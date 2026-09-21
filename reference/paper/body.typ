@@ -15,13 +15,13 @@ appears where the question it answers is asked.
 The document is not a conference paper and is not written to a page
 limit. It keeps its negative results, its reversed decisions and its
 unproved boundaries, and it says at every substantive claim how strong
-the claim is. The directory it lives in is still called `paper/` because
-renaming it would break history; reader-facing text says
-#emph[monograph] or #emph[record].
+the claim is. It lives in `paper/monograph/` beside the core-calculus
+paper (`paper/core_calculus/`); reader-facing text says #emph[monograph]
+or #emph[record].
 
 Two repositories are described. The formal model is `KCN-judu/BDL_FV`, a
 Lean 4 development with no external libraries; it is described as of the
-working tree of this revision, through Phase 17. The production system
+working tree of this revision, through Phase 18. The production system
 is `KCN-judu/BDL`, a Rust toolchain and a Flutter authoring environment;
 it is described as of one audited commit,
 `aa6e7f4ee249556ca7561c854b43607f45f229fe` (2026-09-20, protocol 0.24),
@@ -52,7 +52,7 @@ why each layer is there.
 #strong[Part IV] derives the formal model from the design requirements
 the example exposed, in the order the constructs depend on one another
 rather than the order they were built: persistent declarations and
-refinement; semantic identity and physical quantities; data and
+refinement; concept identity and physical quantities; data and
 equations; units; time; behavior composition; the physical boundary on
 both sides; validation and deployment. #strong[Part V] shows how that
 model becomes a toolchain --- parser, elaborator, checker, reference
@@ -76,7 +76,7 @@ chronology, the revision log, the record conventions, and the map from
 the previous revision's sections to this one.
 
 #strong[Provenance.] The formal development was done in phases (Phase 0
-… Phase 17), and the phase numbers appear throughout as provenance ---
+… Phase 18), and the phase numbers appear throughout as provenance ---
 the place to find the experiment behind a claim --- never as the
 structure of the exposition. The order in which the constructs are
 explained here is their conceptual dependency; it is not the order in
@@ -255,7 +255,7 @@ separate event type, effect rows, action requests, and runtime actuator
 arbitration were all removed, each for a reason recorded in the
 accompanying development. What remains is an environment of named
 declarations with frozen expected types, monotone public commitments,
-and write-once realizations; nominal semantic types whose values can be
+and write-once realizations; nominal concept types whose values can be
 constructed only inside a declaration whose own signature announces the
 concept; physical dimensions carried in the types of primitive
 operators; one temporal primitive that reads a clock domain at its
@@ -638,7 +638,7 @@ Part V, the identity sidecar).
 `MotorAngle` may both be angles and are never interchangeable; a
 concept's value can be observed as its representation anywhere but
 constructed only where a signature announces the concept (Part IV,
-semantic identity).
+concept identity).
 
 #strong[Behavior semantics is separate from deployment.] Everything
 above the logical boundary --- values, timing, outputs --- has a meaning
@@ -753,7 +753,7 @@ Evidence that is not meant to survive refinement --- the existence of a
 pin assignment on a particular board --- is re-established after every
 change and is never merged with the first kind.
 
-@fig:arch shows the layers as they stand at Phase 17; the kernel band
+@fig:arch shows the layers as they stand at Phase 18; the kernel band
 also holds list and product data with one recursor (§IV.3) and the
 behavior-component constructs (§IV.6), the surface band holds the
 deployment construction of §IV.7, and the validation band holds
@@ -837,7 +837,7 @@ Arduino Nano over `avr-hal`), output realization (ADR-0036), the Source
 sheet, the Code view as an IDE surface and the `drive … by …` spelling;
 protocol 0.24. The formal development is described as of the working
 tree that contains this revision of the document; the last commit before
-it is `5dec160` (the Phase 17 records), and the canonical copy of the
+it is `f2b81c0` (the Phase 18 records), and the canonical copy of the
 production hash in the formal repository is the `snapshot` field of
 `docs/project/production-correspondence.md`. Every sentence about
 production is a sentence about that commit; volatile details are
@@ -885,9 +885,13 @@ are never interchangeable, and a link between sockets of different
 concepts is refused before any formula exists.
 
 #emph[Designer problem:] the workshop cost of Part I --- a stable fact
-about a value with no place to live. #emph[Language concept:] the named
-concept with its value form. #emph[Formal mechanism:] the nominal type
-`sem s` and the write-once representation binding Θ (§IV.2).
+about a kind of value with no place to live. The concept is the
+#emph[type] of that value, a template; each place the product carries
+such a value is a #strong[Sem block], an instance of the concept holding
+one value per tick, produced by one #strong[mapping block] or by the
+environment (§IV.2, the concept ladder). #emph[Language concept:] the
+named concept with its value form. #emph[Formal mechanism:] the nominal
+type `sem s` and the write-once representation binding Θ (§IV.2).
 #emph[Owner:] `bdl-model` (identity, value form), `bdl-elab` (Θ),
 `bdl-check`. #emph[Hidden:] the type constructor, the grant, the
 representation; the canvas shows a hue and a socket shape.
@@ -1200,8 +1204,8 @@ interlock is exactly the decision worth writing down. Rates belong to
 deployment.
 
 #strong[Temporal modifiers and contexts --- designed, not offered.] The
-earlier draft of BDL (archived in `paper/archive/`) described temporal
-phrases as qualifiers on relationships --- `p for 300 ms`,
+earlier draft of BDL (archived in `paper/monograph/archive/`) described
+temporal phrases as qualifiers on relationships --- `p for 300 ms`,
 `after e by 2 s`, `while p`, `until e`, `since e`, `once e`,
 `every 1 s`, `rise p`, `previous x`, `count e`, `hold x e` --- and
 #strong[contexts] (StateHandlers): named product situations, activated
@@ -1574,9 +1578,9 @@ The development builds with Lean 4.33.1 with no `sorry`. The axioms used
 by every theorem are propositional extensionality and quotient
 soundness, the latter only through function extensionality and the
 choice-free rational quotient of §IV.4; classical choice is absent, and
-each phase re-audited the whole development for it. As of Phase 17 the
-sources are 66 modules: 11 in `Core`, 12 in `Behavior`, 18 in `Surface`,
-2 in `Validation`, and 23 experiment modules holding alternatives,
+each phase re-audited the whole development for it. As of Phase 18 the
+sources are 68 modules: 11 in `Core`, 12 in `Behavior`, 19 in `Surface`,
+2 in `Validation`, and 24 experiment modules holding alternatives,
 counterexamples and executed examples. Every trace, assignment,
 unsatisfiability result and executed example reported here was obtained
 by running a proved-sound interpreter or solver inside the proof
@@ -1751,8 +1755,8 @@ declared-but-undefined name, and that the kernel imposes a stability
 condition on the validation layer. Neither is a new type-theoretic
 mechanism, and no such claim is made.
 
-== IV.2 Semantic identity and physical quantities
-<iv.2-semantic-identity-and-physical-quantities>
+== IV.2 Concept identity and physical quantities
+<iv.2-concept-identity-and-physical-quantities>
 The lamp needs `Tilt` to remain distinct from any other angle-valued
 concept --- a motor's `MotorAngle`, say --- even though both are
 represented by the same physical quantity, and it needs a formula
@@ -1782,7 +1786,7 @@ the distinction were then tried against it.
 The one that survived is a single nominal type constructor over an
 internal identity:
 
-$ upright("SemanticId")\,#h(2em) upright("Ty") in.rev upright("sem") thick s . $
+$ upright("ConceptId")\,#h(2em) upright("Ty") in.rev upright("sem") thick s . $
 
 Two distinct identities are distinct types regardless of representation,
 so the invalid wire is rejected by the ordinary rules of the simply
@@ -1793,7 +1797,7 @@ signature-first and may remain unresolved --- and it appears in the term
 wherever a crossing occurs. It is not a cast, coercion, or conversion;
 the kernel has no such mechanism.
 
-Semantic identity is independent of declaration identity, of display
+Concept identity is independent of declaration identity, of display
 name, of dimension, and of hardware, and each independence was tested
 rather than assumed. A rename preserves identity, whereas a model in
 which the name #emph[is] the identity makes renaming destructive.
@@ -1809,19 +1813,19 @@ semantic analyses were not formalized and are not ruled out; nominal
 `sem` is the smallest mechanism among the designs that were tried, not
 the only one possible.
 
-Erasing all semantic identities is sound --- a well-typed semantic term
+Erasing all concept identities is sound --- a well-typed semantic term
 is well typed at its representation --- and the baseline is exactly what
 erasure leaves. Generated code is thus ordinary code; the semantic layer
 has no runtime residue.
 
 === Representation binding and the grant
 <representation-binding-and-the-grant>
-Nominal identity alone leaves semantic values opaque. Without a way to
+Nominal identity alone leaves Sem values opaque. Without a way to
 observe a representation and construct a value, no mapping can be
-realized by a formula; under nominal typing alone a semantic value can
-only originate from a declaration of semantic type. That is the right
-state before representation is added. The question is how to add it
-without destroying what identity just bought.
+realized by a formula; under nominal typing alone a Sem value can only
+originate from a declaration of concept type. That is the right state
+before representation is added. The question is how to add it without
+destroying what identity just bought.
 
 The obvious form --- global
 $upright("rep")_s : upright("sem") thick s arrow.r R$ and
@@ -1835,9 +1839,9 @@ mentions no motor. Observation alone, with no construction, is safe but
 cannot realize a mapping. The surviving model separates the two:
 
 - a #strong[concept environment]
-  $Theta : upright("SemanticId") arrow.r upright("Option") thick upright("Ty")$
+  $Theta : upright("ConceptId") arrow.r upright("Option") thick upright("Ty")$
   binds each concept, write-once, to a representation that mentions no
-  semantic type and contains no function type;
+  concept type and contains no function type;
 - $upright("rep") thick e$ is typed at $R$ whenever
   $e : upright("sem") thick s$ and
   $Theta thick s = upright("some") thick R$, everywhere;
@@ -1863,11 +1867,11 @@ well-formedness; and rebinding a concept to a different representation
 is an edit that breaks existing realizations.
 
 Two constraints on the representation were not anticipated.
-Representation types must be free of semantic types, because if `Tilt`
+Representation types must be free of concept types, because if `Tilt`
 may be represented #emph[by] `MotorAngle` then `rep` itself is a hidden
 mapping under every policy, including observation-only. And they must be
 data types, a requirement that arrived later from the reactive
-semantics: a semantic value may be delayed, and a function-typed
+semantics: a Sem value may be delayed, and a function-typed
 representation would carry a closure across ticks.
 
 The grant is a known shape --- a capability attached to a definition
@@ -1902,7 +1906,7 @@ the argument against is that multiplication and division #emph[produce]
 dimensions, so any checker recomputes the same inference, but that
 family was argued against rather than excluded.
 
-Dimension and semantic identity are orthogonal. `Tilt` and `MotorAngle`
+Dimension and concept identity are orthogonal. `Tilt` and `MotorAngle`
 both bound to `q Angle` remain distinct types. A mapping realized by the
 dimensioned formula `λx. mk bright (rep x · gain)` with
 `gain : q (0 − Angle)` is typed; a dimension error inside the formula is
@@ -1944,6 +1948,37 @@ floating point is held to a toleranced version of them. Whether a sum of
 two absolute temperatures should be permitted is a separate, optional
 validation question that the dimension does not decide and conversion
 does not need.
+
+=== The concept ladder (Phases 19--22)
+<the-concept-ladder-phases-1922>
+An audit late in the development (Phase 19) asked whether several
+declarations may produce values of one concept, and found that the
+kernel had always allowed it and that no judgment resolves a value by
+concept: the only ambiguity lay in a canvas that drew a concept as a
+node with a value. One phase (20) tried the opposite discipline --- one
+producer per concept as a global invariant beside the single driver ---
+and proved it preserved under refinement and composition; it was then
+set aside (FVD-0161 → FVD-0163) because the value already has a place:
+the declaration. The reading that closed the question is the
+#strong[concept ladder] (FVD-0163, FVD-0164). A representation
+($Theta thick C = R$) is the type of a type. A #strong[concept] --- a
+$upright("ConceptId")$, the nominal type $upright("sem") thick C$ --- is
+a #emph[type], a template. A #strong[Sem block] --- a declaration of
+type $upright("sem") thick C$ --- is an #emph[instance]: one value per
+tick, whose write-once realization is its #strong[mapping block] and one
+producer, absent for a Source. A #strong[value]
+$upright("sem") thick C thick v$ is the instance's state at a tick. In
+parallel, a rule (an arrow-typed declaration) is a template and a
+mapping block its instance. $upright("sem") thick C$ reads "a Sem of
+$C$". Several Sem blocks of one concept are ordinary --- `sensorA`,
+`sensorB`, `roomTemp : Temperature` --- and every reference is by
+declaration identity; the theorems that state this (`producedBy_unique`,
+`reads_iff_dependsOn`, `new_sem_transparent`, `Surface/Sem`) are
+restatements of Phases 0--1, 5 and 13, which is the point. Phase 22
+fixed the vocabulary in the code (`SemanticId` became `ConceptId`\;
+theorem names keep their historical spelling, "semantic identity" in a
+name reading "concept identity") and removed the proofs the misreading
+had produced.
 
 == IV.3 Data and equations
 <iv.3-data-and-equations>
@@ -2032,15 +2067,14 @@ unbounded.
 
 #strong[Equality at every data type.] `eq τ (h : τ.Data)`: structural
 equality on data values --- booleans, numbers, `none`/`some`, pairs and
-lists componentwise, semantic values by concept and representation ---
-with the proof of `τ.Data` carried #emph[in the syntax]. This is the
-kernel's only capability evidence: an equality on a function type is
-unwritable rather than ill-typed, which keeps the `prim` typing rule
-unconditional. Before Phase 9b, equality existed only at quantities, and
-production encoded boolean equality as `(a ∧ b) ∨ (¬a ∧ ¬b)`. On
-first-order values structural equality is equality (`Value.beq_iff`,
-#strong[formally proved] by a mutual induction over the nested value
-type).
+lists componentwise, Sem values by concept and representation --- with
+the proof of `τ.Data` carried #emph[in the syntax]. This is the kernel's
+only capability evidence: an equality on a function type is unwritable
+rather than ill-typed, which keeps the `prim` typing rule unconditional.
+Before Phase 9b, equality existed only at quantities, and production
+encoded boolean equality as `(a ∧ b) ∨ (¬a ∧ ¬b)`. On first-order values
+structural equality is equality (`Value.beq_iff`, #strong[formally
+proved] by a mutual induction over the nested value type).
 
 #strong[Two first-order operators.] `drop τ` (the dual of `take`) and
 `toList τ : opt τ → list τ`. The second is the one that matters: without
@@ -2139,7 +2173,7 @@ domain-natural meaning for a behavior designer:
     representation],
     [`mode1 == mode2`], [same mode], [Eq],
     [`mode1 < mode2`], [none --- any order would come from a code, a
-    constructor tag or a `SemanticId`], [rejected],
+    constructor tag or a `ConceptId`], [rejected],
     [`pair1 == pair2`], [same reading], [Eq],
     [`pair1 < pair2`], [lexicographic order is a mathematical
     convenience with no design meaning], [rejected],
@@ -2381,7 +2415,7 @@ VI infers what a slot expects.
     [unit coordinate], [`inUnit q u = q / scale(u)`, a dimensionless
     number], [surface elaboration],
     [display / authoring
-    unit], [`Presentation.preferred : SemanticId → Option Unit`], [presentation],
+    unit], [`Presentation.preferred : ConceptId → Option Unit`], [presentation],
   )]
   , kind: table
   )
@@ -2829,7 +2863,7 @@ declaration body, and nothing refers to it because consumers refer to
 the declaration. There is consequently no notion of two writers to one
 cell in this kernel.
 
-State preserves semantic identity and dimension. The typing rule is
+State preserves concept identity and dimension. The typing rule is
 $upright("delay") : tau arrow.r tau arrow.r tau$ for data $tau$, so a
 delayed tilt is a tilt and a backward difference over a time step has
 dimension $upright("Length") - upright("Time")$ with no derivative
@@ -2942,10 +2976,9 @@ destination activation with no earlier source activation. Totality
 extends to the multi-domain case --- a causal, globally well formed
 design with well-typed inputs has a value in every domain at every tick
 --- so the first activation is deterministic with the stated initial
-values. Semantic identity and dimension pass through transport
-untouched, by the typing rule; a crossing from `Tilt@fast` to
-`Tilt@slow` authorizes neither `Tilt -> MotorAngle` nor
-`q Length -> q Time`.
+values. Concept identity and dimension pass through transport untouched,
+by the typing rule; a crossing from `Tilt@fast` to `Tilt@slow`
+authorizes neither `Tilt -> MotorAngle` nor `q Length -> q Time`.
 
 === Cross-domain occurrences and lossless buffering
 <cross-domain-occurrences-and-lossless-buffering>
@@ -3144,7 +3177,7 @@ outcome was that everything is derivable from Phase-1 realization plus
 renaming, and the formal development proves it.
 
 #strong[Renaming.] `Ren` bundles four renamings --- declaration
-identities, semantic identities, clock identities, output identities ---
+identities, concept identities, clock identities, output identities ---
 and the kernel's judgments are equivariant under it: `HasType.rename`
 (typing, given agreement of the three environments on the image; no
 injectivity needed), `Satisfies.rename`, `Clocked.rename` (the domain
@@ -4513,6 +4546,104 @@ carry batches that are pointwise the two transfers of one value
 (`paired_batches_of_one_window`), so the prepare/prepare/commit of a
 paired axis is the backend's order within one batch.
 
+=== The Source side completed: provider state, the device clock, initialization, commitments, readings
+<the-source-side-completed-provider-state-the-device-clock-initialization-commitments-readings>
+What the input boundary still left open after the provider's contract
+--- a transducer that needs memory, a device that samples in its own
+domain, a Source read before its first value, a range a profile is asked
+to guarantee, the `computes` obligation, a reading that is not a value
+of the raw type --- Phase 18 closed with one lemma and six constructions
+(`Surface/SourceBoundary.lean`). The lemma is `MEv.congr_at`: two
+designs that keep every realization but one declaration's, read every
+other input alike, and give that declaration the same value at every
+tick in every domain, evaluate every term alike. The behavior sees a
+Source through its value trace and through nothing else; every answer
+below is that lemma with two traces computed.
+
+#strong[Provider state is movable, so placement is visibility.] A
+stateful transducer --- a debouncer, a quadrature decoder, a low-pass
+filter --- is a Mealy machine whose step is a pure BDL term over data
+(`Machine`). Run below the raw reading, its output is what the provider
+delivers; placed above it, it is one declaration with `delay` over the
+physical reading, and the Source is realized from its output. The
+Source's trace is the same either way, and every evaluation of the
+provisioned design holds in the upstream one (`provider_state_movable`,
+executed on the filter: `exA_filter`). The placement is therefore not a
+semantic question but one of #emph[visibility], and the criterion is
+stated with two formal facts behind it: a provider cannot read the
+design --- its state is a function of the raw stream alone
+(`Machine.run_congr`), and a channel term mentions no declaration, so
+the fault latch that reads `reset` or the settling count that reads
+`target` cannot be a provider's (`exA_latch_reads_design`); and a
+parameter that changes the semantic trace on one physical stream --- the
+debounce threshold, a hysteresis band, a filter constant --- is the
+product's whenever the product's specification fixes it
+(`exA_debounce_param`, `exA_hysteresis_param`). Decoding an edge from
+two consecutive phase readings is the provider's; accumulating and
+homing a position, which reads `reset`, is the design's
+(`exA_quadrature`). Two providers running different machines with one
+output stream give one behavior (`stateful_providers_same_trace`).
+Nothing can be hidden #emph[by] the placement, because the trace is what
+the behavior reads (FVD-0154).
+
+#strong[The Source-side device clock and the first value.] A device that
+samples in its own domain `pc` is provisioned by an explicit `sync` of
+the raw reading into the Source's domain, with an explicit initial value
+--- the input dual of the output side's device clock (`provisionSync`):
+the Source carries the transfer of the reading at the last activation of
+`pc` strictly before, or of the initial value (`provisionSync_target`);
+the abstract design is unchanged (`provisionSync_transparent`); no new
+instantaneous edge, well clocked with the reading in `pc`, a refinement,
+globally well formed (`provisionSync_wf`). An occurrence-like Source ---
+encoder edges, queued commands --- crosses by Phase 9a's window over the
+raw reading (`provisionWindow_target`), the same five declarations and
+the same theorem, nothing lost (`exB_window_edges`). The initial value
+is an explicit `InitRep` under one of two policies a profile declares: a
+#emph[supplied] raw value the Source reads until the first sample, or
+#emph[unavailable] --- `none` at an optional raw type, which the design
+reads as the sensor not having spoken (`exB_sampled`,
+`exB_unavailable`). A reading is never fabricated; activation gated on
+the first sample is not a construction, because a schedule does not read
+an input, and is the optional form (FVD-0155). The explicit initial
+value is the one principle both boundaries share.
+
+#strong[Commitments at three evidence levels.] A Source's commitment ---
+a temperature at most 450 --- is discharged by the provisioned
+realization when every value it takes, under readings satisfying an
+assumption `A`, has the property (`RangeSoundUnder`, `discharge_under`).
+The three levels are three assumptions and three ways of establishing
+them: #emph[static], `A` is typing and the transducer alone guarantees
+the property (a saturating ADC, `discharge_static`); #emph[checked], `A`
+is a validation the provider applies to every delivery, established by
+construction (`discharge_checked`); #emph[trusted], `A` is a range the
+profile asserts of the device, which nobody establishes here and the
+theorem carries as a visible hypothesis (`discharge_trusted`). A profile
+declaration is not evidence by itself: at the trusted level it is
+exactly the assumption named (FVD-0156). The `computes` obligation ---
+that a profile's transfer function is what its term computes --- stays a
+proof: derived when the function #emph[is] the term's evaluation
+(`Channel.ofTerm`), decided at a finite raw type (`computesBool`,
+`computes_of_bool`); a separately supplied function at an infinite type
+is a claim to test, and production compiles the term (FVD-0157).
+
+#strong[Readings that are not values.] A malformed frame, a NaN, an
+invalid code, a count outside the declared range never become a Sem
+value: the checking provider refuses the delivery before the contract's
+deduplication and bound (`checkedProvide`), every delivered item is
+typed by construction (`checked_typed`), and the refusal crosses as
+`none` at an optional Source or as a flag beside it --- semantic state
+if the product must react (`available`), a backend diagnostic if it must
+not (`exE_checked`). No exception semantics (FVD-0158). The richer
+profile a package may supply --- transducer, machine, initial policy,
+delivery contract, assumed range, requirements --- leaves the assignment
+reading Phase 13's profile and nothing else
+(`assignSource_profile_only`), so `assign` stays deployment-only; and
+the motion controller of the previous section, fed by a batch provider
+sampled through `chLatest` and by a scalar provider through the identity
+channel, has one `fb` trace and one `doneM` trace (`exF_two_providers`).
+With this, FVI-0020 --- the Source side's open item since Phase 13 ---
+is closed remainder by remainder.
+
 === The physical boundary as one whole
 <the-physical-boundary-as-one-whole>
 Read end to end, one value's path from the world back to the world is
@@ -4553,6 +4684,15 @@ physical world ─▶ raw reading r : () -> R ─▶ pure transducer tr ─▶ l
     snapshot: no device provides a Source's value (ISS-0016; a slice was
     in flight, uncommitted)], [which bound a physical arrival rate needs
     (a deployment assumption); the device catalogue for inputs],
+    [raw reading → logical Source, with a device that keeps state,
+    samples in its own domain, promises a range, or delivers a malformed
+    value], [provider state as a machine; the Source-side device clock;
+    commitment discharge at three evidence levels; the checking
+    provider], [Phase 18 `Machine`, `provisionSync`, `provisionWindow`,
+    `RangeSoundUnder`, `checkedProvide`], [`provider_state_movable`,
+    `provisionSync_transparent`, `provisionSync_wf`, `discharge_static`
+    \/ `_checked` / `_trusted`, `checked_typed`], [not built], [the
+    device's own bound or range (a deployment assumption)],
     [raw reading → logical Source (`s := mk c (tr r)`)], [provision by a
     pure transducer], [Phase 13 `Provision`], [`provision_envRefines`,
     `provision_wf`, `provision_transparent`, `provision_abstracts`\;
@@ -4642,8 +4782,8 @@ downstream already rests.
 ==== Nominal identity in three places
 <nominal-identity-in-three-places>
 BDL makes the same choice three times. On the axis of quantity, `sem`
-makes semantic identity nominal: two concepts of equal representation
-are distinct, and moving between them is a declared relationship. On the
+makes concept identity nominal: two concepts of equal representation are
+distinct, and moving between them is a declared relationship. On the
 axis of time, `ClockId` makes temporal identity nominal: two domains of
 equal rate are distinct, and moving between them is a `sync` with an
 initial value. On the axis of effect, `OutputId` makes sink identity
@@ -4653,7 +4793,7 @@ representation, of rate, and of type respectively; in each case the
 crossing is a visible artifact rather than a compiler action; and in
 each case the alternative --- identity by representation, by rate, or by
 type --- collided or was ambiguous for a mechanized reason. The three
-are not all placed alike. Semantic identity is in the type, while clock
+are not all placed alike. Concept identity is in the type, while clock
 and sink identity are projections beside the interface checked by
 separate global judgments, because putting the clock in the type forces
 polymorphism on every pure mapping. Symmetry was not a design goal; it
@@ -5014,9 +5154,9 @@ implementation mechanisms never flow upward and redefine the language].
     table.header([layer], [owns], [never does],),
     table.hline(),
     [Flutter Studio], [presentation, interaction, layout, ephemeral
-    render state], [compute type validity, semantic identity,
-    dimensions, causality, clocks, output ownership, hardware
-    feasibility, simulation],
+    render state], [compute type validity, concept identity, dimensions,
+    causality, clocks, output ownership, hardware feasibility,
+    simulation],
     [Rust compiler (`bdld` and crates)], [the canonical project model,
     every semantic judgment, diagnostics, simulation, allocation, code
     generation, the placement of entities that have no position
@@ -5171,7 +5311,7 @@ elaborated design.
 run the solver against the selected target, and attach the assignment or
 the explanation to the bindings.
 
-#strong[Normalization and erasure.] After checking is complete, semantic
+#strong[Normalization and erasure.] After checking is complete, concept
 identities, dimensions, and domains carry no computational content and
 may be erased; erasure is proved sound for identities and for
 dimensions. Nominal wrappers introduced by elaboration cancel,
@@ -5801,7 +5941,7 @@ anatomy and the gestures because designers who have used any node editor
 already know them. It deliberately does not borrow the #emph[meaning]:
 in Blender a graph is a computation and a socket's colour is a data
 type; in Studio a graph is a diagram of product relationships, a
-socket's colour is a semantic identity (`Tilt` and `MotorAngle` are two
+socket's colour is a concept identity (`Tilt` and `MotorAngle` are two
 colours and never connect), an edge is a signature or a dependency and
 never an execution step, a node is never an arithmetic operator, and
 dragging a node over a link does not insert it --- because a link is
@@ -5918,9 +6058,10 @@ echo at the next only as detail behind the first (ADR-0018):
     change; what will the change affect], [designer vocabulary:
     #emph[Meaning, Value, Unit, Reads, Produces, Relationship, Used by,
     affects, checked again]\; diagnostics in product language attached
-    to the field they concern], [`SemanticId`, `DeclId`, `Ty`, `Grant`,
-    `realization`, `Clocked`, `SingleDriver`, solver, protocol,
-    revision, enum names],
+    to the field they concern], [`SemanticId` (production's name;
+    `ConceptId` in the formal development since Phase 22), `DeclId`,
+    `Ty`, `Grant`, `realization`, `Clocked`, `SingleDriver`, solver,
+    protocol, revision, enum names],
     [3 Explain], [why was this accepted or refused; what did the surface
     form elaborate into; which rule applies], [all of the above, kernel
     notation, Core IR, diagnostic codes, revision], [---],
@@ -5935,7 +6076,7 @@ reachable, and it is never in the way.
 
 == VI.5 The canvas as a diagram of product relationships
 <vi.5-the-canvas-as-a-diagram-of-product-relationships>
-#strong[Socket hue = semantic identity.] In a node editor a socket's
+#strong[Socket hue = concept identity.] In a node editor a socket's
 colour is its data type; in BDL the type that matters is the nominal
 concept, so each concept gets a stable hue derived from its `SemanticId`
 --- deterministic, never from the name, with lightness chosen per hue so
@@ -6028,21 +6169,25 @@ the collapsed group is exactly the interface the component receives.
 Each visual interaction on the canvas corresponds to one semantic design
 object, and the correspondence is the reason the gesture exists. A
 #strong[Concept node] is a `SemanticId` with its value form, and its
-socket is the one place its values enter and leave a relationship. A
-#strong[relationship node] is a declaration; its input sockets are its
-signature's inputs and its output socket the concept it produces;
-dragging a link from a concept's socket into an input socket edits the
-signature --- #emph[adds the concept to what the relationship reads] ---
-and dragging into an empty output socket sets what it produces. The
-#strong[three roles] are drawn without colour alone: a Source with no
-input socket, a boundary bar on the environment side and the word
-#emph[Source]\; a Rule with the word #emph[rule] and, when nothing
-applies it, a hollow output socket and the words #emph[not applied]\; a
-Value as the plain node. A #strong[logical Output] is a terminal node at
-the right with a boundary bar of its own and one input socket for its
-one driver. #strong[Groups] are boxes that collapse to their boundary
-sockets, and #strong[instances] show their promised ports with the same
-socket glyphs (§IV.6).
+socket is the one place its values enter and leave a relationship.
+(Production at the snapshot draws the concept as a node; the formal
+development has since decided the projection that replaces it --- Sem
+blocks and mapping blocks, no concept node, FVD-0163 and §IV.2 --- and
+production's canvas follows in its next slice.) A #strong[relationship
+node] is a declaration; its input sockets are its signature's inputs and
+its output socket the concept it produces; dragging a link from a
+concept's socket into an input socket edits the signature --- #emph[adds
+the concept to what the relationship reads] --- and dragging into an
+empty output socket sets what it produces. The #strong[three roles] are
+drawn without colour alone: a Source with no input socket, a boundary
+bar on the environment side and the word #emph[Source]\; a Rule with the
+word #emph[rule] and, when nothing applies it, a hollow output socket
+and the words #emph[not applied]\; a Value as the plain node. A
+#strong[logical Output] is a terminal node at the right with a boundary
+bar of its own and one input socket for its one driver. #strong[Groups]
+are boxes that collapse to their boundary sockets, and
+#strong[instances] show their promised ports with the same socket glyphs
+(§IV.6).
 
 #strong[Selection] follows the grammar a professional expects --- click,
 shift-click to extend, box selection, select all --- and is Studio's own
@@ -6379,7 +6524,7 @@ path does not (roadmap priority 4).
 
 == VI.12 What Studio does not decide, and what is not claimed
 <vi.12-what-studio-does-not-decide-and-what-is-not-claimed>
-Studio computes no type validity, semantic identity, dimension,
+Studio computes no type validity, concept identity, dimension,
 causality, clock, output ownership, hardware feasibility or simulation;
 it holds no parsed formula tree and no unit rule; it arranges nothing at
 render time. Every one of those is a projection from the daemon, keyed
@@ -7216,6 +7361,26 @@ and would be tempted to add it.
     [a batch or transaction primitive at the adapter], [a slower device
     receiving several commands], [`batchOps : List Op`, `lineAfterBatch`
     a fold; `paired_batches_of_one_window`], [REMOVE (FVD-0153)],
+    [memory in the transducer term; a stateful provider
+    primitive], [debouncing, decoding, filtering], [a machine below the
+    reading is movable upstream with one trace
+    (`provider_state_movable`); placement is visibility; a state that
+    reads the design is the design's], [REMOVE (FVD-0154)],
+    [a hidden provider clock; a fabricated initial reading; activation
+    gated on the first sample], [a device that samples in its own
+    domain], [an explicit `sync` with an explicit `InitRep`
+    (`provisionSync_target`); supplied or unavailable; a schedule does
+    not read an input], [REMOVE (FVD-0155)],
+    [a profile range as evidence by declaration], [vendor
+    ranges], [three evidence levels; the trusted one is a named
+    assumption (`discharge_trusted`)], [REMOVE (FVD-0156)],
+    [a "trusted" flag on `computes`\; a proof language for transfer
+    functions], [package profiles], [the field is a proof, derived from
+    the term (`Channel.ofTerm`), decided at `bool`
+    (`computes_of_bool`)], [REMOVE (FVD-0157)],
+    [exception semantics for malformed readings], [NaN, bad
+    frames], [the checking provider refuses; `none` or a flag above the
+    boundary (`checked_typed`, `exE_checked`)], [REMOVE (FVD-0158)],
   )]
   , kind: table
   )
@@ -7491,18 +7656,18 @@ Each names what exists and what would resolve it.
   #emph[commitments on outputs], which production does not author and
   whose discharge by an encoder's declared transfer would be the output
   analogue of FVD-0128.
-+ #strong[The input boundary beyond a pure transducer] (FVI-0020,
-  narrowed by Phase 16; PRP-0001, ISS-0016). Stateful transducers and a
-  stream-level transparency theorem; a device clock with a deployment
-  `sync`\; how a profile's declared range discharges a Source's
-  commitments; whether `computes` is checked or trusted at the
-  catalogue; out-of-type raw readings as validation. Freshness is no
-  longer here: it is behavior state (`age`, `exG_freshness`). The
-  provider's occurrence contract (FVI-0029) is resolved by Phase 17:
-  stated and proved (`Provider.lean`, FVD-0149 … FVD-0151); what a
-  Source device profile has to promise is now a record. Bounded buffered
-  input is answered by it; what remains here is the input side's device
-  clock and stateful transducers.
++ #strike[#strong[The input boundary beyond a pure transducer]
+  (FVI-0020; PRP-0001, ISS-0016)] --- resolved by Phase 18, remainder by
+  remainder: stateful transducers are machines movable upstream with one
+  trace (FVD-0154); the Source-side device clock is an explicit `sync`
+  or window with an explicit initial value (FVD-0155); commitment
+  discharge has three evidence levels (FVD-0156); `computes` is derived
+  from the term and decided at a finite type (FVD-0157); out-of-type
+  readings are refused and cross as `none` or a flag (FVD-0158).
+  Freshness was behavior state since Phase 16 and the occurrence
+  contract Phase 17's (FVI-0029). What stays outside the development:
+  the bound or range a physical device needs --- a deployment assumption
+  --- and the production slice (ISS-0016).
 + #strong[Enums and sums] (ISS-0005). Encoded as tag × optional payload;
   production keeps user enums open. Would resolve: a case that needs
   `match` exhaustiveness beyond the encoding, and then one eliminator
@@ -7696,7 +7861,7 @@ reports them separately, are each measurable in the tasks above.
 A controlled study cannot establish whether the representation fits real
 design practice. A second phase should embed the tool in a semester-long
 product-design studio or an industry project. The study should observe
-where unresolved declarations persist, which semantic types designers
+where unresolved declarations persist, which concept types designers
 invent, where they request escape hatches, how often the single-driver
 condition is met by a combination rule the designer finds natural, and
 how often engineers reinterpret or replace BDL artifacts during
@@ -7789,7 +7954,7 @@ program counter, not the syntax, is the cost for designers. End-user
 software engineering @ko2011enduser documents the tension between
 low-threshold authoring and the errors that follow from the absence of
 static structure; BDL's answer is to make the static structure ---
-semantic identity, dimension, domain, single driver --- the medium, and
+concept identity, dimension, domain, single driver --- the medium, and
 to make it legible through the three information levels rather than
 through diagnostics after the fact. Cognitive dimensions
 @green1996cognitive supplies the vocabulary --- viscosity, hidden
@@ -8019,9 +8184,9 @@ throughout and the old one is mentioned only in Appendix G.
     expected type and the monotone public commitment list],
     [$Delta^(upright(t y))$], [`DeclEnv.tyView`], [the type view: the
     expected type of each declared identity],
-    [$Theta$], [`ConceptEnv : SemanticId → Option Ty`], [the write-once
+    [$Theta$], [`ConceptEnv : ConceptId → Option Ty`], [the write-once
     representation binding of concepts],
-    [$s$, `SemanticId`], [`SemanticId`], [a concept's identity; `sem s`
+    [$s$, `ConceptId`], [`ConceptId`], [a concept's identity; `sem s`
     its nominal type],
     [`q d`], [`Ty.q Dim`], [a physical quantity of dimension `d` (an
     exponent vector)],
@@ -8183,16 +8348,16 @@ Part IV.
   , kind: table
   )
 
-== Semantic identity, representation and the grant (`Core/Base`, `Experiments/SemanticTypeAlternatives`, `Experiments/RepresentationBindingAlternatives`)
-<semantic-identity-representation-and-the-grant-corebase-experimentssemantictypealternatives-experimentsrepresentationbindingalternatives>
+== Concept identity, representation and the grant (`Core/Base`, `Experiments/SemanticTypeAlternatives`, `Experiments/RepresentationBindingAlternatives`)
+<concept-identity-representation-and-the-grant-corebase-experimentssemantictypealternatives-experimentsrepresentationbindingalternatives>
 #figure(
   align(center)[#table(
     columns: (25%, 25%, 25%, 25%),
     align: (auto,auto,auto,auto,),
     table.header([name], [kind], [states], [scope],),
     table.hline(),
-    [`no_semantic_value_without_declaration`], [T], [a semantic value
-    originates only in a declaration of semantic type], [---],
+    [`no_semantic_value_without_declaration`], [T], [a Sem value
+    originates only in a declaration of concept type], [---],
     [`temporal_state_preserves_semantic_identity`], [T], [delay carries
     a concept's tag and never creates one], [---],
     [`HasType.erase`, `erase_not_injective`,
@@ -8789,6 +8954,64 @@ Part IV.
   , kind: table
   )
 
+== The Source-side boundary (`Surface/SourceBoundary`, `Experiments/SourceBoundaryExamples`)
+<the-source-side-boundary-surfacesourceboundary-experimentssourceboundaryexamples>
+#figure(
+  align(center)[#table(
+    columns: (25%, 25%, 25%, 25%),
+    align: (auto,auto,auto,auto,),
+    table.header([name], [kind], [states], [scope],),
+    table.hline(),
+    [`MEv.congr_at`, `MEv.declRef_env`,
+    `MEv.declRef_nil`], [T], [designs agreeing off one declaration whose
+    value trace agrees evaluate every term alike], [---],
+    [`machine_upstream`, `Machine.run_typed`,
+    `Machine.run_congr`], [T], [the upstream declaration computes the
+    machine's run; the run is a function of the stream alone], [single
+    domain],
+    [`below_source_trace`, `upstream_source_trace`,
+    `provider_state_movable`,
+    `stateful_providers_same_trace`], [T], [the same Source trace below
+    or above the reading; every evaluation transfers; equal output
+    streams, one trace], [`Provision.WF`, typed streams],
+    [`provisionSync_target`, `sampled_mev`, `provisionSync_transparent`,
+    `provisionSync_causal`, `provisionSync_wellClocked`,
+    `syncRealizeAt_typed`, `provisionSync_envRefines`,
+    `provisionSync_wf`], [T], [the sampled Source-side device clock with
+    an explicit initial value: correspondence, transparency,
+    structure], [the Source in a domain; typed reading and initial
+    value],
+    [`provisionWindow_target`], [T], [the occurrence-like Source over
+    Phase 9a's window of the raw reading], [`Realized`, typed reading],
+    [`realizeAt_only_transfers`, `discharge_under`, `discharge_static`,
+    `discharge_checked`, `discharge_trusted`], [T], [commitment
+    discharge at three evidence levels], [`RangeSoundUnder`],
+    [`checked_items_ok`, `checked_typed`, `checked_refused_iff`,
+    `filter_length_lt_iff`], [T], [the checking provider: delivered
+    items validated and typed; the flag exact], [`ok` implying typing],
+    [`Value.beq_sound`, `Value.beqList_sound`,
+    `computes_of_bool`], [T], [structural equality is sound; a passed
+    check at `bool` is `computes`], [---],
+    [`assignSource_profile_only`], [T], [the richer profile does not
+    change the assignment], [equal Phase-13 profiles],
+    [`exA_filter`, `exA_filter_run`, `exA_filter_theorem`,
+    `exA_debounce_param`, `exA_quadrature`, `exA_hysteresis_param`,
+    `exA_latch_reads_design`], [X], [provider state below or above; the
+    parameters in the trace; the latch that reads the design], [---],
+    [`exB_sampled`, `exB_structure`, `exB_unavailable`,
+    `exB_window_edges`], [X], [the sampled and the unavailable initial
+    value; edges windowed without loss], [---],
+    [`exC_static`, `exC_trusted`, `exC_checked`,
+    `exC_provider_checks`], [X], [one property at three evidence
+    levels], [---],
+    [`exD_ofTerm`, `exD_bool`, `exD_bool_computes`, `exE_checked`,
+    `exF_two_providers`], [X], [`computes` from the term and decided;
+    refused readings into an optional Source; the motion state under two
+    providers], [---],
+  )]
+  , kind: table
+  )
+
 == Hardware validation (`Validation/Hardware`, `Experiments/HardwareAlternatives`)
 <hardware-validation-validationhardware-experimentshardwarealternatives>
 #figure(
@@ -8941,24 +9164,24 @@ generalisation.
     [FVD-0018], [`Evidence.Monotone` is a stability condition, not a
     definition of validity], [accepted], [§IV.1], [Phase M: `Core/*`
     (the rename)], [ISS-0003 (bears-on)],
-    [FVD-0019], [Semantic identity lives in the type:
-    `Ty.sem : SemanticId → Ty`], [accepted], [§IV.2], [Phase 2:
+    [FVD-0019], [Concept identity lives in the type:
+    `Ty.sem : ConceptId → Ty`], [accepted], [§IV.2], [Phase 2:
     `Core/Base`, `Experiments/SemanticTypeAlternatives`], [ADR-0013
     (supports)],
-    [FVD-0020], [`SemanticId` is independent of `DeclId` and of display
+    [FVD-0020], [`ConceptId` is independent of `DeclId` and of display
     names], [accepted], [§IV.2], [Phase 2: `Core/Base`,
     `Experiments/SemanticTypeAlternatives`], [ADR-0013 (supports)],
-    [FVD-0021], [No introduction/elimination forms for semantic types in
+    [FVD-0021], [No introduction/elimination forms for concept types in
     Phase 2], [accepted], [§IV.2], [Phase 2: `Core/Base`,
     `Experiments/SemanticTypeAlternatives`], [ADR-0013 (supports)],
     [FVD-0022], [Explicit semantic mappings are ordinary
     declarations], [accepted], [§IV.2], [Phase 2: `Core/Base`,
     `Experiments/SemanticTypeAlternatives`], [ADR-0013 (supports)],
-    [FVD-0023], [Semantic identity change is an
+    [FVD-0023], [Concept identity change is an
     edit], [accepted], [§IV.2], [Phase 2: `Core/Base`,
     `Experiments/SemanticTypeAlternatives`], [ADR-0013 (supports)],
     [FVD-0025], [Future constraint for Phase 3: representation binding
-    must not defeat semantic identity], [accepted], [§IV.2], [Phase 2:
+    must not defeat concept identity], [accepted], [§IV.2], [Phase 2:
     `Core/Base`, `Experiments/SemanticTypeAlternatives`], [ADR-0013
     (supports)],
     [FVD-0024], [Canonical closed inhabitants replaced by unresolved
@@ -8995,7 +9218,7 @@ generalisation.
     literals], [accepted], [§IV.2], [Phase 3: `Core/Decl`,
     `Core/Typing`, `Experiments/RepresentationBindingAlternatives`,
     `Experiments/DimensionAlternatives`], [ADR-0028 (supports)],
-    [FVD-0033], [Semantic identity is not indexed by
+    [FVD-0033], [Concept identity is not indexed by
     dimension], [accepted], [§IV.2], [Phase 3: `Core/Decl`,
     `Core/Typing`, `Experiments/RepresentationBindingAlternatives`,
     `Experiments/DimensionAlternatives`], [ADR-0013 (supports)],
@@ -9060,9 +9283,9 @@ generalisation.
     relation], [accepted], [§IV.5], [Phase 5: `Core/Clock`,
     `Experiments/ClockAlternatives`], [FV-only],
     [FVD-0050], [Physical sinks have nominal identity (`OutputId`),
-    separate from `SemanticId` and
-    `DeclId`], [accepted], [§IV.7], [Phase 6: `Core/Output`,
-    `Experiments/OutputAlternatives`], [ADR-0005 (supports)],
+    separate from `ConceptId` and `DeclId`], [accepted], [§IV.7], [Phase
+    6: `Core/Output`, `Experiments/OutputAlternatives`], [ADR-0005
+    (supports)],
     [FVD-0051], [A drive edge is a per-declaration write-once projection
     `β`, checked by type and clock
     equality], [accepted], [§IV.7], [Phase 6: `Core/Output`,
@@ -9471,6 +9694,55 @@ generalisation.
     and the line after it a fold; no batch or transaction
     primitive], [accepted], [§IV.7], [Phase 17:
     `Surface/OutputWindow`], [ISS-0017 (bears-on), ADR-0037 (supports)],
+    [Phase 18], [the Source-side boundary: provider state as a machine
+    below or above the reading; the Source-side device clock with an
+    explicit initial value; commitment discharge at three evidence
+    levels; `computes` derived and decided; out-of-type readings
+    refused; FVI-0020 resolved], [], [§IV.7], [Phase 18], [],
+    [FVD-0154], [Provider state is a Mealy machine below the raw
+    reading, movable upstream with the same Source trace; placement is
+    decided by visibility], [accepted], [§IV.7], [Phase 18:
+    `Surface/SourceBoundary`], [ISS-0016 (bears-on), PRP-0001 (audits)],
+    [FVD-0155], [The Source-side device clock is an explicit `sync` (or
+    window) of the raw reading with an explicit initial value ---
+    supplied or unavailable], [accepted], [§IV.7], [Phase 18:
+    `Surface/SourceBoundary`], [ISS-0016 (bears-on)],
+    [FVD-0156], [A provider discharges a commitment as evidence under an
+    assumption; static, checked and trusted levels differ in who
+    establishes it], [accepted], [§IV.7], [Phase 18:
+    `Surface/SourceBoundary`], [ISS-0016 (bears-on), PRP-0001 (audits)],
+    [FVD-0157], [`computes` is proof-carrying: derived from the term,
+    decided at a finite raw type; a supplied transfer function is a
+    claim], [accepted], [§IV.7], [Phase 18:
+    `Surface/SourceBoundary`], [PRP-0001 (audits)],
+    [FVD-0158], [An out-of-type reading is refused by the checking
+    provider and crosses as `none` or a flag; no exception
+    semantics], [accepted], [§IV.7], [Phase 18:
+    `Surface/SourceBoundary`], [ISS-0016 (bears-on)],
+    [FVD-0159], [A concept is a nominal type; several declarations may
+    produce values of it; alternatives are resolved by an explicit
+    declaration], [superseded by FVD-0161], [§IV.2], [Phase 19:
+    `Experiments/ProducerAlternatives`], [ADR-0034 (supports)],
+    [FVD-0160], [Producer uniqueness per concept is not a kernel
+    invariant; signature-uniqueness is refuted], [superseded by
+    FVD-0161], [§IV.2], [Phase 19:
+    `Experiments/ProducerAlternatives`], [ADR-0034 (bears-on)],
+    [FVD-0161], [Each concept has one producer: `ProducerUnique` as a
+    global invariant beside `SingleDriver`], [superseded by
+    FVD-0163], [§IV.2], [Phase 20:
+    `Experiments/ProducerUnique`], [ADR-0034 (bears-on)],
+    [FVD-0162], [A concept reference elaborates to its
+    producer], [superseded by FVD-0163], [§IV.2], [Phase 20 (deleted in
+    Phase 22)], [ADR-0034 (bears-on)],
+    [FVD-0163], [The design objects are Sem blocks and mapping blocks; a
+    concept is their type template; several Sem blocks of one concept
+    are ordinary], [accepted], [§IV.2], [Phase 21: `Surface/Sem`,
+    `Experiments/SemExamples`], [ADR-0034, ADR-0032, ADR-0041
+    (bears-on)],
+    [FVD-0164], [The concept ladder: a concept is a type named by
+    `ConceptId`, a Sem block is its instance; the vocabulary fixed in
+    the code], [accepted], [§IV.2], [Phase 22: the rename across
+    `BDL/`], [ADR-0013, ADR-0034, ADR-0041 (bears-on)],
   )]
   , kind: table
   )
@@ -9503,7 +9775,7 @@ at the snapshot (`081296d`); #emph[not implemented] means
     [typing consults only the type view], [`HasType.mono_env`,
     `refFree_env_irrelevant`], [`bdl-check`], [pipeline
     tests], [FVD-0004], [---],
-    [semantic identity is nominal; construction needs a
+    [concept identity is nominal; construction needs a
     grant], [`constructs_granted`,
     `no_semantic_value_without_declaration`,
     `temporal_state_preserves_semantic_identity`], [elaborator
@@ -9675,11 +9947,11 @@ unnumbered bullets, and for a few hours on the same day `OI-NN`. The
 stable identifiers keep the sequence number (`D-07` → `FVD-0007`) so
 that a citation in a commit message, an archived draft or a conversation
 can be followed by hand; the number encodes neither a phase nor a
-production record. Archived documents (`paper/archive/`, the dated
-entries of `paper/NOTES.md`) keep the old numbers and are not rewritten.
-Production's records at the snapshot still cite the old numbers
-(ADR-0024, ADR-0025, `formal-correspondence.md`, `status.md`); this
-table resolves each. The canonical copy is
+production record. Archived documents (`paper/monograph/archive/`, the
+dated entries of `paper/monograph/NOTES.md`) keep the old numbers and
+are not rewritten. Production's records at the snapshot still cite the
+old numbers (ADR-0024, ADR-0025, `formal-correspondence.md`,
+`status.md`); this table resolves each. The canonical copy is
 `docs/project/decision-id-migration.md` in the formal repository.
 
 #figure(
@@ -9724,20 +9996,20 @@ table resolves each. The canonical copy is
     `PropertyId` for now], [ISS-0003],
     [D-18], [FVD-0018], [`Evidence.Monotone` is a stability condition,
     not a definition of validity], [ISS-0003],
-    [D-19], [FVD-0019], [Semantic identity lives in the type:
-    `Ty.sem : SemanticId → Ty`], [ADR-0013],
-    [D-20], [FVD-0020], [`SemanticId` is independent of `DeclId` and of
+    [D-19], [FVD-0019], [Concept identity lives in the type:
+    `Ty.sem : ConceptId → Ty`], [ADR-0013],
+    [D-20], [FVD-0020], [`ConceptId` is independent of `DeclId` and of
     display names], [ADR-0013],
-    [D-21], [FVD-0021], [No introduction/elimination forms for semantic
+    [D-21], [FVD-0021], [No introduction/elimination forms for concept
     types in Phase 2], [ADR-0013],
     [D-22], [FVD-0022], [Explicit semantic mappings are ordinary
     declarations], [ADR-0013],
-    [D-23], [FVD-0023], [Semantic identity change is an
+    [D-23], [FVD-0023], [Concept identity change is an
     edit], [ADR-0013],
     [D-24], [FVD-0024], [Canonical closed inhabitants replaced by
     unresolved declarations], [ADR-0013],
     [D-25], [FVD-0025], [Future constraint for Phase 3: representation
-    binding must not defeat semantic identity], [ADR-0013],
+    binding must not defeat concept identity], [ADR-0013],
     [D-26], [FVD-0026], [Unrestricted symmetric `mk`/`rep`
     rejected], [ADR-0013],
     [D-27], [FVD-0027], [Representation types are sem-free
@@ -9752,7 +10024,7 @@ table resolves each. The canonical copy is
     `Prim.ty`\; no dimension rule], [ADR-0011, ADR-0013],
     [D-32], [FVD-0032], [Units are surface: elaborated to scaled
     dimensioned literals], [ADR-0028],
-    [D-33], [FVD-0033], [Semantic identity is not indexed by
+    [D-33], [FVD-0033], [Concept identity is not indexed by
     dimension], [ADR-0013],
     [D-34], [FVD-0034], [One temporal primitive:
     `delay init e`], [ADR-0004, ADR-0016],
@@ -9787,7 +10059,7 @@ table resolves each. The canonical copy is
     [D-49], [FVD-0049], [The logical relation is generic in the
     application relation], [FV-only],
     [D-50], [FVD-0050], [Physical sinks have nominal identity
-    (`OutputId`), separate from `SemanticId` and `DeclId`], [ADR-0005],
+    (`OutputId`), separate from `ConceptId` and `DeclId`], [ADR-0005],
     [D-51], [FVD-0051], [A drive edge is a per-declaration write-once
     projection `β`, checked by type and clock equality], [ADR-0005],
     [D-52], [FVD-0052], [Single-driver is a global invariant;
@@ -10009,8 +10281,8 @@ table resolves each. The canonical copy is
     mappings], [FV-only],
     [OI-19], [FVI-0019], [Display-name table for concepts], [FV-only],
     [OI-20], [FVI-0020], [Source provision: stateful transducers, a
-    device clock, commitment discharge, output provision], [PRP-0001,
-    ISS-0016],
+    device clock, commitment discharge, output provision (resolved by
+    Phase 18)], [PRP-0001, ISS-0016],
     [---], [FVI-0022], [Output realization: stateful adapters, a device
     clock, atomic multi-value frames, codegen correspondence, output
     commitments], [ISS-0016],
@@ -10242,7 +10514,7 @@ added each report.
     references], [§IV.1], [`docs/reports/phase-01-cross-declaration-references.md`],
     [1 → M], [2026-09-14], [Migration: holes →
     declarations], [§IV.1], [`docs/reports/phase-01m-migration-holes-to-declarations.md`],
-    [2], [2026-09-15], [where does semantic identity
+    [2], [2026-09-15], [where does concept identity
     live?], [§IV.2], [`docs/reports/phase-02-where-does-semantic-identity-live.md`],
     [3], [2026-09-15], [representation binding and physical
     dimensions], [§IV.2], [`docs/reports/phase-03-representation-binding-and-physical-dimensions.md`],
@@ -10288,6 +10560,21 @@ added each report.
     [17], [2026-09-20], [The provider's occurrence contract and the
     occurrence-preserving output
     window], [§IV.7], [`docs/reports/phase-17-the-provider-occurrence-contract-and-the-output-window.md`],
+    [18], [2026-09-20], [The Source-side boundary: provider state, the
+    device clock, initialization, commitments, `computes`, out-of-type
+    readings], [§IV.7], [`docs/reports/phase-18-the-source-side-boundary-provider-state-device-clock-commitments-and-readings.md`],
+    [19], [2026-09-21], [May several declarations produce values of one
+    nominal concept? Models A, B,
+    C], [§IV.2], [`docs/reports/phase-19-may-several-declarations-produce-one-concept.md`],
+    [20], [2026-09-21], [One producer per concept: the invariant,
+    refinement, composition, the concept
+    reference], [§IV.2], [`docs/reports/phase-20-one-producer-per-concept.md`],
+    [21], [2026-09-21], [Sem blocks and mapping blocks: the design
+    objects, the concept as their type
+    template], [§IV.2], [`docs/reports/phase-21-sem-blocks-and-mapping-blocks.md`],
+    [22], [2026-09-21], [The concept ladder: concept = type
+    (`ConceptId`), Sem block = instance; the
+    renaming], [§IV.2], [`docs/reports/phase-22-the-concept-ladder-and-the-renaming.md`],
   )]
   , kind: table
   )
@@ -10412,6 +10699,23 @@ consumes the boundary Phase 14 defined and nothing formal beyond it.
     component on two axes (§IV.7, §VII.2, §VII.4, Appendices B, C, F,
     G); FVI-0029 resolved; the production tree's in-flight uncommitted
     Source slice noted, not cited],
+    [2026-09-20 --- Phase 18], [the Source side completed: the
+    value-congruence lemma; provider state as a Mealy machine below or
+    above the reading with one trace and the visibility criterion; the
+    Source-side device clock as an explicit `sync` or window with an
+    explicit initial value, supplied or unavailable; commitment
+    discharge at three evidence levels with the trusted assumption
+    visible; `computes` derived from the term and decided at a finite
+    type; out-of-type readings refused into `none` or a flag; the motion
+    state under two providers (§IV.7, §VII.2, §VII.4, Appendices B, C,
+    F, G); FVI-0020 resolved],
+    [2026-09-21 --- Phases 19--22], [the concept ladder: the audit of
+    producers (Phase 19), one producer per concept tried and set aside
+    (Phase 20), Sem blocks and mapping blocks as the design objects
+    (Phase 21, FVD-0163), the vocabulary fixed in the code ---
+    `SemanticId` is `ConceptId` (Phase 22, FVD-0164); §IV.2 gains the
+    ladder, §III.1 names it, §VI.6 notes the projection production's
+    canvas will follow],
   )]
   , kind: table
   )
@@ -10485,7 +10789,7 @@ same architectural question the text cites the two together ---
 production already names. Until 2026-09-20 the formal decisions were
 numbered `D-01 … D-130` in a single ledger; Appendix E is the permanent
 map, and archived documents keep the old numbers. Theorem names are
-semantic identity and never change to track a document id:
+stable identities and never change to track a document id:
 `provision_transparent` is that theorem whether its record is cited as
 `PRP-0001`, `FVD-0126` or a section of this document.
 
@@ -10503,9 +10807,9 @@ conceptual Parts do not go stale with the next milestone.
 == Canonical source and the production mirror
 <canonical-source-and-the-production-mirror>
 There is one BDL monograph. Its canonical source is
-`KCN-judu/BDL_FV/paper/`\; `paper.md` is the only file whose prose is
-edited, and `body.typ` and the PDF are generated from it there. The
-production repository carries a copy under `reference/paper/` as a
+`KCN-judu/BDL_FV/paper/monograph/`\; `paper.md` is the only file whose
+prose is edited, and `body.typ` and the PDF are generated from it there.
+The production repository carries a copy under `reference/paper/` as a
 reference mirror, refreshed after a revision lands in the formal
 repository and never edited in place; it is not a second authority.
 
@@ -10564,7 +10868,7 @@ duplicated text was.
     [Part III Where the rest of the kernel is
     described], [---], [removed (navigation; the dependency order of
     Part IV replaces it)],
-    [Part IV Semantic identity and physical
+    [Part IV Concept identity and physical
     quantities], [§IV.2], [retained],
     [Part V The data and equation language], [§IV.3], [retained],
     [Part VI Units, coordinates and charts], [§IV.4], [retained],

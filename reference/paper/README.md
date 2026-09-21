@@ -7,9 +7,10 @@ lifecycle; the formal model derived in dependency order; the toolchain by
 responsibility; Studio and the IDE as a design argument; the evidence, the
 rejected designs and the open agenda — with the reference apparatus in the
 appendices (Appendix J maps the previous revision's sections to this one). It
-is not a paper and is not prepared for publication; the directory
-keeps its historical name because renaming it would break history. The
-reader-facing name is _the monograph_ or _the record_.
+is not a paper and is not prepared for publication. It lives in
+`paper/monograph/`; the paper derived from its formal part is
+`paper/core_calculus/` (see `paper/README.md`). The reader-facing name is
+_the monograph_ or _the record_.
 
 ## Files
 
@@ -61,7 +62,7 @@ bundled Libertinus family.
 ## Canonical source and the production mirror
 
 There is one BDL monograph. Its canonical source is this directory,
-`KCN-judu/BDL_FV/paper/`: `paper.md` is the only file whose prose is edited,
+`KCN-judu/BDL_FV/paper/monograph/`: `paper.md` is the only file whose prose is edited,
 and `body.typ` and the PDF are generated from it here. The production
 repository `KCN-judu/BDL` may carry a copy under `reference/paper/` as a
 reference mirror for readers of that repository. The mirror is a copy of a

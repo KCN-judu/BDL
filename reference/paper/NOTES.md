@@ -6,6 +6,15 @@ older entries map to `FVD-NNNN` through Appendix E of the monograph), and none
 is rewritten when a later revision changes a claim. The first section below is
 the note of the original 2026-09 draft.
 
+## Moved to `paper/monograph/` (2026-09-20)
+
+- The monograph moved from `paper/` to `paper/monograph/` so that
+  `paper/core_calculus/` — the core-calculus paper derived from Part IV and
+  `BDL/Core/` — can sit beside it under `paper/README.md`. Nothing in
+  `paper.md` changed except the sentences naming its own directory (the
+  preface and Appendix I); `body.typ` and the PDF were regenerated.
+- Entries below this one keep the paths of their date.
+
 ## The 2026-09 draft (conference manuscript, archived)
 
 - Rewritten in academic English.
