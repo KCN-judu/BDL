@@ -1,10 +1,10 @@
 ---
 id: ADR-0042
-status: accepted
+status: superseded
 date: 2026-09-21
 area: studio
 supersedes: []
-superseded-by: []
+superseded-by: [ADR-0045]
 related: [ADR-0028, ADR-0040, ADR-0018, ADR-0034, ADR-0041]
 fv:
   [
@@ -17,6 +17,13 @@ fv:
 ---
 
 # ADR-0042: The Formula view is typed structure over the compiler's tree — a caret read off the projection, keys that are text edits or compiler actions, a rendering that draws the mathematics, and the same rendering unfolded on the canvas
+
+> **Superseded by
+> [ADR-0045](0045-the-formula-view-types-at-its-own-caret-and-the-formula-sheet.md)**
+> (2026-09-21) on the key model: decision 2 and the last sentence of decision 1
+> were wrong on the same evidence — keys computed against the compiler's last
+> reading lose their order and their characters at a designer's pace. Decisions
+> 3, 4 and 5 stand and are carried by ADR-0045; current pages cite ADR-0045.
 
 ## Status
 

@@ -238,7 +238,7 @@ node either: both live in the sidebar with their own inspectors.
   group's box, never a revision and never saved; the scene
   (`buildScene(expanded:)`, `NodeShape.formulaRegion`) grows the mapping block
   and moves nothing else. A tap on the unfolded formula selects the block and
-  nothing more; no click on the canvas rewrites a formula (ADR-0042). **One
+  nothing more; no click on the canvas rewrites a formula (ADR-0045). **One
   declaration, two nodes**: a click on a mapping block selects its Sem block
   (`asDeclaration`, `singleSelection`), both wear the selection outline, one
   inspector, one menu, one name (`InlineRenameStarted` on the declaration); two
@@ -636,7 +636,10 @@ and infers nothing from names, value forms or units — the daemon ranks
 - Font: the system font (`.AppleSystemUIFont` → SF Pro on macOS). Sizes from the
   HIG macOS table: body 13 regular, headline 13 bold, subheadline 11,
   caption 10. Titles in panels: 11 pt semibold uppercase-free, secondary colour
-  (like Finder's sidebar section headers).
+  (like Finder's sidebar section headers). One display size, 20 regular
+  (`MacType.display`), for the one surface whose subject is a single expression
+  read at arm's length — the formula sheet's equation (§4b); nothing else takes
+  it.
 - Controls: flat, 20–22 pt tall, 5 pt radius, 1 px hairline borders at ~12 %
   opacity; push buttons filled with the accent only for the default action. No
   ripple, no elevation shadows on panels, no FAB, no snackbar.
@@ -781,7 +784,7 @@ restores them — no modal.
 The definition editor has two projections of the one draft, chosen with a
 **Formula | Text** segmented control at its top (`lib/ui/formula_composer.dart`,
 the rendering `lib/ui/formula_render.dart`, the caret `lib/app/caret.dart`;
-ADR-0028, ADR-0042): the Text view is the field of §4a; the Formula view draws
+ADR-0028, ADR-0045): the Text view is the field of §4a; the Formula view draws
 the compiler's `FormulaProjection` as the mathematics it states — `clamp` of a
 fraction `[Tilt]` over `[90][deg ▾]`, `[0]`, `[1]` — never as a graph inside the
 node, and is edited two ways at once over that one draft: a **structural caret**
@@ -831,7 +834,7 @@ the tree in product words — _Tilt over 90 deg_, _a choice: if Held, then 1, el
 0_, _a match on Tilt with 2 cases_, _a block with 1 local bindings_, _a delay
 boundary of 0, half_ — never from the text.
 
-**Typed structure** (ADR-0042). The **caret** is a place in the tree: a byte
+**Typed structure** (ADR-0045). The **caret** is a place in the tree: a byte
 offset with the _stop_ it stands at (`CaretState`), the stops read off the
 projection by `caretStops` — _before_ and _after_ each part at its byte range,
 _in_ an empty slot, _open_ / _close_ just inside a parenthesised part, and the
@@ -840,40 +843,86 @@ each with the part it belongs to and the part enclosing it (the positions
 `NavigateFormula` moves between, walked locally so no key waits). It is drawn
 where the rendered part is (`FormulaGeometry`: a key per part, its inner row,
 its text; `_stopRect` measures the text up to the caret's character with the
-leaf's own style), never over character columns. Keys: ← → the previous / next
-stop (the last stop in a denominator is followed by the stop after the fraction
-— how a nested part is left; a parenthesis is passed, not skipped); ↑ ↓ the
-nearest stop on the row above / below (a numerator from its denominator, a
+leaf's own style; in a slot, just before the `?`), never over character columns.
+Keys: ← → the previous / next stop, one character at a time inside a name or a
+number (the last stop in a denominator is followed by the stop after the
+fraction — how a nested part is left; a parenthesis is passed, not skipped); ↑ ↓
+the nearest stop on the row above / below (a numerator from its denominator, a
 branch from the next; measured, not counted); Home / End the first / last stop
 of the enclosing part, again of the whole formula; Tab / ⇧Tab the next /
-previous empty slot, wrapping; `)` leaves the enclosing parentheses; `,` moves
-to the next argument. What a key **does** at a stop is one `KeyPlan`
-(`characterAt`, `operatorAt`, `openParenAt`, `backspaceAt`, `deleteAt`): a
-**text edit** of the draft at the stop's byte offset — letters and digits into a
-slot or extending the name or number the caret touches, a space after a number
-starting its unit, a character of a leaf deleted — sent as
-`DefinitionDraftChanged` and read by the compiler like any typing; a
-**structured action** the compiler answers with text — `+ − * / < > = & | !` on
-the part the caret touches with a slot for the other side (`operator`), `(`
-after a name applying it (`clamp` → `clamp(?, ?, ?)`, `apply`, 0.28), ⌫ / ⌦ on a
-whole part (`remove`); a **move**; or a **refusal** with a sentence under the
-field (_type an operator first_ — a letter after a complete part). Nothing here
-parses: the compiler reads the result. While the text differs from what the
-compiler last read, the part being typed into is shown as text in place
-(`PendingText`, the region `changedRegion` names) and the rest keeps its
-structure; the picture follows the compiler's next reading, and the caret is put
-back at the byte it was typed at (`FormulaCaretMoved`). An empty draft is typed
-into directly. **Completion** is asked on every typed character at the caret's
-byte offset (`CompletionRequested` → `CompleteDefinitionDraft`, ranked by the
-position's expected type) and on ⌃Space, shown beside the caret
-(`CompletionPopup`); ↑ ↓ choose, Return or Tab accepts (Tab moves to the next
-slot when the candidate is already written), Esc closes it, then clears the
-caret and the selection. **Pointer** and keyboard share the draft: a click
-places the caret at the nearest stop of the part under it and selects the part
+previous `?` of the text, wrapping; `)` leaves the enclosing parentheses; `,`
+moves to the next argument.
+
+**The editor owns its text and its caret.** The composer keeps the draft text
+and the caret byte as of the last key (`_source`, `_caret` in
+`formula_composer.dart`), ahead of the rebuild a dispatch schedules — the way a
+formula editor keeps its sequence and cursor (GeoGebra's `EditorState`) — and
+every key is computed against them, never against the compiler's last reading;
+the store follows (`DefinitionDraftChanged`, `FormulaCaretMoved`). Two keys in
+one frame both land, in order. The compiler's reading redraws the picture when
+it arrives and never moves the caret. What a key **does** is one `KeyPlan`
+(`app/caret.dart`). What the text alone can decide, it decides at once, as a
+**text edit** of the draft at the caret's byte (`textCharacterAt`,
+`textOperatorAt`, `textBackspaceAt`, `textDeleteAt`): a character replaces the
+`?` it touches, extends the word it touches, or begins a value where one may
+begin; a space after a number starts its unit; in a slot `-` and `!` are a sign
+(`-?`) and the other operators split it (`? + ?`, the caret in the second); `=`
+after `<` or `>` makes `<=` / `>=`; `(` groups a slot (`(?)`) or opens a group
+where a value may begin; `)` steps past the parenthesis before it; ⌫ takes a
+character, the last character of a value leaves a slot in its place, a slot goes
+with the operator that opened it (`a + ?` → `a`), and before a part the caret
+steps back over the separators — an operator is never deleted on its own, so the
+text stays readable; ⌦ mirrors it. A value typed right after a complete part is
+refused with a sentence under the field (_type an operator first_). What needs
+the **tree** — an operator on a part (`operator`, after or before it, with a
+slot for the other side, parenthesised where the part's place needs it: a `+` in
+a denominator stays in the denominator), `(` after a name applying it (`clamp` →
+`clamp(?, ?, ?)`, `apply`), `!` on a part, ⌫ / ⌦ of a whole structure
+(`remove`), `,` and `)` when the text does not show the next slot or the
+parenthesis right there — is a **compiler action** or a tree move, taken at once
+when the reading is of the text on screen and otherwise **queued**: the key kept
+as pressed, the debounced check flushed (`DefinitionDraftFlushRequested` →
+`FlushDraftCheck`), every later key queued behind it, the queue replayed in
+order when the reading or the action's answer arrives (`_queue`, `_drain`).
+Nothing typed is dropped; Esc empties the queue with the caret. While the text
+differs from what the compiler last read, the part being typed into is shown as
+text in place (`PendingText`, the region `changedRegion` names, the stops of the
+last good reading shifted to the text as it is now by `shiftedStops`) with the
+caret inside it, measured in the text's own style, and the rest keeps its
+structure; when the reading arrives the picture follows and the part under the
+caret is selected, so the palette is about the part the keys are. Text the
+compiler could not read is shown as text and edited as text (every key a plain
+insertion or deletion at the caret), so it can be mended without leaving the
+view; the notice and _Edit as text_ stay. **Completion** is asked on every typed
+character at the caret's byte offset (`CompletionRequested` →
+`CompleteDefinitionDraft`, ranked by the position's expected type) and on
+⌃Space, shown beside the caret (`CompletionPopup`); ↑ ↓ choose, Return or Tab
+accepts (Tab moves to the next slot when the candidate is already written), Esc
+closes it, then clears the caret and the selection. **Pointer** and keyboard
+share the draft: a click places the caret at the nearest stop of the part under
+it — or between two characters of the part being typed — and selects the part
 (`onTapNode`; a click in the field's empty space places the caret at the nearest
 stop), the caret follows every compiler answer to the part it selects, and the
 palette below acts on the selection as before — there is no mode to enter or
 leave.
+
+**The formula sheet** (`lib/ui/formula_sheet.dart`, `EditorState.formulaSheet`).
+_Edit…_ beside the Formula | Text switch, or ⌘E in the inspector's field, opens
+the definition over the design with room: the same `DefinitionEditor` in its
+sheet layout (`DefinitionEditorLayout.sheet`) over the same draft — nothing is
+held in the sheet. The sheet is 920 pt wide and reads as an **equation**: in one
+field, the socket glyph of what the relationship produces, its name, `=`, then
+the expression at the display size (`FormulaComposer.large`, `leading`); under
+it the verdict line and the findings, as in the inspector; beside it, in a 264
+pt column, **This position** — the palette (`FormulaPalette`) for the selected
+part, or, with nothing selected, the sentence that says how to get there and the
+names the formula may read. The title is _Define name_, the subtitle what it
+produces; the Formula | Text switch sits at the sheet's top right. _Revert_ at
+the left of the action row; _Done_ closes with the draft kept (Esc reaches it
+after the completion and the caret); _Save_ / _Add definition_ commits and
+closes (⌘↩). The inspector's section says _Editing in the sheet._ while it is
+open; another selection closes it. The keys, the queue, the completion and the
+pointer are the composer's, unchanged.
 
 **The palette**, beneath the field, for the selected component: the compiler's
 sentence — _Expected: an angle, because an angle ÷ an angle = a dimensionless
@@ -1096,7 +1145,7 @@ indication on the canvas; the device name on a sink node; editing a formula on
 the canvas (the unfolded formula is read-only; the inspector edits); a
 per-concept display unit (ISS-0019); the daemon's `NavigateFormula`,
 `CompleteFormulaCaret` and `ComposeAction.insert` are served but Studio walks
-the tree it holds and types as text (ADR-0042).
+the tree it holds and types as text (ADR-0045).
 docs/architecture/studio-compiler-integration.md §3 places each.
 
 ### Collections, grouped values, equations
