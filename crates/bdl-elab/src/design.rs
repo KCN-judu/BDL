@@ -409,6 +409,73 @@ mod tests {
         assert_eq!(codes(&m.diagnostics), vec!["formula.name.not_an_input"]);
     }
 
+    /// The Sem-block model (ADR-0043) changes no resolution: a name is an
+    /// input, then a relationship of the design (a Sem block or a rule),
+    /// then a concept that is not an input — never a value looked up by
+    /// concept.  A rule reading one concept twice reaches each input by
+    /// the name the model derived for it.
+    #[test]
+    fn resolution_is_input_then_mapping_then_not_an_input_and_never_by_concept() {
+        let (design, id, ids) = lamp(None);
+        let m = &design.mappings[&id];
+        let env = crate::names::InputEnv::for_mapping(&design, m);
+        assert_eq!(env.resolve(&design, "Tilt"), crate::names::Lookup::Input(0));
+        assert_eq!(env.resolve(&design, "Held"), crate::names::Lookup::Input(1));
+        assert_eq!(
+            env.resolve(&design, "dimByTilt"),
+            crate::names::Lookup::Mapping(id)
+        );
+        assert_eq!(
+            env.resolve(&design, "Open"),
+            crate::names::Lookup::NotAnInput(ids[3], "Open".into())
+        );
+        assert_eq!(
+            env.resolve(&design, "nothing"),
+            crate::names::Lookup::Unknown
+        );
+        // the same concept twice: the derived names tell the inputs apart
+        let a = apply_edit(
+            &ProjectSnapshot::new(design.clone()),
+            &EditOp::SetMappingSignature {
+                id,
+                signature: Signature {
+                    inputs: vec![ids[0], ids[0]],
+                    output: ids[1],
+                },
+            },
+        )
+        .unwrap();
+        let design = a.snapshot.design;
+        let m = &design.mappings[&id];
+        assert_eq!(m.parameters, vec!["tilt1", "tilt2"]);
+        let env = crate::names::InputEnv::for_mapping(&design, m);
+        assert_eq!(
+            env.resolve(&design, "tilt1"),
+            crate::names::Lookup::Input(0)
+        );
+        assert_eq!(
+            env.resolve(&design, "tilt2"),
+            crate::names::Lookup::Input(1)
+        );
+        // the concept's own name is no input now: it is the concept
+        assert_eq!(
+            env.resolve(&design, "Tilt"),
+            crate::names::Lookup::NotAnInput(ids[0], "Tilt".into())
+        );
+        // without names (a hand-written text `f(Tilt, Tilt)`), the exact
+        // spelling takes the first input and the loose one is ambiguous —
+        // the second input is unreachable, which is why the model names them
+        let unnamed = crate::names::InputEnv::with_parameters(&design, &[ids[0], ids[0]], &[]);
+        assert_eq!(
+            unnamed.resolve(&design, "Tilt"),
+            crate::names::Lookup::Input(0)
+        );
+        assert_eq!(
+            unnamed.resolve(&design, "tilt"),
+            crate::names::Lookup::Ambiguous(vec!["Tilt".into(), "Tilt".into()])
+        );
+    }
+
     #[test]
     fn malformed_formula() {
         let (design, id, _) = lamp(Some("Tilt / "));
