@@ -67,7 +67,7 @@ _式を書く前の 2 つのブロック：tilt と、まだ外部から提供�
 
 どちらのビューも同じ数式を編集します。**⌘↩** を押すか、**定義を追加**をクリックします。
 
-![The Relationship section of the inspector in Formula view: a Formula | Text switch, then the formula drawn as a fraction — a Tilt chip over a rule over a dashed empty slot, selected, with a red underline — and beneath it the line Expected: an angle, because an angle ÷ an angle = a dimensionless quantity with an Explain link, a number entry with a unit pop-up reading rad and an Insert button, a References list with Tilt and tilt, a folded Equations row and a Choose button.](../../../../docs/user-guide/assets/studio/formula-composer.png)
+![The Relationship section of the inspector in Formula view: a Formula | Text switch with an Edit… button at its right, then the formula drawn as a fraction — a Tilt chip over a rule over a dashed empty slot, selected, with a red underline — and beneath it the line Expected: an angle, because an angle ÷ an angle = a dimensionless quantity with an Explain link, a number entry with a unit pop-up reading rad and an Insert button, a References list with Tilt and tilt, a folded Equations row and a Choose button.](../../../../docs/user-guide/assets/studio/formula-composer.png)
 
 _分母のスロットを選択した式ビュー：商は分数として描かれ、コンパイラはそのスロットが角度を期待する理由を示し、角度の単位付きの数値、適合する参照、結果が適合する方程式を提示します。_
 

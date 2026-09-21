@@ -67,7 +67,7 @@ _公式写出之前的两个块：tilt，以及仍由外部提供的 brightness�
 
 两个视图编辑的是同一个公式。按 **⌘↩** 或点击**添加定义**。
 
-![The Relationship section of the inspector in Formula view: a Formula | Text switch, then the formula drawn as a fraction — a Tilt chip over a rule over a dashed empty slot, selected, with a red underline — and beneath it the line Expected: an angle, because an angle ÷ an angle = a dimensionless quantity with an Explain link, a number entry with a unit pop-up reading rad and an Insert button, a References list with Tilt and tilt, a folded Equations row and a Choose button.](../../../../docs/user-guide/assets/studio/formula-composer.png)
+![The Relationship section of the inspector in Formula view: a Formula | Text switch with an Edit… button at its right, then the formula drawn as a fraction — a Tilt chip over a rule over a dashed empty slot, selected, with a red underline — and beneath it the line Expected: an angle, because an angle ÷ an angle = a dimensionless quantity with an Explain link, a number entry with a unit pop-up reading rad and an Insert button, a References list with Tilt and tilt, a folded Equations row and a Choose button.](../../../../docs/user-guide/assets/studio/formula-composer.png)
 
 _选中分母槽位的公式视图：商画成分数；编译器说明该槽位需要一个角度以及原因，并提供带角度单位的数字、匹配的引用以及结果匹配的方程。_
 

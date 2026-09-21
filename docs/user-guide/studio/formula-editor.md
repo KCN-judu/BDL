@@ -12,6 +12,10 @@ part the buttons beneath act on, and tells you what each empty slot expects.
 **Text** is the formula as written. Switching does nothing to the formula: both
 edit one draft, and what you build in one is what you read in the other.
 
+The inspector's field is the quick edit. For a formula worth some room,
+**Edit…** beside the switch (or **⌘E** in the field) opens the same editor in a
+[sheet](#the-formula-sheet) over the design.
+
 ## Typing a formula
 
 The Formula view is written at a **caret**, like a text field, but the caret
@@ -27,7 +31,10 @@ formula (_Type to write, or choose a part_).
   A **space after a number** starts its unit: `90` `⎵` `deg`.
 - **`+ − * /`, `< >`, `=`, `&`, `|`** put that operator after the part the caret
   touches, with a slot for the other side; `/` draws a fraction and puts the
-  caret in the denominator. **`!`** negates the part.
+  caret in the denominator; a `+` typed in a denominator stays in the
+  denominator. **`=`** right after `<` or `>` makes `<=` / `>=`. **`!`** negates
+  the part. In an empty slot, **`-`** and **`!`** are a sign: `-` `5` writes
+  `-5`.
 - **`(`** after an equation's name applies it: `clamp` becomes `clamp(?, ?, ?)`
   with the first slot ready to type into. `(` in an empty slot opens a group.
 - **← →** move to the previous / next place — out of a denominator, past a
@@ -36,15 +43,23 @@ formula (_Type to write, or choose a part_).
   the ends of the formula. **Tab / ⇧Tab** jump to the next / previous empty
   slot. **`)`** leaves the parentheses you are in; **`,`** moves to the next
   argument.
-- **⌫ / ⌦** delete a character of a name or a number, or a whole part when the
-  caret is beside one — a slot's operator goes with it.
+- **⌫ / ⌦** delete a character of a name or a number; deleting the last
+  character of a value leaves a slot in its place, an empty slot goes together
+  with the operator that opened it (`Tilt / ?` → `Tilt`), and a whole part after
+  the caret — a fraction, a call — goes as a whole. Before a part, ⌫ only steps
+  back to the part before it: an operator is never removed on its own, so the
+  formula always still reads.
 
 So `clamp(Tilt / 90 deg, 0, 1)` is typed as `clamp` `(` `Tilt` `/` `90` `⎵deg`
 `,` `0` `,` `1` — 22 keys, and the completion list would have taken `clamp`
-after `cl` and `Tilt` after `Ti`. The part you are typing into is shown as text
-until the compiler has read it — a moment — and the rest of the formula keeps
-its shape. A key that cannot act where the caret is says why beneath the field
-(_Type an operator before adding a value here._) and changes nothing.
+after `cl` and `Tilt` after `Ti`. Type at your own pace: every key lands where
+the caret is, in the order typed. The part you are typing into is shown as text
+until the compiler has read it — a moment — with the caret inside it, and the
+rest of the formula keeps its shape. A key that needs the compiler's reading of
+what you just typed — `/` right after `Tilt`, `(` right after `clamp` — waits
+that moment and then acts; nothing typed is lost. A key that cannot act where
+the caret is says why beneath the field (_Type an operator before adding a value
+here._) and changes nothing.
 
 The pointer works alongside: clicking a part places the caret there _and_
 selects the part, so the buttons beneath the field (below) act on it; the caret
@@ -52,7 +67,7 @@ follows every action to the part that comes next. There is no mode to switch.
 
 ## Assembling a formula
 
-![The Relationship section of the inspector in Formula view: a Formula | Text switch, then the formula drawn as a fraction — a Tilt chip over a rule over a dashed empty slot, selected, with a red underline — and beneath it the line Expected: an angle, because an angle ÷ an angle = a dimensionless quantity with an Explain link, a number entry with a unit pop-up reading rad and an Insert button, a References list with Tilt and tilt, a folded Equations row and a Choose button.](../assets/studio/formula-composer.png)
+![The Relationship section of the inspector in Formula view: a Formula | Text switch with an Edit… button at its right, then the formula drawn as a fraction — a Tilt chip over a rule over a dashed empty slot, selected, with a red underline — and beneath it the line Expected: an angle, because an angle ÷ an angle = a dimensionless quantity with an Explain link, a number entry with a unit pop-up reading rad and an Insert button, a References list with Tilt and tilt, a folded Equations row and a Choose button.](../assets/studio/formula-composer.png)
 
 _The Formula view with the denominator slot selected: the quotient drawn as a
 fraction; the compiler says the slot expects an angle and why, and offers a
@@ -148,10 +163,38 @@ exactly so in the **Text** view, and a formula typed as text appears in the
 back as the same words, every part selectable. Only an empty group `()` is shown
 as text. Text that cannot be read as a formula keeps exactly what you typed; the
 Formula view shows no parts for it, says _The text cannot be read as a formula._
-and offers **Edit as text**. After any change the Formula view waits for the
-compiler's reading of the new text — _Waiting for the compiler to read the
-formula…_, the parts dimmed — before it offers the next action, so nothing you
-click ever acts on text that has already changed.
+and offers **Edit as text** — and the text itself stays editable in place, so a
+stray character can be deleted where it is. After a change made elsewhere (the
+Text view, a reload) the Formula view shows the text and waits for the
+compiler's reading of it — _Waiting for the compiler to read the formula…_ —
+before it offers the buttons again, so nothing you click ever acts on text that
+has already changed.
+
+## The formula sheet
+
+![A sheet titled Define dimByTilt, subtitled produces a Brightness (a dimensionless quantity) · The definition is read as you type; save when it is right., with a Formula | Text switch at its top right. In one wide field, a green socket glyph, dimByTilt =, then clamp of a fraction Tilt over 90 deg, a 0, and a dashed empty slot, selected; under the field a red line saying This slot is empty; it expects a dimensionless quantity. with the finding's excerpt and explanation. To the right, under This position, the line Expected: a dimensionless quantity, because clamp(x, low, high) takes high here. with an Explain link, a number entry and Insert, a References list with brightness, a folded Equations row and a Choose button. Along the bottom, Revert at the left, Done and Save definition at the right.](../assets/studio/formula-sheet.png)
+
+_The formula sheet for dimByTilt: the definition as an equation at reading size,
+its verdict beneath, and This position — what the selected slot expects and what
+fits — in its own column._
+
+**Edit…** beside the Formula | Text switch, or **⌘E** while the inspector's
+field has the keyboard, opens the relationship's definition in a sheet over the
+design. It is the same editor over the same draft — nothing is copied, nothing
+is held in the sheet — with room: the formula is drawn as an **equation**, the
+relationship's name and what it produces on the left of the `=`, the expression
+at reading size on the right; its verdict and findings sit beneath; and **This
+position**, in its own column, says what the selected slot or part expects and
+what fits there — the same expectation, number entry, references, equations and
+buttons the inspector shows beneath the field — or, with nothing selected, how
+to get there and what the formula may read. The keys are the keys above; the
+switch at the sheet's top right is the same Formula | Text.
+
+**Revert** at the left discards the draft. **Done** (or **Esc**, once the
+completion list and the caret are cleared) closes the sheet with the draft kept
+— the inspector, which meanwhile said _Editing in the sheet._, shows it unsaved.
+**Add definition** / **Save definition** (**⌘↩**) saves and closes. Selecting
+anything else closes the sheet too, the draft kept.
 
 ## The text field and its verdict
 
@@ -198,25 +241,26 @@ it is right, just as a concept may exist before its value form is chosen.
 
 ## Keys
 
-| Key                         | Does                                                                                                                         |
-| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| **⌘↩**                      | Add / Save the definition                                                                                                    |
-| **Esc**                     | Revert a draft (a second Esc when completion is open closes it first)                                                        |
-| **Return**                  | in the Text view a new line — formulas may span lines; in a number entry, insert the number                                  |
-| **⌃Space**                  | open completion (both views; the Formula view also opens it as you type a name)                                              |
-| **↑ / ↓**, **Return / Tab** | move in and accept from the completion list                                                                                  |
-| **← →**                     | Formula view: the previous / next place — out of a denominator, past a parenthesis, into the next part                       |
-| **↑ ↓**                     | Formula view: the row above / below (a numerator from its denominator, a branch from the next)                               |
-| **Home / End**              | Formula view: the ends of the enclosing part; again, the ends of the formula                                                 |
-| **Tab / ⇧Tab**              | Formula view: the next / previous empty slot                                                                                 |
-| **) ,**                     | Formula view: leave the parentheses / move to the next argument                                                              |
-| **letters, digits, space**  | Formula view: type into the slot or the name or number at the caret; a space after a number starts its unit                  |
-| **+ − \* /**, **< >**       | Formula view: put that operator after the part at the caret (or the selected part), with a slot for the other side           |
-| **=**, **&**, **\|**        | likewise `==`, `&&` (and), `\|\|` (or); `<=`, `>=` and `!=` are in the **Compare** pop-up                                    |
-| **!**                       | negate the part in place (`not …`)                                                                                           |
-| **(**                       | Formula view: apply the name before the caret (`clamp` → `clamp(?, ?, ?)`), or group a slot                                  |
-| **⌫ / ⌦**                   | Formula view: a character of a name or number, or the whole part beside the caret (an empty slot takes its operator with it) |
-| **⌘S**                      | _Save project_ — never saves a draft; a dirty formula and an unsaved project are two different states                        |
+| Key                         | Does                                                                                                                                                            |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **⌘↩**                      | Add / Save the definition (in the sheet: and close it)                                                                                                          |
+| **Esc**                     | Revert a draft (a second Esc when completion is open closes it first); in the sheet: close it, the draft kept                                                   |
+| **⌘E**                      | open the formula sheet on this relationship                                                                                                                     |
+| **Return**                  | in the Text view a new line — formulas may span lines; in a number entry, insert the number                                                                     |
+| **⌃Space**                  | open completion (both views; the Formula view also opens it as you type a name)                                                                                 |
+| **↑ / ↓**, **Return / Tab** | move in and accept from the completion list                                                                                                                     |
+| **← →**                     | Formula view: the previous / next place — out of a denominator, past a parenthesis, into the next part                                                          |
+| **↑ ↓**                     | Formula view: the row above / below (a numerator from its denominator, a branch from the next)                                                                  |
+| **Home / End**              | Formula view: the ends of the enclosing part; again, the ends of the formula                                                                                    |
+| **Tab / ⇧Tab**              | Formula view: the next / previous empty slot                                                                                                                    |
+| **) ,**                     | Formula view: leave the parentheses / move to the next argument                                                                                                 |
+| **letters, digits, space**  | Formula view: type into the slot or the name or number at the caret; a space after a number starts its unit                                                     |
+| **+ − \* /**, **< >**       | Formula view: put that operator after the part at the caret (or the selected part), with a slot for the other side                                              |
+| **=**, **&**, **\|**        | likewise `==`, `&&` (and), `\|\|` (or); `=` right after `<` or `>` makes `<=` / `>=`; `!=` is in the **Compare** pop-up                                         |
+| **!**                       | negate the part in place (`not …`); in a slot, with `-`, a sign                                                                                                 |
+| **(**                       | Formula view: apply the name before the caret (`clamp` → `clamp(?, ?, ?)`), or group a slot                                                                     |
+| **⌫ / ⌦**                   | Formula view: a character; the last character of a value leaves a slot; an empty slot goes with its operator; a whole structure after the caret goes as a whole |
+| **⌘S**                      | _Save project_ — never saves a draft; a dirty formula and an unsaved project are two different states                                                           |
 
 ## Completion and hover
 

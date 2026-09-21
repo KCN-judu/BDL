@@ -235,8 +235,64 @@
       },
       "output": "studio/formula-composer.png",
       "caption": "The Formula view with the denominator slot selected: the quotient drawn as a fraction; the compiler says the slot expects an angle and why, and offers a number with the angle units, the references that fit and the equations whose result fits.",
-      "alt": "The Relationship section of the inspector in Formula view: a Formula | Text switch, then the formula drawn as a fraction — a Tilt chip over a rule over a dashed empty slot, selected, with a red underline — and beneath it the line Expected: an angle, because an angle ÷ an angle = a dimensionless quantity with an Explain link, a number entry with a unit pop-up reading rad and an Insert button, a References list with Tilt and tilt, a folded Equations row and a Choose button.",
+      "alt": "The Relationship section of the inspector in Formula view: a Formula | Text switch with an Edit… button at its right, then the formula drawn as a fraction — a Tilt chip over a rule over a dashed empty slot, selected, with a red underline — and beneath it the line Expected: an angle, because an angle ÷ an angle = a dimensionless quantity with an Explain link, a number entry with a unit pop-up reading rad and an Insert button, a References list with Tilt and tilt, a folded Equations row and a Choose button.",
       "purpose": "How a formula is assembled without typing, and how the compiler guides each slot."
+    },
+    {
+      "id": "formula-sheet",
+      "pages": [
+        "studio/formula-editor.md"
+      ],
+      "fixture": "tilt-lamp",
+      "view": "design",
+      "steps": [
+        {
+          "select": {
+            "mapping": "dimByTilt"
+          }
+        },
+        {
+          "mode": "formula"
+        },
+        {
+          "draft": {
+            "mapping": "dimByTilt",
+            "source": "clamp(Tilt / 90 deg, 0, ?)"
+          }
+        },
+        {
+          "sheet": {
+            "mapping": "dimByTilt"
+          }
+        },
+        {
+          "slot": {
+            "mapping": "dimByTilt",
+            "node": "r.2"
+          }
+        }
+      ],
+      "expect": {
+        "texts": [
+          "Define dimByTilt",
+          "This position",
+          "Done",
+          "Formula",
+          "Text"
+        ],
+        "textsContaining": [
+          "Expected: a dimensionless quantity",
+          "Editing in the sheet"
+        ]
+      },
+      "crop": {
+        "key": "formula-sheet",
+        "pad": 24
+      },
+      "output": "studio/formula-sheet.png",
+      "caption": "The formula sheet for dimByTilt: the definition as an equation at reading size, its verdict beneath, and This position — what the selected slot expects and what fits — in its own column.",
+      "alt": "A sheet titled Define dimByTilt, subtitled produces a Brightness (a dimensionless quantity) · The definition is read as you type; save when it is right., with a Formula | Text switch at its top right. In one wide field, a green socket glyph, dimByTilt =, then clamp of a fraction Tilt over 90 deg, a 0, and a dashed empty slot, selected; under the field a red line saying This slot is empty; it expects a dimensionless quantity. with the finding's excerpt and explanation. To the right, under This position, the line Expected: a dimensionless quantity, because clamp(x, low, high) takes high here. with an Explain link, a number entry and Insert, a References list with brightness, a folded Equations row and a Choose button. Along the bottom, Revert at the left, Done and Save definition at the right.",
+      "purpose": "The roomy editing surface for one definition, and where the palette lives in it."
     },
     {
       "id": "complete-lamp",

@@ -49,8 +49,9 @@ their shortcuts but are reached by clicking today.
 
 | Keys | Does |
 | --- | --- |
-| ⌘↩ | Add / Save the definition |
-| Esc | Revert the draft; with completion open, close it first |
+| ⌘↩ | Add / Save the definition (in the formula sheet: and close it) |
+| Esc | Revert the draft; with completion open, close it first; in the formula sheet, close it with the draft kept |
+| ⌘E | open the formula sheet on this relationship |
 | Return | new line |
 | ⌃Space | completion (in the Formula view it also opens as you type a name) |
 | ↑ / ↓ · Return / Tab | move in the completion list · accept |
@@ -65,10 +66,10 @@ their shortcuts but are reached by clicking today.
 | Tab / ⇧Tab | the next / previous empty slot |
 | ) , | leave the parentheses / the next argument |
 | letters, digits | type into the slot or the name or number at the caret; a space after a number starts its unit |
-| + − \* / < > = & \| | the operator after the part at the caret, with a slot for the other side |
-| ! | negate the part |
+| + − \* / < > = & \| | the operator after the part at the caret, with a slot for the other side; `=` after `<` or `>` makes `<=` / `>=` |
+| ! | negate the part; in a slot, with `-`, a sign |
 | ( | apply the name before the caret (`clamp` → `clamp(?, ?, ?)`), or group a slot |
-| ⌫ / ⌦ | a character, or the whole part beside the caret |
+| ⌫ / ⌦ | a character; the last character of a value leaves a slot; a slot goes with its operator; a whole structure after the caret |
 | click | place the caret and select the part |
 
 ## Code view

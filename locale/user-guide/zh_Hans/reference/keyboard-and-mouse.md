@@ -52,8 +52,9 @@
 
 | 按键 | 作用 |
 | --- | --- |
-| ⌘↩ | 添加 / 保存定义 |
-| Esc | 还原草稿；补全打开时先关闭它 |
+| ⌘↩ | Add / Save the definition (in the formula sheet: and close it) |
+| Esc | Revert the draft; with completion open, close it first; in the formula sheet, close it with the draft kept |
+| ⌘E | open the formula sheet on this relationship |
 | Return | 换行 |
 | ⌃Space | completion (in the Formula view it also opens as you type a name) |
 | ↑ / ↓ · Return / Tab | 在补全列表中移动 · 接受 |
@@ -68,10 +69,10 @@
 | Tab / ⇧Tab | the next / previous empty slot |
 | ) , | leave the parentheses / the next argument |
 | letters, digits | type into the slot or the name or number at the caret; a space after a number starts its unit |
-| + − \* / < > = & \| | the operator after the part at the caret, with a slot for the other side |
-| ! | negate the part |
+| + − \* / < > = & \| | the operator after the part at the caret, with a slot for the other side; `=` after `<` or `>` makes `<=` / `>=` |
+| ! | negate the part; in a slot, with `-`, a sign |
 | ( | apply the name before the caret (`clamp` → `clamp(?, ?, ?)`), or group a slot |
-| ⌫ / ⌦ | a character, or the whole part beside the caret |
+| ⌫ / ⌦ | a character; the last character of a value leaves a slot; a slot goes with its operator; a whole structure after the caret |
 | 点击 | place the caret and select the part |
 
 ## 代码视图
