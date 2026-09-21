@@ -1077,6 +1077,25 @@ class UnlinkMappingInput extends UserAction {
   final int conceptId;
 }
 
+/// Disconnect one edge: the one semantic path behind the link menu's
+/// _Disconnect_, the ×, Delete on a selected edge and the drag-away.  An
+/// edge that is not [LinkId.disconnectable] is left alone.
+class DisconnectLinkRequested extends UserAction {
+  const DisconnectLinkRequested(this.link);
+  final LinkId link;
+}
+
+/// Arrange every node of every canvas automatically (the layout service's
+/// whole-graph arrangement): layout only, never a revision.
+class AutoLayoutRequested extends UserAction {
+  const AutoLayoutRequested();
+}
+
+/// Put the layout back as it was before the last arrangement.
+class RestoreLayoutRequested extends UserAction {
+  const RestoreLayoutRequested();
+}
+
 class RemoveRecentRequested extends UserAction {
   const RemoveRecentRequested(this.path);
   final String path;
@@ -1448,6 +1467,12 @@ class FirmwareRequestFailed extends ResponseAction {
   const FirmwareRequestFailed({required this.code, required this.message});
   final String code;
   final String message;
+}
+
+/// The daemon's arrangement of the project's canvases.
+class ArrangedLayoutReceived extends ResponseAction {
+  const ArrangedLayoutReceived(this.layout);
+  final pb.Layout layout;
 }
 
 class TemplatesReceived extends ResponseAction {

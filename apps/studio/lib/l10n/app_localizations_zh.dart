@@ -2462,6 +2462,44 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get connectionMenu => '连线菜单';
+
+  @override
+  String get nodeMenu => '节点菜单';
+
+  @override
+  String get groupMenu => '行为菜单';
+
+  @override
+  String get arrangeAutomatically => '自动排列';
+
+  @override
+  String get undoArrange => '撤销自动排列';
+
+  @override
+  String connectionReads(String to, String concept) {
+    return '$to 读取 $concept';
+  }
+
+  @override
+  String connectionProduces(String from, String concept) {
+    return '$from 生成 $concept';
+  }
+
+  @override
+  String connectionDrives(String from, String to) {
+    return '$from 驱动 $to';
+  }
+
+  @override
+  String connectionAggregate(String group) {
+    return '已折叠的行为 $group 的一条连线：它代表某个成员的连接。';
+  }
+
+  @override
+  String get produceEdgeCannotGoAlone => '关系的生成连线就是它签名的输出：请修改关系，而不是这条连线。';
+
+  @override
   String get libItem_std_value_boolean_name => '开 / 关';
 
   @override

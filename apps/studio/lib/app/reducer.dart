@@ -262,10 +262,15 @@ Transition reduce(AppState s, AppAction action) {
       ComponentSelected(:final id) => reduce(s, DeleteComponentRequested(id)),
       InstanceSelected(:final id) => reduce(s, DeleteInstanceRequested(id)),
       BindingSelected(:final id) => reduce(s, UnbindRequested(id)),
+      LinkSelected(:final link) => reduce(s, DisconnectLinkRequested(link)),
       // Deleting a group keeps its relationships; the destructive delete
       // is a named action in the group's inspector.
       GroupSelected(:final id) => reduce(s, UngroupRequested(id)),
     },
+    DisconnectLinkRequested(:final link) => _whenProject(s, () => _disconnectLink(s, link)),
+    AutoLayoutRequested() => _whenProject(s, () => Transition(s, const [ArrangeLayout()])),
+    ArrangedLayoutReceived(:final layout) => _whenProject(s, () => _arrangedLayout(s, layout)),
+    RestoreLayoutRequested() => _whenProject(s, () => _restoreLayout(s)),
 
     // ---- timing domains ---------------------------------------------------
     CreateClockDomainRequested(:final name) => _edit(
@@ -828,7 +833,7 @@ Transition reduce(AppState s, AppAction action) {
       final layouts = s.editor.layouts.withNodes(s.editor.context, layout);
       return Transition(
         s.copyWith(
-          editor: s.editor.copyWith(layout: layout, layouts: layouts),
+          editor: s.editor.copyWith(layout: layout, layouts: layouts, clearLayoutBefore: true),
         ),
         [SetLayout(layoutToPb(layouts))],
       );
@@ -1029,6 +1034,69 @@ List<RecentProject> _remember(List<RecentProject> recent, pb.ProjectProjection p
 /// One gesture moved several nodes: one layout, one write.  Collapsed group
 /// boxes are layout of their own kind (`GroupBoxChanged`); their hidden
 /// members travel with the box, as for a single box move.
+/// The one semantic disconnect of an edge, by what it joins.  Nothing here
+/// decides more than the model already can: a concept read by a
+/// relationship stops being read; a relationship driving a sink stops
+/// driving it; anything else is left as it is (the produce edge is the
+/// signature's output; a concept's producers are under formal audit).
+Transition _disconnectLink(AppState s, LinkId link) {
+  if (!link.disconnectable) return Transition(s);
+  final next = link.to.kind == NodeKind.output
+      ? SetMappingDriveRequested(mappingId: link.from.id, outputId: null)
+      : UnlinkMappingInput(mappingId: link.to.id, conceptId: link.concept);
+  final t = reduce(s, next);
+  // The edge is gone with the edit; so is its selection.
+  final sel = t.state.editor.selection;
+  return sel == LinkSelected(link)
+      ? Transition(
+          t.state.copyWith(editor: t.state.editor.copyWith(selection: const NoSelection())),
+          t.effects,
+        )
+      : t;
+}
+
+/// The arrangement arrived: what was there is kept for _Undo Arrange_,
+/// the arrangement is the layout now (one write, like a move), and the
+/// canvas frames the whole design once.  No revision (ADR-0003).
+Transition _arrangedLayout(AppState s, pb.Layout layout) {
+  final arranged = layoutFromPb(layout);
+  // The designer's viewports are not the service's to move.
+  final kept = CanvasLayout(
+    system: arranged.system.copyWith(viewport: s.editor.layouts.system.viewport),
+    components: {
+      for (final e in arranged.components.entries)
+        e.key: e.value.copyWith(viewport: s.editor.layouts.components[e.key]?.viewport),
+    },
+  );
+  return Transition(
+    s.copyWith(
+      editor: s.editor.copyWith(
+        layout: kept.of(s.editor.context).nodes,
+        layouts: kept,
+        layoutBefore: s.editor.layouts,
+        frameRequest: s.editor.frameRequest + 1,
+      ),
+    ),
+    [SetLayout(layoutToPb(kept))],
+  );
+}
+
+Transition _restoreLayout(AppState s) {
+  final before = s.editor.layoutBefore;
+  if (before == null) return Transition(s);
+  return Transition(
+    s.copyWith(
+      editor: s.editor.copyWith(
+        layout: before.of(s.editor.context).nodes,
+        layouts: before,
+        clearLayoutBefore: true,
+        frameRequest: s.editor.frameRequest + 1,
+      ),
+    ),
+    [SetLayout(layoutToPb(before))],
+  );
+}
+
 Transition _nodesMoved(AppState s, Map<NodeRef, Offset> positions) {
   final ctx = s.editor.context;
   var layouts = s.editor.layouts;
@@ -1056,7 +1124,11 @@ Transition _nodesMoved(AppState s, Map<NodeRef, Offset> positions) {
   }
   return Transition(
     s.copyWith(
-      editor: s.editor.copyWith(layout: layouts.of(ctx).nodes, layouts: layouts),
+      editor: s.editor.copyWith(
+        layout: layouts.of(ctx).nodes,
+        layouts: layouts,
+        clearLayoutBefore: true,
+      ),
     ),
     [SetLayout(layoutToPb(layouts))],
   );
@@ -1485,6 +1557,8 @@ Transition projectReceived(
                 selection: selection,
                 layout: layout,
                 layouts: layoutsOut,
+                // another project: nothing to put back
+                clearLayoutBefore: !sameProject,
                 context: context,
                 lastOutcome: outcome,
                 drafts: drafts.drafts,

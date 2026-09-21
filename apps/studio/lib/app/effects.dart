@@ -94,6 +94,12 @@ class ListTemplates extends Effect {
   const ListTemplates();
 }
 
+/// Ask the layout service for the whole-graph arrangement (answered, not
+/// applied: the reducer sets it through `SetLayout`).
+class ArrangeLayout extends Effect {
+  const ArrangeLayout();
+}
+
 /// The Code view's sources (uncounted: a view fetch, answered by
 /// `SourcesReceived`).
 class GetSources extends Effect {

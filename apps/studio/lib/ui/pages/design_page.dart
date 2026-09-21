@@ -130,6 +130,8 @@ class DesignPage extends StatelessWidget {
                 groupsEnabled: state.isSystem,
                 expanded: state.editor.expandedFormulas,
                 previews: state.editor.formulaPreviews,
+                frameRequest: state.editor.frameRequest,
+                canUndoArrange: state.editor.layoutBefore != null,
                 analyses: {
                   for (final m in state.contextAnalysis?.mappings ?? const <pb.MappingAnalysis>[])
                     m.id.toInt(): m,

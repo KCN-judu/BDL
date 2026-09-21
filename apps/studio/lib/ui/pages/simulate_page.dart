@@ -706,6 +706,7 @@ class _Probe extends StatelessWidget {
           InstanceSelected() ||
           PortSelected() ||
           BindingSelected() ||
+          LinkSelected() ||
           GroupSelected() ||
           MultiSelected():
         body = Padding(

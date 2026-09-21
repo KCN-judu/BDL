@@ -2484,6 +2484,44 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String get connectionMenu => '接続メニュー';
+
+  @override
+  String get nodeMenu => 'ノードメニュー';
+
+  @override
+  String get groupMenu => 'グループメニュー';
+
+  @override
+  String get arrangeAutomatically => '自動配置';
+
+  @override
+  String get undoArrange => '自動配置を元に戻す';
+
+  @override
+  String connectionReads(String to, String concept) {
+    return '$to が $concept を読み取る';
+  }
+
+  @override
+  String connectionProduces(String from, String concept) {
+    return '$from が $concept を生成する';
+  }
+
+  @override
+  String connectionDrives(String from, String to) {
+    return '$from が $to を駆動する';
+  }
+
+  @override
+  String connectionAggregate(String group) {
+    return '折りたたまれたグループ $group のエッジです。メンバーの接続を表しています。';
+  }
+
+  @override
+  String get produceEdgeCannotGoAlone => '関係の生成エッジはそのシグネチャの出力です。エッジではなく関係を変更してください。';
+
+  @override
   String get libItem_std_value_boolean_name => 'オン / オフ';
 
   @override

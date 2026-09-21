@@ -141,6 +141,12 @@ class Inspector extends StatelessWidget {
           id: id,
           dispatch: dispatch,
         ),
+        LinkSelected(:final link) => LinkInspector(
+          key: ValueKey('link$link'),
+          state: state,
+          link: link,
+          dispatch: dispatch,
+        ),
         GroupSelected(:final id) => GroupInspector(
           key: ValueKey('group$id'),
           state: state,

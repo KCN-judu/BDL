@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import '../l10n/l10n.dart';
 import '../app/actions.dart';
 import '../app/state.dart';
+import '../app/system.dart' show nodeName;
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import 'canvas/canvas_geometry.dart' show socketKind;
 import 'canvas/concept_glyphs.dart';
@@ -517,6 +518,68 @@ class BindingInspector extends StatelessWidget {
               label: context.l10n.disconnect,
               onPressed: () => dispatch(UnbindRequested(id)),
             ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Connection (a signature or drive edge of the canvas)
+// ---------------------------------------------------------------------------
+
+/// What one edge means, in the designer's words, and the one thing that
+/// can be done to it on its own.  Says nothing the model does not: a
+/// produce edge and a collapsed group's edges get a sentence, not a
+/// button (the producer question is under formal audit).
+class LinkInspector extends StatelessWidget {
+  const LinkInspector({super.key, required this.state, required this.link, required this.dispatch});
+  final AppState state;
+  final LinkId link;
+  final void Function(AppAction) dispatch;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = MacTokens.of(context);
+    final l10n = context.l10n;
+    final small = TextStyle(fontSize: MacType.secondary, color: t.textSecondary);
+    final body = TextStyle(fontSize: MacType.body, color: t.textPrimary);
+    final from = nodeName(state, link.from);
+    final to = nodeName(state, link.to);
+    final concept = nodeName(state, NodeRef(NodeKind.concept, link.concept));
+    final aggregate = link.from.kind == NodeKind.group || link.to.kind == NodeKind.group;
+    final produce = link.from.kind == NodeKind.mapping && link.to.kind == NodeKind.concept;
+    final meaning = aggregate
+        ? l10n.connectionAggregate(link.from.kind == NodeKind.group ? from : to)
+        : link.to.kind == NodeKind.output
+        ? l10n.connectionDrives(from, to)
+        : produce
+        ? l10n.connectionProduces(from, concept)
+        : l10n.connectionReads(to, concept);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        InspectorSection(
+          title: l10n.connection,
+          children: [
+            FormRow(
+              label: l10n.from,
+              child: Text(from, style: body),
+            ),
+            FormRow(
+              label: l10n.to,
+              child: Text(to, style: body),
+            ),
+            Text(meaning, style: small),
+            if (produce) Text(l10n.produceEdgeCannotGoAlone, style: small),
+            if (link.disconnectable) ...[
+              const SizedBox(height: 8),
+              MacButton(
+                label: l10n.disconnect,
+                onPressed: () => dispatch(DisconnectLinkRequested(link)),
+              ),
+            ],
           ],
         ),
       ],
@@ -1213,16 +1276,7 @@ class MultiInspector extends StatelessWidget {
     final concepts = nodes.where((n) => n.kind == NodeKind.concept).length;
     final outputs = nodes.where((n) => n.kind == NodeKind.output).length;
     final rest = nodes.length - concepts - mappings.length - outputs;
-    String nameOf(NodeRef n) => switch (n.kind) {
-      NodeKind.concept =>
-        p.concepts.where((c) => c.id.toInt() == n.id).map((c) => c.name).firstOrNull ?? '?',
-      NodeKind.mapping =>
-        p.mappings.where((m) => m.id.toInt() == n.id).map((m) => m.name).firstOrNull ?? '?',
-      NodeKind.output =>
-        p.outputs.where((o) => o.id.toInt() == n.id).map((o) => o.name).firstOrNull ?? '?',
-      NodeKind.instance => state.instance(n.id)?.name ?? '?',
-      NodeKind.group => state.group(n.id)?.name ?? '?',
-    };
+    String nameOf(NodeRef n) => nodeName(state, n);
     // The active object first, then the rest in a stable order.
     final ordered = [
       if (active != null && nodes.contains(active)) active!,

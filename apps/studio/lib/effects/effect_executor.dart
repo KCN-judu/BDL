@@ -732,6 +732,12 @@ class EffectExecutor {
             flashFirmware: pb.FlashFirmwareRequest(targetId: targetId, deviceId: deviceId),
           ),
         );
+      case ArrangeLayout():
+        await _call(
+          pb.ClientMessage(arrangeLayout: pb.ArrangeLayoutRequest()),
+          (r) => _dispatch(ArrangedLayoutReceived(r.layout.layout)),
+          counted: false,
+        );
       case ListTemplates():
         await _call(
           pb.ClientMessage(listTemplates: pb.ListTemplatesRequest()),

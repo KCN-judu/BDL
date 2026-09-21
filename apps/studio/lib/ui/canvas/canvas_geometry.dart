@@ -339,6 +339,11 @@ class LinkShape {
     final metrics = path.computeMetrics().first;
     return metrics.getTangentForOffset(metrics.length / 2)?.position ?? Offset.zero;
   }
+
+  /// The edge as the selection names it: by its ends.  A binding's edge
+  /// keeps its own selection ([BindingSelected]); a reference edge has no
+  /// identity to select (ADR-0034).
+  LinkId get id => LinkId(from: from.node, to: to.node, concept: concept, index: to.index);
 }
 
 /// A behaviour group on the canvas: an expanded region around its members
@@ -1268,9 +1273,19 @@ Path linkPath(Offset a, Offset b) {
     ..cubicTo(a.dx + bend, a.dy, b.dx - bend, b.dy, b.dx, b.dy);
 }
 
+/// How far from an edge's stroke, in scene units, a pointer still takes
+/// it: eight screen pixels whatever the zoom (never narrower than the
+/// stroke's own six units, never so wide at a far zoom that a link is hit
+/// from across the canvas).  The stroke itself never widens.
+double linkTolerance(double zoom) => (8 / zoom).clamp(6.0, 32.0);
+
 /// Topmost thing under [point], sockets first (their hit area extends
-/// outside the node), then nodes in reverse draw order.
-CanvasHit hitTest(CanvasScene scene, Offset point) {
+/// outside the node), then nodes in reverse draw order, then the nearest
+/// edge within [linkHitTolerance] (scene units; see [linkTolerance]) —
+/// nearest, so two edges crossing or running side by side resolve to the
+/// one the pointer is closest to, the earlier one drawn on a tie.  Hover,
+/// click and right-click all ask this one question.
+CanvasHit hitTest(CanvasScene scene, Offset point, {double linkHitTolerance = 6}) {
   for (final n in scene.nodes.reversed) {
     for (final s in n.sockets) {
       if ((s.center - point).distance <= NodeMetrics.socketHitRadius) return HitSocket(s, n);
@@ -1286,24 +1301,45 @@ CanvasHit hitTest(CanvasScene scene, Offset point) {
   }
   // Signature and binding edges have a hit area (a contextual menu, a
   // binding's selection); reference edges have none (ADR-0034).
-  for (final l in scene.links) {
-    if (!l.reference && _nearPath(l.path, point, 6)) return HitLink(l);
-  }
+  if (nearestLink(scene, point, linkHitTolerance) case final l?) return HitLink(l);
   for (final g in scene.groups.reversed) {
     if (g.titleBand.contains(point)) return HitGroup(g);
   }
   return const HitNothing();
 }
 
-bool _nearPath(Path path, Offset p, double tolerance) {
-  for (final m in path.computeMetrics()) {
-    final steps = (m.length / 6).ceil().clamp(1, 400);
-    for (var i = 0; i <= steps; i++) {
-      final t = m.getTangentForOffset(m.length * i / steps);
-      if (t != null && (t.position - p).distance <= tolerance) return true;
+/// The selectable edge nearest [point] within [tolerance], or none.
+LinkShape? nearestLink(CanvasScene scene, Offset point, double tolerance) {
+  LinkShape? best;
+  var bestDistance = double.infinity;
+  for (final l in scene.links) {
+    if (l.reference) continue;
+    final d = _distanceToPath(l.path, point, tolerance);
+    if (d != null && d < bestDistance) {
+      best = l;
+      bestDistance = d;
     }
   }
-  return false;
+  return best;
+}
+
+/// The distance from [p] to [path] when within [tolerance], sampled every
+/// four scene units along the path (finer than any tolerance, so a hit
+/// never falls between samples).
+double? _distanceToPath(Path path, Offset p, double tolerance) {
+  final bounds = path.getBounds().inflate(tolerance);
+  if (!bounds.contains(p)) return null;
+  double? best;
+  for (final m in path.computeMetrics()) {
+    final steps = (m.length / 4).ceil().clamp(1, 600);
+    for (var i = 0; i <= steps; i++) {
+      final t = m.getTangentForOffset(m.length * i / steps);
+      if (t == null) continue;
+      final d = (t.position - p).distance;
+      if (d <= tolerance && (best == null || d < best)) best = d;
+    }
+  }
+  return best;
 }
 
 /// The expanded group region a point falls in, if any (for dropping a

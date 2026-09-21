@@ -209,11 +209,15 @@ void main() {
       final labels = openMenuLabels(t).toList();
       expect(labels, containsAll(['Show brightness', 'Show light', 'Disconnect']));
       expect(labels, isNot(contains('Add Concept')));
+      // the right-click selected the edge, as it selects a node
+      expect(actions.whereType<SelectionChanged>().single.selection, LinkSelected(drive.id));
       await t.tap(menuItem('Disconnect'));
       await t.pump();
-      final off = actions.whereType<SetMappingDriveRequested>().single;
-      expect(off.mappingId, value);
-      expect(off.outputId, isNull);
+      // one semantic path for every disconnect: the reducer turns it into
+      // the drive edit
+      final off = actions.whereType<DisconnectLinkRequested>().single;
+      expect(off.link, drive.id);
+      expect(off.link.disconnectable, isTrue);
     });
 
     testWidgets('D/E: on a selected member the set is kept and the menu is about it; on an '

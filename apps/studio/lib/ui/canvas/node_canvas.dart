@@ -31,6 +31,7 @@ import '../library_panel.dart' show LibraryItemDrag, categoryLabel, itemName;
 import '../mac/menus.dart';
 import '../mac/tokens.dart';
 import '../expanded_formula.dart';
+import 'canvas_affordance.dart';
 import 'canvas_geometry.dart';
 
 class NodeCanvas extends StatefulWidget {
@@ -60,7 +61,17 @@ class NodeCanvas extends StatefulWidget {
     this.expanded = const {},
     this.previews = const {},
     this.analyses = const {},
+    this.frameRequest = 0,
+    this.canUndoArrange = false,
   });
+
+  /// Bumped when the canvas should frame the whole design once (after an
+  /// arrangement, ADR-0023 §7): never on the designer's own moves.
+  final int frameRequest;
+
+  /// Whether a layout from before the last arrangement is kept: the
+  /// canvas menu's _Undo Arrange_.
+  final bool canUndoArrange;
 
   /// The mappings whose saved formula is shown on the node, with the
   /// height of the picture (measured once drawn; the initial height
@@ -313,6 +324,14 @@ class _NodeCanvasState extends State<NodeCanvas> {
 
   NodeRef? _hoverNode;
   SocketRef? _hoverSocket;
+  LinkId? _hoverLink;
+
+  /// The pointer is on the selected object's affordance (or just around
+  /// it): the object stays hovered while the pointer crosses over to the
+  /// icons.  The rectangle is what the last build placed, in local pixels;
+  /// none when no affordance is on show.
+  bool _overAffordance = false;
+  Rect? _affordanceRect;
   bool _spaceHeld = false;
   final FocusNode _focus = FocusNode(debugLabel: 'canvas');
 
@@ -332,6 +351,24 @@ class _NodeCanvasState extends State<NodeCanvas> {
     // canvas) closes: its commands would act on nothing.
     final ctx = _menuContext;
     if (ctx != null && !_contextStillValid(ctx)) _closeMenus();
+    // An arrangement arrived: the whole design in view, once.
+    if (widget.frameRequest != old.frameRequest) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _frameAll(_viewportSize);
+      });
+    }
+    // A selected edge that is no longer drawn (its ends are, the edge
+    // went with an edit made elsewhere) is no selection: the reducer only
+    // knows the ends; the canvas knows the edges.
+    if (widget.selection case LinkSelected(:final link)) {
+      if (!_scene(widget.layout).links.any((l) => !l.reference && l.id == link)) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && widget.selection == LinkSelected(link)) {
+            widget.dispatch(const SelectionChanged(NoSelection()));
+          }
+        });
+      }
+    }
   }
 
   bool _contextStillValid(MenuContext ctx) {
@@ -477,6 +514,9 @@ class _NodeCanvasState extends State<NodeCanvas> {
       return;
     }
     if (_gesture is! _Idle) return;
+    // The affordance's buttons take their own press; the canvas under
+    // them does not start a gesture on it.
+    if (_affordanceRect?.contains(e.localPosition) ?? false) return;
     _focus.requestFocus();
     if (_isContextButton(e)) {
       _openContextMenuAt(e.localPosition);
@@ -490,7 +530,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
       _gesture = _PressCandidate(
         downLocal: e.localPosition,
         downScene: p,
-        hit: hitTest(scene, p),
+        hit: hitTest(scene, p, linkHitTolerance: linkTolerance(_zoom)),
         buttons: e.buttons,
         pan: middle || _spaceHeld,
       );
@@ -687,12 +727,19 @@ class _NodeCanvasState extends State<NodeCanvas> {
             ? _toggle(ref)
             : widget.dispatch(SelectionChanged(GroupSelected(group.id)));
       case HitLink(:final link):
-        // A binding is a selectable object; a signature edge is the
-        // interface of its ends and has no selection of its own.
-        if (link.binding case final b?) widget.dispatch(SelectionChanged(BindingSelected(b)));
+        // A binding is its own object; any other edge is selected by its
+        // ends (studio-ui §2): the selection persists, the inspector says
+        // what the edge means, and the affordance appears on hover.
+        _selectLink(link);
       case HitNothing():
         if (!_primaryModifier && !shift) _setSelection(const {});
     }
+  }
+
+  void _selectLink(LinkShape link) {
+    final b = link.binding;
+    final Selection next = b != null ? BindingSelected(b) : LinkSelected(link.id);
+    if (widget.selection != next) widget.dispatch(SelectionChanged(next));
   }
 
   /// ⇧-click on a node: the displayed signature chain from the active
@@ -858,18 +905,26 @@ class _NodeCanvasState extends State<NodeCanvas> {
   void _onHover(PointerHoverEvent e) {
     // A menu owns the pointer: the nodes under it do not react.
     if (_menuIsOpen) return;
+    // On the affordance (or just around it), the selected object stays
+    // hovered: the pointer is on its way to an icon, not leaving.
+    final onAffordance =
+        _affordanceRect?.inflate(CanvasAffordance.hoverInflate).contains(e.localPosition) ?? false;
+    if (onAffordance != _overAffordance) setState(() => _overAffordance = onAffordance);
+    if (onAffordance) return;
     final scene = _scene(_effectiveLayout);
-    final hit = hitTest(scene, _toScene(e.localPosition));
-    final (NodeRef? node, SocketRef? socket) = switch (hit) {
-      HitSocket(:final socket, :final node) => (node.ref, socket.ref),
-      HitNode(:final node) || HitDisclosure(:final node) => (node.ref, null),
-      HitGroup(:final group) => (NodeRef.group(group.id), null),
-      HitLink() || HitNothing() => (null, null),
+    final hit = hitTest(scene, _toScene(e.localPosition), linkHitTolerance: linkTolerance(_zoom));
+    final (NodeRef? node, SocketRef? socket, LinkId? link) = switch (hit) {
+      HitSocket(:final socket, :final node) => (node.ref, socket.ref, null),
+      HitNode(:final node) || HitDisclosure(:final node) => (node.ref, null, null),
+      HitGroup(:final group) => (NodeRef.group(group.id), null, null),
+      HitLink(:final link) => (null, null, link.id),
+      HitNothing() => (null, null, null),
     };
-    if (node != _hoverNode || socket != _hoverSocket) {
+    if (node != _hoverNode || socket != _hoverSocket || link != _hoverLink) {
       setState(() {
         _hoverNode = node;
         _hoverSocket = socket;
+        _hoverLink = link;
       });
     }
   }
@@ -884,7 +939,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
   void _openContextMenuAt(Offset local) {
     final p = _toScene(local);
     final scene = _scene(widget.layout);
-    final hit = hitTest(scene, p);
+    final hit = hitTest(scene, p, linkHitTolerance: linkTolerance(_zoom));
     final MenuContext ctx;
     switch (hit) {
       case HitNode(:final node) || HitSocket(:final node) || HitDisclosure(:final node):
@@ -899,7 +954,9 @@ class _NodeCanvasState extends State<NodeCanvas> {
         widget.dispatch(SelectionChanged(GroupSelected(group.id)));
         ctx = GroupMenuContext(group.id);
       case HitLink(:final link):
-        if (link.binding case final b?) widget.dispatch(SelectionChanged(BindingSelected(b)));
+        // The edge is selected first, as a node is: the menu is about
+        // what the inspector then shows.
+        _selectLink(link);
         ctx = LinkMenuContext(link);
       case HitNothing():
         // Blank canvas keeps the selection on show (nothing was clicked
@@ -920,6 +977,8 @@ class _NodeCanvasState extends State<NodeCanvas> {
       _gesture = const _Idle();
       _hoverNode = null;
       _hoverSocket = null;
+      _hoverLink = null;
+      _overAffordance = false;
     });
     // The items are built from the context in the next frame; open then.
     // Until then the old overlay's own close (it closes itself on the
@@ -1190,14 +1249,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
       ),
       MacMenuItem(
         label: collapsed ? l10n.expand : l10n.collapse,
-        onPressed: () {
-          // Collapsing: the box starts where the region was.
-          if (!collapsed) {
-            final region = _scene(widget.layout).groups.where((g) => g.id == group).firstOrNull;
-            if (region != null) widget.dispatch(GroupBoxChanged(id: group, rect: region.rect));
-          }
-          widget.dispatch(GroupCollapsedChanged(id: group, collapsed: !collapsed));
-        },
+        onPressed: () => _toggleCollapsed(group, collapsed),
       ),
       if (_isSystemCanvas)
         MacMenuItem(
@@ -1229,12 +1281,18 @@ class _NodeCanvasState extends State<NodeCanvas> {
         label: l10n.showEnd(_nodeName(to)),
         onPressed: () => _setSelection({to}, active: to),
       ),
-      const MacMenuDivider(),
-      MacMenuItem(
-        label: l10n.disconnect,
-        destructive: true,
-        onPressed: () => _unlink(_scene(widget.layout), link.to, link: link),
-      ),
+      // Disconnect only where the model has a way to take this one edge
+      // away (a binding; a relationship's read; a sink's driver).  A
+      // relationship's produce edge and a collapsed group's edges have
+      // none, and get no item — nothing greyed out, nothing implied.
+      if (link.binding != null || link.id.disconnectable) ...[
+        const MacMenuDivider(),
+        MacMenuItem(
+          label: l10n.disconnect,
+          destructive: true,
+          onPressed: () => _unlink(_scene(widget.layout), link.to, link: link),
+        ),
+      ],
     ];
   }
 
@@ -1353,6 +1411,19 @@ class _NodeCanvasState extends State<NodeCanvas> {
       const MacMenuDivider(),
       MacMenuItem(label: l10n.selectAll, shortcut: shortcut('A'), onPressed: () => _selectAll()),
       MacMenuItem(label: l10n.frameAll, shortcut: shortcut('0'), onPressed: () => _frameAllNow()),
+      const MacMenuDivider(),
+      // Layout only (ADR-0023 §7): the service arranges every node again;
+      // the layout from before is kept for one step back.
+      MacMenuItem(
+        label: l10n.arrangeAutomatically,
+        onPressed: () => widget.dispatch(const AutoLayoutRequested()),
+      ),
+      MacMenuItem(
+        label: l10n.undoArrange,
+        onPressed: widget.canUndoArrange
+            ? () => widget.dispatch(const RestoreLayoutRequested())
+            : null,
+      ),
     ];
   }
 
@@ -1621,23 +1692,178 @@ class _NodeCanvasState extends State<NodeCanvas> {
       }
       return;
     }
-    switch (input.node.kind) {
-      case NodeKind.mapping:
-        widget.dispatch(UnlinkMappingInput(mappingId: input.node.id, conceptId: input.concept));
-      case NodeKind.output:
-        for (final l in scene.links.where((l) => l.to == input)) {
-          if (link == null || l.from == link.from) {
-            widget.dispatch(SetMappingDriveRequested(mappingId: l.from.node.id, outputId: null));
-          }
-        }
-      case NodeKind.concept:
-        // A relationship → concept edge is the relationship's output: its
-        // signature keeps an output, so the edge cannot be removed alone.
-        break;
-      case NodeKind.instance:
-      case NodeKind.group:
-        break;
+    // Every other edge goes through the one disconnect (the reducer
+    // refuses what the model cannot take away alone: a produce edge, a
+    // collapsed group's aggregate edge).
+    for (final l in scene.links.where((l) => l.to == input && !l.reference)) {
+      if (link == null || l.from == link.from) widget.dispatch(DisconnectLinkRequested(l.id));
     }
+  }
+
+  /// The contextual menu for the selection, from the keyboard (the menu
+  /// key, ⇧F10): what the affordance's menu icon opens, at the same place.
+  bool _openMenuForSelection() {
+    final scene = _scene(widget.layout);
+    final (MenuContext, Offset)? target = switch (widget.selection) {
+      LinkSelected(:final link) => switch (scene.links.where((l) => l.id == link).firstOrNull) {
+        final l? => (LinkMenuContext(l), _toLocal(l.midpoint)),
+        null => null,
+      },
+      BindingSelected(:final id) => switch (scene.links.where((l) => l.binding == id).firstOrNull) {
+        final l? => (LinkMenuContext(l), _toLocal(l.midpoint)),
+        null => null,
+      },
+      GroupSelected(:final id) => switch (scene.groups.where((g) => g.id == id).firstOrNull) {
+        final g? => (GroupMenuContext(id), _toLocal(g.titleBand.center)),
+        null => null,
+      },
+      MultiSelected(:final nodes) => (
+        SelectionMenuContext(nodes, active: _active),
+        _toLocal(scene.bounds.center),
+      ),
+      _ => switch (_selectedSet.singleOrNull) {
+        final ref? => switch (scene.nodes.where((n) => n.ref == ref).firstOrNull) {
+          final n? => (NodeMenuContext(ref), _toLocal(n.header.center)),
+          null => null,
+        },
+        null => null,
+      },
+    };
+    if (target == null) return false;
+    _openMenu(_MenuKind.context, target.$1, target.$2);
+    return true;
+  }
+
+  // ---- affordance ----------------------------------------------------------------
+
+  /// The affordance of the selected object while it is hovered
+  /// (studio-ui §2): the object's menu, then its own quick actions — an
+  /// edge's disconnect, a node's delete, a group's collapse — only those
+  /// its menu has.  Nothing while a menu is open, a gesture is under way
+  /// or a name is being edited.  One object at a time; a set has none.
+  CanvasAffordance? _affordance(BuildContext context, CanvasScene scene) {
+    if (_menuIsOpen || widget.renaming != null) return null;
+    if (_gesture is! _Idle && _gesture is! _PressCandidate) return null;
+    final l10n = context.l10n;
+    switch (widget.selection) {
+      case LinkSelected(:final link):
+        final shape = scene.links.where((l) => !l.reference && l.id == link).firstOrNull;
+        if (shape == null || !(_hoverLink == link || _overAffordance)) return null;
+        return CanvasAffordance(
+          key: ValueKey(link),
+          owner: link,
+          anchor: _toLocal(shape.midpoint),
+          actions: [
+            AffordanceAction(
+              icon: Icons.more_horiz,
+              label: l10n.connectionMenu,
+              onPressed: () => _openMenuFromAffordance(LinkMenuContext(shape)),
+            ),
+            if (link.disconnectable)
+              AffordanceAction(
+                icon: Icons.close,
+                label: l10n.disconnect,
+                destructive: true,
+                onPressed: () => widget.dispatch(DisconnectLinkRequested(link)),
+              ),
+          ],
+        );
+      case BindingSelected(:final id):
+        final shape = scene.links.where((l) => l.binding == id).firstOrNull;
+        if (shape == null || !(_hoverLink == shape.id || _overAffordance)) return null;
+        return CanvasAffordance(
+          key: ValueKey('binding$id'),
+          owner: shape.id,
+          anchor: _toLocal(shape.midpoint),
+          actions: [
+            AffordanceAction(
+              icon: Icons.more_horiz,
+              label: l10n.connectionMenu,
+              onPressed: () => _openMenuFromAffordance(LinkMenuContext(shape)),
+            ),
+            AffordanceAction(
+              icon: Icons.close,
+              label: l10n.disconnect,
+              destructive: true,
+              onPressed: () => widget.dispatch(UnbindRequested(id)),
+            ),
+          ],
+        );
+      case GroupSelected(:final id):
+        final ref = NodeRef.group(id);
+        if (!(_hoverNode == ref || _overAffordance)) return null;
+        final region = scene.groups.where((g) => g.id == id).firstOrNull;
+        final box = scene.nodes.where((n) => n.ref == ref).firstOrNull;
+        final rect = region?.rect ?? box?.rect;
+        if (rect == null) return null;
+        final collapsed = widget.system.groupBoxes[id]?.collapsed ?? false;
+        return CanvasAffordance(
+          key: ValueKey(ref),
+          owner: ref,
+          anchor: _toLocal(rect.topRight),
+          alignment: AffordanceAlignment.endAbove,
+          actions: [
+            AffordanceAction(
+              icon: Icons.more_horiz,
+              label: l10n.groupMenu,
+              onPressed: () => _openMenuFromAffordance(GroupMenuContext(id)),
+            ),
+            AffordanceAction(
+              icon: collapsed ? Icons.unfold_more : Icons.unfold_less,
+              label: collapsed ? l10n.expand : l10n.collapse,
+              onPressed: () => _toggleCollapsed(id, collapsed),
+            ),
+          ],
+        );
+      case MultiSelected():
+        return null;
+      default:
+        final ref = _selectedSet.singleOrNull;
+        if (ref == null || ref.kind == NodeKind.group) return null;
+        if (!(_hoverNode == ref || _overAffordance)) return null;
+        final shape = scene.nodes.where((n) => n.ref == ref).firstOrNull;
+        if (shape == null) return null;
+        // A ported relationship is part of the component's promise: its
+        // menu has no delete, and neither does the affordance.
+        final deletable =
+            ref.kind != NodeKind.mapping || !widget.system.portWords.containsKey(ref.id);
+        return CanvasAffordance(
+          key: ValueKey(ref),
+          owner: ref,
+          anchor: _toLocal(shape.rect.topRight),
+          alignment: AffordanceAlignment.endAbove,
+          actions: [
+            AffordanceAction(
+              icon: Icons.more_horiz,
+              label: l10n.nodeMenu,
+              onPressed: () => _openMenuFromAffordance(NodeMenuContext(ref)),
+            ),
+            if (deletable)
+              AffordanceAction(
+                icon: Icons.close,
+                label: l10n.deleteNamed(shape.title),
+                destructive: true,
+                onPressed: () => widget.dispatch(const DeleteSelectionRequested()),
+              ),
+          ],
+        );
+    }
+  }
+
+  /// The menu icon: the same contextual menu the right-click opens, under
+  /// the affordance.
+  void _openMenuFromAffordance(MenuContext ctx) {
+    final r = _affordanceRect;
+    _openMenu(_MenuKind.context, ctx, r == null ? Offset.zero : r.bottomLeft);
+  }
+
+  void _toggleCollapsed(int group, bool collapsed) {
+    // Collapsing: the box starts where the region was.
+    if (!collapsed) {
+      final region = _scene(widget.layout).groups.where((g) => g.id == group).firstOrNull;
+      if (region != null) widget.dispatch(GroupBoxChanged(id: group, rect: region.rect));
+    }
+    widget.dispatch(GroupCollapsedChanged(id: group, collapsed: !collapsed));
   }
 
   // ---- keyboard ------------------------------------------------------------------
@@ -1700,6 +1926,10 @@ class _NodeCanvasState extends State<NodeCanvas> {
       widget.dispatch(const DeleteSelectionRequested());
       return KeyEventResult.handled;
     }
+    if (key == LogicalKeyboardKey.contextMenu ||
+        (key == LogicalKeyboardKey.f10 && HardwareKeyboard.instance.isShiftPressed)) {
+      return _openMenuForSelection() ? KeyEventResult.handled : KeyEventResult.ignored;
+    }
     if (key == LogicalKeyboardKey.home || (key == LogicalKeyboardKey.digit0 && _primaryModifier)) {
       _frameAllNow();
       return KeyEventResult.handled;
@@ -1743,6 +1973,9 @@ class _NodeCanvasState extends State<NodeCanvas> {
       default:
         if (_spaceHeld) return SystemMouseCursors.grab;
         if (_hoverSocket != null) return SystemMouseCursors.precise;
+        // An edge is something to click: the pointer says so before
+        // anything is drawn on it.
+        if (_hoverLink != null && !_overAffordance) return SystemMouseCursors.click;
         return SystemMouseCursors.basic;
     }
   }
@@ -1757,6 +1990,12 @@ class _NodeCanvasState extends State<NodeCanvas> {
       BindingSelected(:final id) => id,
       _ => null,
     };
+    final selectedLink = switch (widget.selection) {
+      LinkSelected(:final link) => link,
+      _ => null,
+    };
+    final affordance = _affordance(context, scene);
+    _affordanceRect = affordance?.rect;
     final g = _gesture;
     final marquee = g is _Marquee ? g : null;
     final preview = marquee == null ? null : _marqueeResult(marquee);
@@ -1803,6 +2042,8 @@ class _NodeCanvasState extends State<NodeCanvas> {
                     cursor: _cursor,
                     onExit: (_) => setState(() {
                       _hoverNode = null;
+                      _hoverLink = null;
+                      _overAffordance = false;
                       if (g is! _DragLink) _hoverSocket = null;
                     }),
                     child: ClipRect(
@@ -1818,6 +2059,8 @@ class _NodeCanvasState extends State<NodeCanvas> {
                               selectedSet: selectedSet,
                               active: active,
                               selectedBinding: selectedBinding,
+                              selectedLink: selectedLink,
+                              hoveredLink: _hoverLink,
                               marquee: marquee?.rect,
                               marqueeMode: marquee?.mode,
                               marqueeAdd: marquee?.add ?? false,
@@ -1867,6 +2110,9 @@ class _NodeCanvasState extends State<NodeCanvas> {
                                 selected: selectedSet.contains(shape.ref),
                                 dispatch: widget.dispatch,
                               ),
+                          // The selected object's affordance, over the
+                          // picture, at its anchor (studio-ui §2).
+                          ?affordance,
                           if (widget.renaming case final node?) ...[
                             for (final shape in scene.nodes.where((n) => n.ref == node))
                               _InlineRename(
@@ -2015,6 +2261,8 @@ class _CanvasPainter extends CustomPainter {
     required this.selectedSet,
     required this.active,
     required this.selectedBinding,
+    required this.selectedLink,
+    required this.hoveredLink,
     required this.hovered,
     required this.hoveredSocket,
     required this.linkDrag,
@@ -2037,6 +2285,10 @@ class _CanvasPainter extends CustomPainter {
   final Set<NodeRef> selectedSet;
   final NodeRef? active;
   final int? selectedBinding;
+
+  /// The selected edge and the hovered one (by their ends).
+  final LinkId? selectedLink;
+  final LinkId? hoveredLink;
 
   /// A marquee in progress: its rectangle, its mode (window: solid;
   /// crossing: dashed), whether it adds to or subtracts from the
@@ -2095,7 +2347,26 @@ class _CanvasPainter extends CustomPainter {
       );
     }
     for (final l in scene.links.where((l) => !l.reference)) {
-      final isSelected = l.binding != null && l.binding == selectedBinding;
+      final isSelected =
+          (l.binding != null && l.binding == selectedBinding) ||
+          (l.binding == null && selectedLink != null && l.id == selectedLink);
+      final isHovered = !isSelected && hoveredLink != null && l.id == hoveredLink;
+      // Hovered: a soft halo under the same stroke — "this can be
+      // clicked", nothing more.  Selected: the accent, the heavier stroke
+      // and a ring at each end, so the state is told by shape as well as
+      // by colour (a binding's selection has looked like this all along).
+      if (isHovered || isSelected) {
+        canvas.drawPath(
+          l.path,
+          Paint()
+            ..color = (isSelected ? tokens.accent : tokens.conceptColor(l.concept)).withValues(
+              alpha: isSelected ? 0.22 : 0.28,
+            )
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 8
+            ..strokeCap = StrokeCap.round,
+        );
+      }
       canvas.drawPath(
         l.path,
         Paint()
@@ -2104,6 +2375,19 @@ class _CanvasPainter extends CustomPainter {
           ..strokeWidth = isSelected ? 3 : 2
           ..strokeCap = StrokeCap.round,
       );
+      if (isSelected) {
+        for (final end in _pathEnds(l.path)) {
+          canvas.drawCircle(end, 4, Paint()..color = tokens.canvas);
+          canvas.drawCircle(
+            end,
+            4,
+            Paint()
+              ..color = tokens.accent
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 2,
+          );
+        }
+      }
       // A transported binding: a gate where the value crosses domains,
       // with its initial value.
       if (l.transport case final init?) {
@@ -2313,6 +2597,15 @@ class _CanvasPainter extends CustomPainter {
     for (var y = oy; y < size.height; y += s) {
       canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
     }
+  }
+
+  /// Where a path starts and ends.
+  static List<Offset> _pathEnds(Path path) {
+    final metrics = path.computeMetrics().toList();
+    if (metrics.isEmpty) return const [];
+    final first = metrics.first.getTangentForOffset(0)?.position;
+    final last = metrics.last.getTangentForOffset(metrics.last.length)?.position;
+    return [?first, ?last];
   }
 
   @override

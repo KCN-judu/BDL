@@ -2634,6 +2634,45 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get connectionMenu => 'Connection menu';
+
+  @override
+  String get nodeMenu => 'Node menu';
+
+  @override
+  String get groupMenu => 'Group menu';
+
+  @override
+  String get arrangeAutomatically => 'Arrange Automatically';
+
+  @override
+  String get undoArrange => 'Undo Arrange';
+
+  @override
+  String connectionReads(String to, String concept) {
+    return '$to reads $concept';
+  }
+
+  @override
+  String connectionProduces(String from, String concept) {
+    return '$from produces $concept';
+  }
+
+  @override
+  String connectionDrives(String from, String to) {
+    return '$from drives $to';
+  }
+
+  @override
+  String connectionAggregate(String group) {
+    return 'An edge of the collapsed group $group: it stands for a member\'s connection.';
+  }
+
+  @override
+  String get produceEdgeCannotGoAlone =>
+      'A relationship\'s produce edge is its signature\'s output: change the relationship, not the edge.';
+
+  @override
   String get libItem_std_value_boolean_name => 'On / off';
 
   @override

@@ -473,7 +473,11 @@ Transition systemAction(AppState s, UserAction a) {
 
 Transition _layoutChanged(AppState s, CanvasLayout layouts) => Transition(
   s.copyWith(
-    editor: s.editor.copyWith(layouts: layouts, layout: layouts.of(s.editor.context).nodes),
+    editor: s.editor.copyWith(
+      layouts: layouts,
+      layout: layouts.of(s.editor.context).nodes,
+      clearLayoutBefore: true,
+    ),
   ),
   [SetLayout(layoutToPb(layouts))],
 );
@@ -916,8 +920,27 @@ bool selectionStillValid(AppState s, Selection sel) {
     InstanceSelected(:final id) => s.instance(id) != null,
     PortSelected(:final instance, :final port) => s.port(instance, port) != null,
     BindingSelected(:final id) => s.binding(id) != null,
+    // Whether the edge itself is still drawn is the canvas's to judge (it
+    // builds the edges); here the ends must still exist.
+    LinkSelected(:final link) => nodeExists(s, link.from) && nodeExists(s, link.to),
     GroupSelected(:final id) => s.group(id) != null,
     MultiSelected(:final nodes) => nodes.every((n) => nodeExists(s, n)),
+  };
+}
+
+/// The designer's name for a node of the canvas, `?` when it is gone.
+String nodeName(AppState s, NodeRef n) {
+  final p = s.project;
+  if (p == null) return '?';
+  return switch (n.kind) {
+    NodeKind.concept =>
+      p.concepts.where((c) => c.id.toInt() == n.id).map((c) => c.name).firstOrNull ?? '?',
+    NodeKind.mapping =>
+      p.mappings.where((m) => m.id.toInt() == n.id).map((m) => m.name).firstOrNull ?? '?',
+    NodeKind.output =>
+      p.outputs.where((o) => o.id.toInt() == n.id).map((o) => o.name).firstOrNull ?? '?',
+    NodeKind.instance => s.instance(n.id)?.name ?? '?',
+    NodeKind.group => s.group(n.id)?.name ?? '?',
   };
 }
 

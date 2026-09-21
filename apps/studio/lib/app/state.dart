@@ -804,6 +804,57 @@ class BindingSelected extends Selection {
   int get hashCode => Object.hash(BindingSelected, id);
 }
 
+/// One signature or drive edge of the canvas, by the ends it joins:
+/// stable across revisions (the ids are), gone when either end or the
+/// edge itself goes.  A binding is its own selection ([BindingSelected]);
+/// reference edges are never selected (ADR-0034).
+@immutable
+class LinkId {
+  const LinkId({required this.from, required this.to, required this.concept, this.index = 0});
+
+  /// The node whose output socket the edge leaves.
+  final NodeRef from;
+
+  /// The node whose input socket it enters, and — for a relationship's
+  /// inputs — which one.
+  final NodeRef to;
+  final int concept;
+  final int index;
+
+  /// Whether the edge can be taken away on its own by a semantic edit
+  /// the model has today: a concept read by a relationship
+  /// (`UnlinkMappingInput`), a relationship driving a sink
+  /// (`SetMappingDrive` to none).  A relationship's produce edge is its
+  /// signature's output and cannot go alone — and whether a concept has
+  /// one producer or several is under formal audit; until it concludes
+  /// no edge into a concept gets a destructive action.  A collapsed
+  /// group's aggregate edges stand for members and are a picture.
+  bool get disconnectable =>
+      from.kind == NodeKind.mapping && to.kind == NodeKind.output ||
+      from.kind == NodeKind.concept && to.kind == NodeKind.mapping;
+
+  @override
+  bool operator ==(Object other) =>
+      other is LinkId &&
+      other.from == from &&
+      other.to == to &&
+      other.concept == concept &&
+      other.index == index;
+  @override
+  int get hashCode => Object.hash(from, to, concept, index);
+  @override
+  String toString() => '$from→$to:$concept/$index';
+}
+
+class LinkSelected extends Selection {
+  const LinkSelected(this.link);
+  final LinkId link;
+  @override
+  bool operator ==(Object other) => other is LinkSelected && other.link == link;
+  @override
+  int get hashCode => Object.hash(LinkSelected, link);
+}
+
 class GroupSelected extends Selection {
   const GroupSelected(this.id);
   final int id;
@@ -1708,6 +1759,8 @@ class EditorState {
     this.renaming,
     this.context = const SystemContext(),
     this.layouts = const CanvasLayout(),
+    this.layoutBefore,
+    this.frameRequest = 0,
     this.pendingBind,
     this.extraction,
     this.pendingPlacement,
@@ -1792,6 +1845,15 @@ class EditorState {
 
   /// Every canvas of the project; [layout] is `layouts.of(context)`.
   final CanvasLayout layouts;
+
+  /// The layout as it was before the last _Arrange Automatically_, kept
+  /// until any other layout change: _Undo Arrange_ restores it.  Layout
+  /// only, apart from the semantic history (ADR-0003).
+  final CanvasLayout? layoutBefore;
+
+  /// Bumped when the canvas should frame the whole design once (after an
+  /// arrangement); never on the designer's own moves.
+  final int frameRequest;
 
   /// A link that needs the designer's decision before it is sent.
   final PendingBind? pendingBind;
@@ -1938,6 +2000,9 @@ class EditorState {
     bool clearRenaming = false,
     DesignContext? context,
     CanvasLayout? layouts,
+    CanvasLayout? layoutBefore,
+    bool clearLayoutBefore = false,
+    int? frameRequest,
     PendingBind? pendingBind,
     bool clearPendingBind = false,
     ExtractionState? extraction,
@@ -1998,6 +2063,8 @@ class EditorState {
       renaming: clearRenaming ? null : (renaming ?? this.renaming),
       context: context ?? this.context,
       layouts: layouts ?? this.layouts,
+      layoutBefore: clearLayoutBefore ? null : (layoutBefore ?? this.layoutBefore),
+      frameRequest: frameRequest ?? this.frameRequest,
       pendingBind: clearPendingBind ? null : (pendingBind ?? this.pendingBind),
       extraction: clearExtraction ? null : (extraction ?? this.extraction),
       pendingPlacement: clearPendingPlacement ? null : (pendingPlacement ?? this.pendingPlacement),
