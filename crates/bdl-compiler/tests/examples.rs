@@ -261,6 +261,12 @@ fn author(root: &std::path::Path) -> Authored {
             y: 178.0,
         },
     );
+    // `brightness`'s mapping block (ADR-0044), where the layout service
+    // attaches it on first open — left of its Sem block, below the rule
+    // positions above it; authored here so the example opens unchanged
+    layout
+        .definitions
+        .insert(bright, Point { x: 456.0, y: 248.0 });
     persist::save_project(root, &s, &layout, COMPILER_VERSION).unwrap();
     Authored {
         snapshot: s,

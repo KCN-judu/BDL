@@ -1215,9 +1215,12 @@ fn grouping_and_extraction_over_the_wire() {
     assert!(layout.groups[0].collapsed);
     let body = layout.components[0].layout.as_ref().unwrap();
     assert_eq!(body.mappings.iter().find(|p| p.id == dim).unwrap().x, 5.0);
+    // a concept is a template and gets no node (ADR-0044); the body's
+    // other Sem blocks were placed
+    assert!(body.concepts.is_empty());
     assert!(
-        !body.concepts.is_empty(),
-        "body concepts were placed on open"
+        body.mappings.iter().any(|p| p.id != dim),
+        "body Sem blocks were placed on open"
     );
     let v2 = c.system();
     assert_eq!(v2.bindings.len(), 2);
