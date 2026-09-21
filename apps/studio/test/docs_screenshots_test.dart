@@ -287,7 +287,11 @@ class Scene {
     final ref = node(name);
     final sc = scene();
     for (final n in sc.nodes) {
-      if (n.ref == ref) return toWindow(n.rect);
+      if (n.ref != ref) continue;
+      // a Sem block is one declaration with its mapping block (ADR-0044):
+      // the picture of the block takes both nodes
+      final block = sc.nodes.where((b) => b.ref == NodeRef.definition(ref.id)).firstOrNull;
+      return toWindow(block == null ? n.rect : n.rect.expandToInclude(block.rect));
     }
     for (final g in sc.groups) {
       if (NodeRef.group(g.id) == ref) return toWindow(g.rect);
