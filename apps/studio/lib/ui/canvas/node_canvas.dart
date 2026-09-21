@@ -27,7 +27,7 @@ import '../../app/state.dart';
 import '../../platform/desktop.dart';
 import '../../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import '../../l10n/library_strings.dart';
-import '../library_panel.dart' show LibraryItemDrag, categoryLabel, itemName;
+import '../library_panel.dart' show ConceptDrag, LibraryItemDrag, categoryLabel, itemName;
 import '../mac/menus.dart';
 import '../mac/tokens.dart';
 import '../expanded_formula.dart';
@@ -2014,16 +2014,23 @@ class _NodeCanvasState extends State<NodeCanvas> {
         return Focus(
           focusNode: _focus,
           onKeyEvent: _onKey,
-          child: DragTarget<LibraryItemDrag>(
-            onWillAcceptWithDetails: (_) => widget.canInsert,
+          child: DragTarget<Object>(
+            onWillAcceptWithDetails: (d) =>
+                widget.canInsert && (d.data is LibraryItemDrag || d.data is ConceptDrag),
             onAcceptWithDetails: (d) {
               final box = context.findRenderObject() as RenderBox?;
               if (box == null) return;
               final scene = _toScene(box.globalToLocal(d.offset));
-              if (d.data.source) {
-                _newSourceAt(d.data.itemId, scene);
-              } else {
-                _newConceptAt(d.data.itemId, scene);
+              switch (d.data) {
+                case LibraryItemDrag(:final itemId, source: true):
+                  _newSourceAt(itemId, scene);
+                case LibraryItemDrag(:final itemId):
+                  _newConceptAt(itemId, scene);
+                // a concept row: a block of it, named on the sheet
+                case ConceptDrag(:final conceptId):
+                  widget.dispatch(
+                    AddBlockRequested(conceptId: conceptId, position: nodeOriginFor(scene)),
+                  );
               }
             },
             builder: (context, candidates, _) => MacMenuAnchor(

@@ -15,7 +15,10 @@ import 'package:bdl_studio/l10n/l10n.dart';
 import 'package:bdl_studio/protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import 'package:bdl_studio/ui/canvas/canvas_geometry.dart';
 import 'package:bdl_studio/ui/dialogs.dart';
+import 'package:bdl_studio/ui/canvas/node_canvas.dart';
 import 'package:bdl_studio/ui/inspector.dart';
+import 'package:bdl_studio/ui/library.dart';
+import 'package:bdl_studio/ui/source_sheet.dart';
 import 'package:bdl_studio/ui/mac/interactive.dart';
 import 'package:bdl_studio/ui/mac/theme.dart';
 import 'package:bdl_studio/ui/pages/simulate_page.dart';
@@ -333,6 +336,97 @@ void main() {
       expect(find.text('Rules'), findsOneWidget);
       expect(find.text('AirConditionerCtrl'), findsOneWidget);
       expect(find.text('Produced by'), findsNothing);
+    });
+  });
+
+  group('a block from a concept', () {
+    testWidgets('a concept row dragged onto the canvas opens the block sheet there', (t) async {
+      t.view.physicalSize = const Size(1280, 720);
+      t.view.devicePixelRatio = 1;
+      addTearDown(t.view.reset);
+      final actions = <AppAction>[];
+      await t.pumpWidget(
+        Harness(
+          width: 1280,
+          initial: connected(design(), analysis: analysis()),
+          child: (s, d) => Row(
+            children: [
+              SizedBox(
+                width: 240,
+                child: Library(state: s, dispatch: d),
+              ),
+              Expanded(
+                child: NodeCanvas(
+                  project: s.project!,
+                  layout: layout,
+                  selection: s.editor.selection,
+                  refs: refsOf(analysis()),
+                  dispatch: (a) {
+                    actions.add(a);
+                    d(a);
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+      // the row `SwitchState` in the Project sidebar, dragged onto empty canvas
+      final row = find.descendant(of: find.byType(Library), matching: find.text('SwitchState'));
+      expect(row, findsOneWidget);
+      final canvas = t.getRect(find.byType(NodeCanvas));
+      final g = await t.startGesture(t.getCenter(row));
+      await t.pump(const Duration(milliseconds: 50));
+      await g.moveTo(Offset(canvas.left + 400, canvas.top + 500));
+      await t.pump(const Duration(milliseconds: 50));
+      await g.moveTo(Offset(canvas.left + 420, canvas.top + 520));
+      await t.pump(const Duration(milliseconds: 50));
+      await g.up();
+      await t.pumpAndSettle();
+      final asked = actions.whereType<AddBlockRequested>().single;
+      expect(asked.conceptId, switchState);
+      // the sheet is open over the concept, at once, at the drop point
+      final h = t.state<HarnessState>(find.byType(Harness));
+      final sheet = h.state.editor.sourceSheet!;
+      expect(sheet.conceptId, switchState);
+      expect(sheet.ready, isTrue);
+      expect(sheet.position, isNotNull);
+      expect(actions.whereType<NewConceptRequested>(), isEmpty, reason: 'a block, not a concept');
+    });
+
+    testWidgets('the sheet over a fixed concept asks the name only and creates one block', (
+      t,
+    ) async {
+      final created = <AppAction>[];
+      await t.pumpWidget(
+        Harness(
+          width: 560,
+          initial: connected(design()),
+          child: (s, d) => SingleChildScrollView(
+            child: SourceSheetForm(
+              sheet: SourceSheetState(
+                presetId: '',
+                revision: 1,
+                conceptId: switchState,
+                candidates: pb.SourceCandidatesResponse(),
+              ),
+              concepts: design().concepts,
+              taken: [for (final m in design().mappings) m.name],
+              unitPresets: const [],
+              onCreate: created.add,
+              onCancel: () {},
+            ),
+          ),
+        ),
+      );
+      await t.pumpAndSettle();
+      expect(find.text('Existing concept'), findsNothing);
+      expect(find.text('mapping switchState : () -> SwitchState'), findsOneWidget);
+      await t.tap(find.text('Create Block'));
+      await t.pumpAndSettle();
+      final c = created.single as CreateSourceRequested;
+      expect(c.existingConcept, switchState);
+      expect(c.sourceName, 'switchState');
     });
   });
 

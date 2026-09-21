@@ -2065,6 +2065,25 @@ class AppLocalizationsZh extends AppLocalizations {
   String get createSource => '创建来源';
 
   @override
+  String get createBlock => '创建块';
+
+  @override
+  String get blockName => '块名称';
+
+  @override
+  String newBlockOfConcept(String concept) {
+    return '新建 $concept 的块';
+  }
+
+  @override
+  String aBlockOneValueOfConcept(String concept) {
+    return '本设计中 $concept 的一个值：为它在产品里对应的实物命名。在你给它公式之前它是一个来源。';
+  }
+
+  @override
+  String get blockOfConceptCaption => '只创建这个块；概念保持不变。一次撤销即可移除该块。';
+
+  @override
   String get noConceptsYetCreateOne => '此设计中还没有概念——请选择“新建概念”。';
 
   @override

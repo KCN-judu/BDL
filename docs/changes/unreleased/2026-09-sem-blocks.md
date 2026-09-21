@@ -49,14 +49,17 @@
   two nodes have two positions: the mapping block is placed beside the Sem block
   when it appears, and from then on each moves alone. Renaming either renames
   the block.
-- **Creation**: the canvas menu's **Add Block ▸ of C** makes a Sem block of an
-  existing concept at the point (the Source path, `CreateSource`); **New Concept
-  ▸** (the category items) makes the concept and a block of it in one
-  transaction; a Library row dropped on the canvas does the same; a library
-  item's fragment inserted at a point makes the template, and a block of it
-  follows as a second edit, open for naming. The Library's own row (no point)
-  makes the template alone. A block created at a point takes its mapping block
-  along.
+- **Creation**: the canvas menu's **Add Block ▸ of C**, and a concept's row
+  dragged from the Project sidebar onto the canvas (`ConceptDrag`), open the
+  **block sheet** — the Source sheet over a fixed concept
+  (`SourceSheetState.conceptId`, on screen at once, no candidates asked): the
+  designer names the block, the thing it is in the product, and one
+  `CreateSource` makes it at the point; **New Concept ▸** (the category items)
+  makes the concept and a block of it in one transaction; a Library row dropped
+  on the canvas does the same; a library item's fragment inserted at a point
+  makes the template, and a block of it follows as a second edit, open for
+  naming. The Library's own row (no point) makes the template alone. A block
+  created at a point takes its mapping block along.
 - **Model (ADR-0013 amendment)**: a rule reading one concept twice gets a name
   per repeated input (`tilt1`, `tilt2`; other inputs keep their concept's name;
   given names kept while they cover the signature) on `CreateMapping` and

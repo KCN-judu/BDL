@@ -132,6 +132,8 @@ class _ProjectObjects extends StatelessWidget {
                   // the concept sheet, with the category to choose there
                   onAdd: () => dispatch(const NewConceptRequested()),
                 ),
+                // a concept is a template: its row drags onto the canvas to
+                // make a block of it there (ADR-0044)
                 for (final c in p.concepts)
                   _Row(
                     glyph: SocketGlyph.of(c, t),
@@ -139,6 +141,7 @@ class _ProjectObjects extends StatelessWidget {
                     selected: selectedSet.contains(NodeRef.concept(c.id.toInt())),
                     active: active == NodeRef.concept(c.id.toInt()) && selectedSet.length > 1,
                     onTap: () => _rowTap(NodeRef.concept(c.id.toInt())),
+                    drag: ConceptDrag(c.id.toInt()),
                   ),
                 _Section(
                   title: context.l10n.mappings,
@@ -319,6 +322,7 @@ class _Row extends StatelessWidget {
     required this.selected,
     required this.onTap,
     this.active = false,
+    this.drag,
   });
   final Widget glyph;
   final String title;
@@ -329,8 +333,32 @@ class _Row extends StatelessWidget {
   final bool active;
   final VoidCallback onTap;
 
+  /// What the row is when dragged onto the canvas (a concept: a block of
+  /// it at the drop point); `null` for a row that stays put.
+  final ConceptDrag? drag;
+
   @override
   Widget build(BuildContext context) {
+    final row = _rowBody(context);
+    final d = drag;
+    if (d == null) return row;
+    return Draggable<ConceptDrag>(
+      data: d,
+      dragAnchorStrategy: pointerDragAnchorStrategy,
+      feedback: DragFeedback(
+        child: Row(
+          spacing: MacMetrics.gap,
+          children: [
+            SizedBox(width: 14, child: Center(child: glyph)),
+            Text(title),
+          ],
+        ),
+      ),
+      child: row,
+    );
+  }
+
+  Widget _rowBody(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 6),
       child: MacInteractive(

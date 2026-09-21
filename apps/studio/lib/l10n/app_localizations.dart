@@ -3633,6 +3633,36 @@ abstract class AppLocalizations {
   /// **'Create Source'**
   String get createSource;
 
+  /// Primary button of the block sheet: creates one Sem block of the fixed concept.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Block'**
+  String get createBlock;
+
+  /// Label of the name field on the block sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Block name'**
+  String get blockName;
+
+  /// Title of the block sheet: a Sem block of an existing concept is created and named.
+  ///
+  /// In en, this message translates to:
+  /// **'New block of {concept}'**
+  String newBlockOfConcept(String concept);
+
+  /// Subtitle of the block sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'One value of {concept} in this design: name the thing it is in your product. A Source until you give it a formula.'**
+  String aBlockOneValueOfConcept(String concept);
+
+  /// Caption under the block sheet's preview.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the block is created; the concept stays as it is. One Undo removes the block.'**
+  String get blockOfConceptCaption;
+
   /// Source sheet: shown in place of the concept pop-up when the design has no concept to bind to.
   ///
   /// In en, this message translates to:

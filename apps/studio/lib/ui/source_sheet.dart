@@ -72,12 +72,22 @@ class SourceSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final item = sheet.presetId.isEmpty ? null : state.libraryItem(sheet.presetId);
     final project = state.project;
+    // a block sheet: the concept is fixed, the block is named (ADR-0044)
+    final fixed = sheet.conceptId == null
+        ? null
+        : project?.concepts.where((c) => c.id.toInt() == sheet.conceptId).firstOrNull;
     return SheetScrim(
-      title: item == null ? context.l10n.newSource : itemName(context.l10n, item),
-      subtitle: context.l10n.aSourceAValueTheEnvironmentProvides,
+      title: fixed != null
+          ? context.l10n.newBlockOfConcept(fixed.name)
+          : item == null
+          ? context.l10n.newSource
+          : itemName(context.l10n, item),
+      subtitle: fixed != null
+          ? context.l10n.aBlockOneValueOfConcept(fixed.name)
+          : context.l10n.aSourceAValueTheEnvironmentProvides,
       width: 560,
       child: SourceSheetForm(
-        key: ValueKey('source-sheet-${sheet.revision}-${sheet.presetId}'),
+        key: ValueKey('source-sheet-${sheet.revision}-${sheet.presetId}-${sheet.conceptId}'),
         sheet: sheet,
         concepts: project?.concepts ?? const [],
         taken: [
@@ -140,10 +150,14 @@ class SourceSheetFormState extends State<SourceSheetForm> {
       ?widget.concepts.where((x) => x.id == c.conceptId).firstOrNull,
   ];
 
-  late SourceConceptChoice _choice = _ranked.isEmpty
-      ? SourceConceptChoice.newConcept
-      : SourceConceptChoice.existing;
-  late int? _existing = _ranked.firstOrNull?.id.toInt();
+  /// A block sheet: the concept is decided (ADR-0044) — no choice on the
+  /// sheet, the name is the question.
+  int? get _fixed => widget.sheet.conceptId;
+
+  late SourceConceptChoice _choice = _fixed != null || _ranked.isNotEmpty
+      ? SourceConceptChoice.existing
+      : SourceConceptChoice.newConcept;
+  late int? _existing = _fixed ?? _ranked.firstOrNull?.id.toInt();
 
   late final TextEditingController _conceptName = TextEditingController(
     text: _cands.suggestedConceptName,
@@ -186,6 +200,8 @@ class SourceSheetFormState extends State<SourceSheetForm> {
   /// else `<concept>Input` made free here.
   String _suggestedName() {
     final concept = _conceptNameChosen();
+    // a block of a concept is named after it: `tilt`, `tilt2`
+    if (_fixed != null) return blockNameFor(concept, widget.taken);
     if (_choice == SourceConceptChoice.newConcept &&
         _cands.suggestedSourceName.isNotEmpty &&
         concept == _cands.suggestedConceptName) {
@@ -307,22 +323,39 @@ class SourceSheetFormState extends State<SourceSheetForm> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // The concept: the one decision the sheet exists for.
-        FormRow(
-          label: l10n.conceptLabel,
-          child: MacSegmented<SourceConceptChoice>(
-            value: _choice,
-            options: {
-              SourceConceptChoice.existing: l10n.existingConcept,
-              SourceConceptChoice.newConcept: l10n.newConcept,
-            },
-            onChanged: (c) => setState(() {
-              _choice = c;
-              _resuggest();
-            }),
+        // The concept: the one decision the sheet exists for — or, on a
+        // block sheet, the decided template the block is made from.
+        if (_fixed != null && chosen != null)
+          FormRow(
+            label: l10n.conceptLabel,
+            child: Row(
+              spacing: 6,
+              children: [
+                SocketGlyph.of(chosen, t),
+                Text(chosen.name, key: const ValueKey('block-concept')),
+                Text(
+                  _kindWord(l10n, chosen.hasRepresentation() ? chosen.representation : null),
+                  style: small,
+                ),
+              ],
+            ),
+          )
+        else
+          FormRow(
+            label: l10n.conceptLabel,
+            child: MacSegmented<SourceConceptChoice>(
+              value: _choice,
+              options: {
+                SourceConceptChoice.existing: l10n.existingConcept,
+                SourceConceptChoice.newConcept: l10n.newConcept,
+              },
+              onChanged: (c) => setState(() {
+                _choice = c;
+                _resuggest();
+              }),
+            ),
           ),
-        ),
-        if (_choice == SourceConceptChoice.existing)
+        if (_fixed == null && _choice == SourceConceptChoice.existing)
           FormRow(
             label: '',
             child: _ranked.isEmpty
@@ -379,7 +412,7 @@ class SourceSheetFormState extends State<SourceSheetForm> {
         Divider(height: 1, color: t.hairline),
         const SizedBox(height: 10),
         FormRow(
-          label: l10n.sourceName,
+          label: _fixed != null ? l10n.blockName : l10n.sourceName,
           child: MacTextField(
             key: const ValueKey('source-name'),
             controller: _sourceName,
@@ -411,10 +444,15 @@ class SourceSheetFormState extends State<SourceSheetForm> {
         for (final line in lines)
           Text(line, key: ValueKey('source-preview-${lines.indexOf(line)}'), style: mono),
         const SizedBox(height: 4),
-        Text(switch (_choice) {
-          SourceConceptChoice.existing => l10n.sourceOverExistingConceptCaption,
-          SourceConceptChoice.newConcept => l10n.sourceWithNewConceptCaption,
-        }, style: small),
+        Text(
+          _fixed != null
+              ? l10n.blockOfConceptCaption
+              : switch (_choice) {
+                  SourceConceptChoice.existing => l10n.sourceOverExistingConceptCaption,
+                  SourceConceptChoice.newConcept => l10n.sourceWithNewConceptCaption,
+                },
+          style: small,
+        ),
         const SizedBox(height: 18),
         Row(
           mainAxisAlignment: MainAxisAlignment.end,
@@ -423,7 +461,7 @@ class SourceSheetFormState extends State<SourceSheetForm> {
             const SizedBox(width: 8),
             MacButton.primary(
               key: const ValueKey('source-create'),
-              label: l10n.createSource,
+              label: _fixed != null ? l10n.createBlock : l10n.createSource,
               onPressed: _complete ? _submit : null,
             ),
           ],

@@ -187,9 +187,14 @@ class InsertLibraryItemRequested extends UserAction {
 /// existing concepts; empty for the generic *New Source…*.  [position] is
 /// where the objects will land.  Nothing is committed by this action.
 class NewSourceRequested extends UserAction {
-  const NewSourceRequested({this.presetId = '', this.position});
+  const NewSourceRequested({this.presetId = '', this.position, this.conceptId});
   final String presetId;
   final Offset? position;
+
+  /// The concept the block is of, when it is decided already (a block
+  /// sheet, [AddBlockRequested]): the sheet asks for the name only and
+  /// needs no candidates from the daemon.
+  final int? conceptId;
 }
 
 /// The Source sheet was closed without creating anything: the project is
@@ -1088,9 +1093,12 @@ class WireSemBlockRequested extends UserAction {
   final int? slot;
 }
 
-/// A Sem block of an existing concept, at a canvas point: a unit-domain
-/// relationship the environment provides until it is given a definition
-/// (a Source, ADR-0032) — the instantiation of the concept template.
+/// A Sem block of an existing concept, at a canvas point — the
+/// instantiation of the concept template (ADR-0044): the block sheet opens
+/// over the concept, fixed, to name the thing the block is in the product
+/// (a Source until it is given a definition, ADR-0032).  From the canvas
+/// menu's _Add Block ▸ of C_ and from a concept row dragged onto the
+/// canvas.  Nothing is committed by this action.
 class AddBlockRequested extends UserAction {
   const AddBlockRequested({required this.conceptId, required this.position});
   final int conceptId;

@@ -2083,6 +2083,25 @@ class AppLocalizationsJa extends AppLocalizations {
   String get createSource => '入力元を作成';
 
   @override
+  String get createBlock => 'ブロックを作成';
+
+  @override
+  String get blockName => 'ブロック名';
+
+  @override
+  String newBlockOfConcept(String concept) {
+    return '$concept の新しいブロック';
+  }
+
+  @override
+  String aBlockOneValueOfConcept(String concept) {
+    return 'この設計における $concept の一つの値：製品でそれが何であるかを名付けてください。式を与えるまでは入力元です。';
+  }
+
+  @override
+  String get blockOfConceptCaption => '作成されるのはこのブロックだけで、概念はそのままです。取り消し一回でブロックが消えます。';
+
+  @override
   String get noConceptsYetCreateOne => 'この設計にはまだコンセプトがありません。「新しいコンセプト」を選んでください。';
 
   @override

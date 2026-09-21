@@ -235,6 +235,14 @@ class LibraryItemDrag {
   final bool source;
 }
 
+/// A concept of the design dragged from the Project sidebar: the drop
+/// opens the block sheet at the drop point — a block of the concept, named
+/// there (ADR-0044).
+class ConceptDrag {
+  const ConceptDrag(this.conceptId);
+  final int conceptId;
+}
+
 class LibraryPanel extends StatefulWidget {
   const LibraryPanel({super.key, required this.state, required this.dispatch});
   final AppState state;
@@ -482,7 +490,7 @@ class _ActivatableRow extends StatelessWidget {
       child: Draggable<LibraryItemDrag>(
         data: drag,
         dragAnchorStrategy: pointerDragAnchorStrategy,
-        feedback: _DragFeedback(child: child),
+        feedback: DragFeedback(child: child),
         child: interactive,
       ),
     );
@@ -610,8 +618,9 @@ class ItemGlyph extends StatelessWidget {
 
 /// What travels under the pointer during a drag: the row itself, on a
 /// node-coloured card.
-class _DragFeedback extends StatelessWidget {
-  const _DragFeedback({required this.child});
+/// The card under the pointer while a row is dragged onto the canvas.
+class DragFeedback extends StatelessWidget {
+  const DragFeedback({required this.child, super.key});
   final Widget child;
 
   @override

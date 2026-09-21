@@ -190,16 +190,27 @@ void main() {
     expect(moved.state.editor.pendingWire, isNull, reason: 'given up, not retried blindly');
   });
 
-  test('Add Block: a Source of the concept at the point, named after it, the Source path', () {
+  test('Add Block: the block sheet over the concept, at once; its Create is the Source path', () {
     final t = reduce(
       connected(design()),
       const AddBlockRequested(conceptId: litC, position: Offset(300, 200)),
     );
-    final create = t.effects.single as CreateSource;
+    expect(t.effects, isEmpty, reason: 'no candidates to rank: the concept is decided');
+    final sheet = t.state.editor.sourceSheet!;
+    expect(sheet.conceptId, litC);
+    expect(sheet.ready, isTrue);
+    expect(sheet.position, const Offset(300, 200));
+    // the sheet's Create: one CreateSource over the concept, landing there
+    final made = reduce(
+      t.state,
+      const CreateSourceRequested(sourceName: 'lit2', existingConcept: litC),
+    );
+    final create = made.effects.single as CreateSource;
     expect(create.existingConcept, litC);
-    expect(create.sourceName, 'lit2', reason: '`lit` is taken');
-    expect(t.state.editor.pendingInsert?.position, const Offset(300, 200));
-    expect(t.state.editor.pendingInsert?.templateId, PendingInsert.kSourceInsert);
-    expect(t.state.editor.pendingInsert?.named, isTrue);
+    expect(create.sourceName, 'lit2');
+    expect(made.state.editor.sourceSheet, isNull);
+    expect(made.state.editor.pendingInsert?.position, const Offset(300, 200));
+    expect(made.state.editor.pendingInsert?.templateId, PendingInsert.kSourceInsert);
+    expect(made.state.editor.pendingInsert?.named, isTrue);
   });
 }

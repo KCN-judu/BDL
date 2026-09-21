@@ -3019,6 +3019,36 @@
   "@createSource": {
     "description": "Source sheet: the primary button; enabled once the concept choice and the name are complete."
   },
+  "createBlock": "Create Block",
+  "@createBlock": {
+    "description": "Primary button of the block sheet: creates one Sem block of the fixed concept."
+  },
+  "blockName": "Block name",
+  "@blockName": {
+    "description": "Label of the name field on the block sheet."
+  },
+  "newBlockOfConcept": "New block of {concept}",
+  "@newBlockOfConcept": {
+    "description": "Title of the block sheet: a Sem block of an existing concept is created and named.",
+    "placeholders": {
+      "concept": {
+        "type": "String"
+      }
+    }
+  },
+  "aBlockOneValueOfConcept": "One value of {concept} in this design: name the thing it is in your product. A Source until you give it a formula.",
+  "@aBlockOneValueOfConcept": {
+    "description": "Subtitle of the block sheet.",
+    "placeholders": {
+      "concept": {
+        "type": "String"
+      }
+    }
+  },
+  "blockOfConceptCaption": "Only the block is created; the concept stays as it is. One Undo removes the block.",
+  "@blockOfConceptCaption": {
+    "description": "Caption under the block sheet's preview."
+  },
   "noConceptsYetCreateOne": "No concepts in this design yet — choose New concept.",
   "@noConceptsYetCreateOne": {
     "description": "Source sheet: shown in place of the concept pop-up when the design has no concept to bind to."

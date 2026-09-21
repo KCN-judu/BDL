@@ -695,6 +695,38 @@ void main() {
       expect(created, isEmpty);
     });
 
+    testWidgets('the block sheet (ADR-0044): the concept is fixed, the block is named', (t) async {
+      // a block of Tilt: no choice of concept on the sheet, the name is the
+      // concept's in lower camel case made free — `tilt` here
+      final created = await pumpSheet(
+        t,
+        SourceSheetState(
+          presetId: '',
+          revision: 1,
+          conceptId: tilt,
+          candidates: pb.SourceCandidatesResponse(),
+        ),
+      );
+      expect(find.text('Existing concept'), findsNothing, reason: 'the concept is decided');
+      expect(find.byKey(const ValueKey('block-concept')), findsOneWidget);
+      expect(find.text('Block name'), findsOneWidget);
+      expect(find.text('mapping tilt : () -> Tilt'), findsOneWidget);
+      expect(find.text(kEnglish.blockOfConceptCaption), findsOneWidget);
+      await t.enterText(find.byKey(const ValueKey('source-name')), 'lidTilt');
+      await t.pumpAndSettle();
+      await t.tap(find.text('Create Block'));
+      await t.pumpAndSettle();
+      expect(created.single.existingConcept, tilt);
+      expect(created.single.newConceptName, isNull);
+      expect(created.single.sourceName, 'lidTilt');
+    });
+
+    test('a block is named after its concept, made free among the design\'s names', () {
+      expect(blockNameFor('RoomTemperature', const []), 'roomTemperature');
+      expect(blockNameFor('RoomTemperature', const ['roomTemperature']), 'roomTemperature2');
+      expect(blockNameFor('', const []), 'block');
+    });
+
     test('a suggested name is made free; the design\'s names are never touched', () {
       expect(suggestedSourceName('RoomTemperature', const []), 'roomTemperatureInput');
       expect(

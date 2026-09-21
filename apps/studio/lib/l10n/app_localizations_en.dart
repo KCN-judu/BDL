@@ -2212,6 +2212,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get createSource => 'Create Source';
 
   @override
+  String get createBlock => 'Create Block';
+
+  @override
+  String get blockName => 'Block name';
+
+  @override
+  String newBlockOfConcept(String concept) {
+    return 'New block of $concept';
+  }
+
+  @override
+  String aBlockOneValueOfConcept(String concept) {
+    return 'One value of $concept in this design: name the thing it is in your product. A Source until you give it a formula.';
+  }
+
+  @override
+  String get blockOfConceptCaption =>
+      'Only the block is created; the concept stays as it is. One Undo removes the block.';
+
+  @override
   String get noConceptsYetCreateOne => 'No concepts in this design yet — choose New concept.';
 
   @override

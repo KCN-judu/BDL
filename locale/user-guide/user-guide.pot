@@ -350,7 +350,7 @@ msgstr ""
 #: docs/user-guide/reference/cli.md:71
 #: docs/user-guide/reference/formula-language.md:102
 #: docs/user-guide/reference/project-files.md:127
-#: docs/user-guide/studio/canvas.md:238
+#: docs/user-guide/studio/canvas.md:242
 #: docs/user-guide/studio/code-view.md:152
 #: docs/user-guide/studio/deploy.md:185
 #: docs/user-guide/studio/formula-editor.md:248
@@ -5248,43 +5248,51 @@ msgstr ""
 msgid "open the concept sheet for that category; the concept you name is created with a block of it at the drop point"
 msgstr ""
 
-#: docs/user-guide/studio/canvas.md:177
+#: docs/user-guide/studio/canvas.md:176
+msgid "drag a concept's row from the Project sidebar onto the canvas"
+msgstr ""
+
+#: docs/user-guide/studio/canvas.md:176
+msgid "open the block sheet over that concept: name the block, and it lands at the drop point"
+msgstr ""
+
+#: docs/user-guide/studio/canvas.md:178
 msgid "**Driving an output.** An output is driven by a block that produces exactly what the output accepts, in the output's timing domain — never by a rule, which has no value of its own. Drag the block's output socket onto the output, or select the output and choose the block in its inspector's _Connect_ pop-up, which names the blocks that qualify. The edge on the canvas runs from the driving block, and the output's context menu names it (_Show Driver: brightness_)."
 msgstr ""
 
-#: docs/user-guide/studio/canvas.md:186
+#: docs/user-guide/studio/canvas.md:187
 msgid "The context menu"
 msgstr ""
 
-#: docs/user-guide/studio/canvas.md:188
+#: docs/user-guide/studio/canvas.md:189
 msgid "The menu is about what you right-clicked, and only that. While it is open the canvas waits: nothing behind the menu moves, scrolls or lights up; the first click outside closes it and does nothing else; a right-click somewhere else moves it there. Use ↑ ↓ ⏎ and Esc as in any menu."
 msgstr ""
 
-#: docs/user-guide/studio/canvas.md:193
-msgid "On **empty canvas**: **Add Block ▸** — _of Tilt_, _of Brightness_, … one entry per concept of the design, each making a block of that concept where you clicked (a Source until you give it a formula); then **New Concept ▸** — _Recent_, the four kinds of value (_On / off_, _Count_, _Level_, _Decide later_), _Quantities ▸_ (_Angle_, _Length_, …), _More…_ (which opens the Library tab), each opening the [concept sheet](library.md#creating-a-concept) where you name the concept, which is created together with a block of it at the point; **Add Source ▸** — _New source…_, opening the [Source sheet](library.md#sources), where you choose the concept the Source provides — an existing one, or a new one made with it; **Add Instance ▸** _component_ and **New Behavior Group**; then **Select All** and **Frame All**; then **Arrange Automatically** and **Undo Arrange** (see [The nodes](#the-nodes))."
+#: docs/user-guide/studio/canvas.md:194
+msgid "On **empty canvas**: **Add Block ▸** — _of Tilt_, _of Brightness_, … one entry per concept of the design, each opening the **block sheet** over that concept: you name the block — the thing it is in your product (`lidTilt`, `roomTemp`) — and it lands where you clicked, a Source until you give it a formula. Dragging a concept's row from the Project sidebar onto the canvas opens the same sheet at the drop point. Then **New Concept ▸** — _Recent_, the four kinds of value (_On / off_, _Count_, _Level_, _Decide later_), _Quantities ▸_ (_Angle_, _Length_, …), _More…_ (which opens the Library tab), each opening the [concept sheet](library.md#creating-a-concept) where you name the concept, which is created together with a block of it at the point; **Add Source ▸** — _New source…_, opening the [Source sheet](library.md#sources), where you choose the concept the Source provides — an existing one, or a new one made with it; **Add Instance ▸** _component_ and **New Behavior Group**; then **Select All** and **Frame All**; then **Arrange Automatically** and **Undo Arrange** (see [The nodes](#the-nodes))."
 msgstr ""
 
-#: docs/user-guide/studio/canvas.md:206
+#: docs/user-guide/studio/canvas.md:210
 msgid "On a **block** or its **mapping block** (one menu: they are one declaration): **Edit Definition** (not for a Source — the environment provides its value), **Show Formula** / **Hide Formula** (when it has one), **Rename**, **Reveal in Code** (the Split view opens at its declaration); **Fix ▸** — the fixes the compiler offers for it, as in the inspector's Fixes section: a ready fix runs, one that needs a choice lists the choices, one the language cannot express yet is shown greyed with the reason; then **Group as Behavior**, **Add to Group ▸** or **Remove from …**; and **Delete _name_**."
 msgstr ""
 
-#: docs/user-guide/studio/canvas.md:215
+#: docs/user-guide/studio/canvas.md:219
 msgid "On an **output**: **Show Driver: _name_**, **Rename**, **Reveal in Code**, **Fix ▸** (connect a value, disconnect a driver), **Delete _name_**. On a **link**: **Show _one end_**, **Show _the other_**, **Disconnect** (and **Show Binding** for a binding between components). A right-click selects the link first, as it selects a node. **Disconnect** is offered where the design can lose that one link: an output's driver, a binding, a read link (the name in the formula becomes `?`). The short joint from a mapping block into its block is the formula itself and has none — _Detach definition_ in the inspector takes the whole formula away. On an **instance**: **Edit Source**, **Rename**, **Reveal in Code**, **Delete _name_**. On a **behavior**: **Rename**, **Collapse** / **Expand**, **Package as Reusable Component…**, **Ungroup**. A concept has no node: its menu is in the sidebar."
 msgstr ""
 
-#: docs/user-guide/studio/canvas.md:228
+#: docs/user-guide/studio/canvas.md:232
 msgid "On one of **several selected nodes**: the menu is about all of them — **Group as Behavior (_n_ relationships)** and **Delete _n_ objects**."
 msgstr ""
 
-#: docs/user-guide/studio/canvas.md:231
+#: docs/user-guide/studio/canvas.md:235
 msgid "What the canvas never shows"
 msgstr ""
 
-#: docs/user-guide/studio/canvas.md:233
+#: docs/user-guide/studio/canvas.md:237
 msgid "Draft formulas (a typed but unadded formula changes nothing on the canvas — nor its links; the status line counts it), values (those are on the Simulate page), a relationship's memory of its own last value (`delay` draws no link), and identifiers or type names (those are in Explain)."
 msgstr ""
 
-#: docs/user-guide/studio/canvas.md:240
+#: docs/user-guide/studio/canvas.md:244
 msgid "[Workspace](workspace.md) · [Inspector](inspector.md) · [System projects](system-projects.md) · [Keyboard and mouse](../reference/keyboard-and-mouse.md)"
 msgstr ""
 

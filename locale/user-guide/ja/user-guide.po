@@ -351,7 +351,7 @@ msgstr ""
 #: docs/user-guide/reference/cli.md:71
 #: docs/user-guide/reference/formula-language.md:102
 #: docs/user-guide/reference/project-files.md:127
-#: docs/user-guide/studio/canvas.md:238
+#: docs/user-guide/studio/canvas.md:242
 #: docs/user-guide/studio/code-view.md:152
 #: docs/user-guide/studio/deploy.md:185
 #: docs/user-guide/studio/formula-editor.md:248
@@ -5249,43 +5249,51 @@ msgstr "ライブラリタブの行をキャンバスへドラッグ"
 msgid "open the concept sheet for that category; the concept you name is created with a block of it at the drop point"
 msgstr "そのカテゴリのコンセプトシートを開きます。名前を付けたコンセプトは、そのブロックとともにドロップした位置に作られます"
 
-#: docs/user-guide/studio/canvas.md:177
+#: docs/user-guide/studio/canvas.md:176
+msgid "drag a concept's row from the Project sidebar onto the canvas"
+msgstr "プロジェクトサイドバーの概念の行をキャンバスへドラッグ"
+
+#: docs/user-guide/studio/canvas.md:176
+msgid "open the block sheet over that concept: name the block, and it lands at the drop point"
+msgstr "その概念のブロックシートを開く：ブロックに名前を付けると、落とした位置に置かれる"
+
+#: docs/user-guide/studio/canvas.md:178
 msgid "**Driving an output.** An output is driven by a block that produces exactly what the output accepts, in the output's timing domain — never by a rule, which has no value of its own. Drag the block's output socket onto the output, or select the output and choose the block in its inspector's _Connect_ pop-up, which names the blocks that qualify. The edge on the canvas runs from the driving block, and the output's context menu names it (_Show Driver: brightness_)."
 msgstr "**出力を駆動する。** 出力は、出力のタイミングドメインで、出力が受け入れるものをちょうど生成するブロックによって駆動されます——自分の値を持たないルールによってではありません。ブロックの出力ソケットを出力の上へドラッグするか、出力を選択してそのインスペクタの _接続_ ポップアップでブロックを選びます。ポップアップは条件を満たすブロックを列挙します。キャンバス上のエッジは駆動するブロックから伸び、出力のコンテキストメニューがその名前を示します（_ドライバを表示: brightness_）。"
 
-#: docs/user-guide/studio/canvas.md:186
+#: docs/user-guide/studio/canvas.md:187
 msgid "The context menu"
 msgstr "コンテキストメニュー"
 
-#: docs/user-guide/studio/canvas.md:188
+#: docs/user-guide/studio/canvas.md:189
 msgid "The menu is about what you right-clicked, and only that. While it is open the canvas waits: nothing behind the menu moves, scrolls or lights up; the first click outside closes it and does nothing else; a right-click somewhere else moves it there. Use ↑ ↓ ⏎ and Esc as in any menu."
 msgstr "メニューは右クリックしたものについてだけです。開いている間、キャンバスは待ちます。メニューの後ろでは何も動かず、スクロールせず、光りません。外側での最初のクリックはメニューを閉じるだけで、他には何もしません。別の場所で右クリックすればそこへ移ります。↑ ↓ ⏎ と Esc は他のメニューと同じです。"
 
-#: docs/user-guide/studio/canvas.md:193
-msgid "On **empty canvas**: **Add Block ▸** — _of Tilt_, _of Brightness_, … one entry per concept of the design, each making a block of that concept where you clicked (a Source until you give it a formula); then **New Concept ▸** — _Recent_, the four kinds of value (_On / off_, _Count_, _Level_, _Decide later_), _Quantities ▸_ (_Angle_, _Length_, …), _More…_ (which opens the Library tab), each opening the [concept sheet](library.md#creating-a-concept) where you name the concept, which is created together with a block of it at the point; **Add Source ▸** — _New source…_, opening the [Source sheet](library.md#sources), where you choose the concept the Source provides — an existing one, or a new one made with it; **Add Instance ▸** _component_ and **New Behavior Group**; then **Select All** and **Frame All**; then **Arrange Automatically** and **Undo Arrange** (see [The nodes](#the-nodes))."
-msgstr "**空のキャンバス**では、**ブロックを追加 ▸**——_Tilt のブロック_、_Brightness のブロック_ … 設計のコンセプトごとに 1 項目で、それぞれクリックした場所にそのコンセプトのブロックを作ります（式を与えるまでは入力元）。続いて**新しいコンセプト ▸**——_最近使用_、4 種類の値（_オン / オフ_、_カウント_、_レベル_、_後で決める_）、_物理量 ▸_（_角度_、_長さ_ …）、_その他…_（ライブラリタブを開く）——それぞれが[コンセプトシート](library.md#creating-a-concept)を開き、そこでコンセプトに名前を付けると、そのブロックとともにその位置に作られます。**入力元を追加 ▸**——_新しい入力元…_ は[入力元シート](library.md#sources)を開き、その入力元が提供するコンセプト——既存のもの、または一緒に作る新しいもの——を選びます。**インスタンスを追加 ▸** _コンポーネント_ と**新しいビヘイビアグループ**、続いて**すべて選択**と**全体を表示**、さらに**自動配置**と**自動配置を元に戻す**（[ノード](#the-nodes)を参照）。"
+#: docs/user-guide/studio/canvas.md:194
+msgid "On **empty canvas**: **Add Block ▸** — _of Tilt_, _of Brightness_, … one entry per concept of the design, each opening the **block sheet** over that concept: you name the block — the thing it is in your product (`lidTilt`, `roomTemp`) — and it lands where you clicked, a Source until you give it a formula. Dragging a concept's row from the Project sidebar onto the canvas opens the same sheet at the drop point. Then **New Concept ▸** — _Recent_, the four kinds of value (_On / off_, _Count_, _Level_, _Decide later_), _Quantities ▸_ (_Angle_, _Length_, …), _More…_ (which opens the Library tab), each opening the [concept sheet](library.md#creating-a-concept) where you name the concept, which is created together with a block of it at the point; **Add Source ▸** — _New source…_, opening the [Source sheet](library.md#sources), where you choose the concept the Source provides — an existing one, or a new one made with it; **Add Instance ▸** _component_ and **New Behavior Group**; then **Select All** and **Frame All**; then **Arrange Automatically** and **Undo Arrange** (see [The nodes](#the-nodes))."
+msgstr "**空のキャンバス**の上で：**Add Block ▸**——_of Tilt_、_of Brightness_……設計の概念ごとに一項目で、それぞれその概念の**ブロックシート**を開きます。ブロックに名前を付け——製品でそれが何であるか（`lidTilt`、`roomTemp`）——クリックした位置に置かれます。式を与えるまでは入力元です。プロジェクトサイドバーの概念の行をキャンバスへドラッグしても、落とした位置に同じシートが開きます。続いて **New Concept ▸**——_Recent_、四種の値（_On / off_、_Count_、_Level_、_Decide later_）、_Quantities ▸_（_Angle_、_Length_……）、_More…_（Library タブを開く）で、それぞれ[概念シート](library.md#creating-a-concept)を開き、そこで概念に名前を付けると、概念はそのブロック一つとともにその位置に作られます。**Add Source ▸**——_New source…_ は[入力元シート](library.md#sources)を開き、入力元が提供する概念——既存のもの、または一緒に作る新しいもの——を選びます。**Add Instance ▸** _コンポーネント_ と **New Behavior Group**、続いて **Select All** と **Frame All**、そして **Arrange Automatically** と **Undo Arrange**（[ノード](#the-nodes)参照）。"
 
-#: docs/user-guide/studio/canvas.md:206
+#: docs/user-guide/studio/canvas.md:210
 msgid "On a **block** or its **mapping block** (one menu: they are one declaration): **Edit Definition** (not for a Source — the environment provides its value), **Show Formula** / **Hide Formula** (when it has one), **Rename**, **Reveal in Code** (the Split view opens at its declaration); **Fix ▸** — the fixes the compiler offers for it, as in the inspector's Fixes section: a ready fix runs, one that needs a choice lists the choices, one the language cannot express yet is shown greyed with the reason; then **Group as Behavior**, **Add to Group ▸** or **Remove from …**; and **Delete _name_**."
 msgstr "**ブロック**またはその**マッピングブロック**の上で（同じ一つのメニュー：両者は一つの宣言）：**Edit Definition**（入力元にはない——値は環境が与える）、**Show Formula** / **Hide Formula**（式があるとき）、**Rename**、**Reveal in Code**（Split ビューがその宣言の位置で開く）、**Fix ▸**——コンパイラがそれに提示する修正で、インスペクタの Fixes 節と同じ：準備済みの修正は実行され、選択が必要なものは選択肢を列挙し、言語がまだ表現できないものは理由付きで灰色表示。続いて **Group as Behavior**、**Add to Group ▸** または **Remove from …**、そして **Delete _名前_**。"
 
-#: docs/user-guide/studio/canvas.md:215
+#: docs/user-guide/studio/canvas.md:219
 msgid "On an **output**: **Show Driver: _name_**, **Rename**, **Reveal in Code**, **Fix ▸** (connect a value, disconnect a driver), **Delete _name_**. On a **link**: **Show _one end_**, **Show _the other_**, **Disconnect** (and **Show Binding** for a binding between components). A right-click selects the link first, as it selects a node. **Disconnect** is offered where the design can lose that one link: an output's driver, a binding, a read link (the name in the formula becomes `?`). The short joint from a mapping block into its block is the formula itself and has none — _Detach definition_ in the inspector takes the whole formula away. On an **instance**: **Edit Source**, **Rename**, **Reveal in Code**, **Delete _name_**. On a **behavior**: **Rename**, **Collapse** / **Expand**, **Package as Reusable Component…**, **Ungroup**. A concept has no node: its menu is in the sidebar."
 msgstr "**出力**の上で：**Show Driver: _名前_**、**Rename**、**Reveal in Code**、**Fix ▸**（値を接続、駆動元を切断）、**Delete _名前_**。**リンク**の上で：**Show _一端_**、**Show _他端_**、**Disconnect**（コンポーネント間のバインディングでは **Show Binding** も）。右クリックはノードと同様、まずリンクを選択します。**Disconnect** は設計がその一本を失えるところでだけ提示されます：出力の駆動元、バインディング、読み取りリンク（式の中の名が `?` になる）。マッピングブロックからそのブロックへの短い継ぎ目は式そのものなので項目がありません——インスペクタの _Detach definition_ が式全体を取り去ります。**インスタンス**の上で：**Edit Source**、**Rename**、**Reveal in Code**、**Delete _名前_**。**振る舞い**の上で：**Rename**、**Collapse** / **Expand**、**Package as Reusable Component…**、**Ungroup**。概念にはノードがありません。そのメニューはサイドバーにあります。"
 
-#: docs/user-guide/studio/canvas.md:228
+#: docs/user-guide/studio/canvas.md:232
 msgid "On one of **several selected nodes**: the menu is about all of them — **Group as Behavior (_n_ relationships)** and **Delete _n_ objects**."
 msgstr "**複数の選択ノード**の 1 つで：メニューはそれら全体についてです——**振る舞いとしてグループ化（_n_ 個の関係）**と **_n_ 個のオブジェクトを削除**。"
 
-#: docs/user-guide/studio/canvas.md:231
+#: docs/user-guide/studio/canvas.md:235
 msgid "What the canvas never shows"
 msgstr "キャンバスが決して示さないもの"
 
-#: docs/user-guide/studio/canvas.md:233
+#: docs/user-guide/studio/canvas.md:237
 msgid "Draft formulas (a typed but unadded formula changes nothing on the canvas — nor its links; the status line counts it), values (those are on the Simulate page), a relationship's memory of its own last value (`delay` draws no link), and identifiers or type names (those are in Explain)."
 msgstr "下書きの式（入力したが追加していない式はキャンバス上の何も変えません——そのリンクも。ステータス行が数えます）、値（シミュレーションページにあります）、関係が自分の前回の値を記憶すること（`delay` はリンクを描きません）、識別子や型名（説明にあります）。"
 
-#: docs/user-guide/studio/canvas.md:240
+#: docs/user-guide/studio/canvas.md:244
 msgid "[Workspace](workspace.md) · [Inspector](inspector.md) · [System projects](system-projects.md) · [Keyboard and mouse](../reference/keyboard-and-mouse.md)"
 msgstr "[ワークスペース](workspace.md) · [インスペクター](inspector.md) · [システムプロジェクト](system-projects.md) · [キーボードとマウス](../reference/keyboard-and-mouse.md)"
 

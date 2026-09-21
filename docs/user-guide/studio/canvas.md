@@ -173,6 +173,7 @@ selected link, and the menu key (or ⇧F10) opens the selected object's menu.
 | double-click a block or its mapping block                                               | rename the block in place (an output is renamed in the inspector; an instance opens its source)                                                            |
 | right-click, or Control-click                                                           | the context menu (below)                                                                                                                                   |
 | drag a row from the Library tab onto the canvas                                         | open the concept sheet for that category; the concept you name is created with a block of it at the drop point                                             |
+| drag a concept's row from the Project sidebar onto the canvas                           | open the block sheet over that concept: name the block, and it lands at the drop point                                                                     |
 
 **Driving an output.** An output is driven by a block that produces exactly what
 the output accepts, in the output's timing domain — never by a rule, which has
@@ -191,16 +192,19 @@ click outside closes it and does nothing else; a right-click somewhere else
 moves it there. Use ↑ ↓ ⏎ and Esc as in any menu.
 
 On **empty canvas**: **Add Block ▸** — _of Tilt_, _of Brightness_, … one entry
-per concept of the design, each making a block of that concept where you clicked
-(a Source until you give it a formula); then **New Concept ▸** — _Recent_, the
-four kinds of value (_On / off_, _Count_, _Level_, _Decide later_), _Quantities
-▸_ (_Angle_, _Length_, …), _More…_ (which opens the Library tab), each opening
-the [concept sheet](library.md#creating-a-concept) where you name the concept,
-which is created together with a block of it at the point; **Add Source ▸** —
-_New source…_, opening the [Source sheet](library.md#sources), where you choose
-the concept the Source provides — an existing one, or a new one made with it;
-**Add Instance ▸** _component_ and **New Behavior Group**; then **Select All**
-and **Frame All**; then **Arrange Automatically** and **Undo Arrange** (see
+per concept of the design, each opening the **block sheet** over that concept:
+you name the block — the thing it is in your product (`lidTilt`, `roomTemp`) —
+and it lands where you clicked, a Source until you give it a formula. Dragging a
+concept's row from the Project sidebar onto the canvas opens the same sheet at
+the drop point. Then **New Concept ▸** — _Recent_, the four kinds of value (_On
+/ off_, _Count_, _Level_, _Decide later_), _Quantities ▸_ (_Angle_, _Length_,
+…), _More…_ (which opens the Library tab), each opening the
+[concept sheet](library.md#creating-a-concept) where you name the concept, which
+is created together with a block of it at the point; **Add Source ▸** — _New
+source…_, opening the [Source sheet](library.md#sources), where you choose the
+concept the Source provides — an existing one, or a new one made with it; **Add
+Instance ▸** _component_ and **New Behavior Group**; then **Select All** and
+**Frame All**; then **Arrange Automatically** and **Undo Arrange** (see
 [The nodes](#the-nodes)).
 
 On a **block** or its **mapping block** (one menu: they are one declaration):

@@ -351,7 +351,7 @@ msgstr ""
 #: docs/user-guide/reference/cli.md:71
 #: docs/user-guide/reference/formula-language.md:102
 #: docs/user-guide/reference/project-files.md:127
-#: docs/user-guide/studio/canvas.md:238
+#: docs/user-guide/studio/canvas.md:242
 #: docs/user-guide/studio/code-view.md:152
 #: docs/user-guide/studio/deploy.md:185
 #: docs/user-guide/studio/formula-editor.md:248
@@ -5249,43 +5249,51 @@ msgstr "把库标签页中的一行拖到画布上"
 msgid "open the concept sheet for that category; the concept you name is created with a block of it at the drop point"
 msgstr "打开该类别的概念表单；你命名的概念会连同它的一个块一起在放置点创建"
 
-#: docs/user-guide/studio/canvas.md:177
+#: docs/user-guide/studio/canvas.md:176
+msgid "drag a concept's row from the Project sidebar onto the canvas"
+msgstr "把概念在项目侧栏中的行拖到画布上"
+
+#: docs/user-guide/studio/canvas.md:176
+msgid "open the block sheet over that concept: name the block, and it lands at the drop point"
+msgstr "打开该概念的块表单：为块命名，它就落在放下的位置"
+
+#: docs/user-guide/studio/canvas.md:178
 msgid "**Driving an output.** An output is driven by a block that produces exactly what the output accepts, in the output's timing domain — never by a rule, which has no value of its own. Drag the block's output socket onto the output, or select the output and choose the block in its inspector's _Connect_ pop-up, which names the blocks that qualify. The edge on the canvas runs from the driving block, and the output's context menu names it (_Show Driver: brightness_)."
 msgstr "**驱动输出。** 输出由在其时序域中恰好生成它所接受概念的块来驱动——绝不会由规则驱动，规则没有自己的值。把块的输出插口拖到输出上，或者选中输出，在其检查器的 _连接_ 弹出菜单中选择块，菜单会列出符合条件的块。画布上的连线从驱动块出发，输出的上下文菜单会写出它的名字（_显示驱动者：brightness_）。"
 
-#: docs/user-guide/studio/canvas.md:186
+#: docs/user-guide/studio/canvas.md:187
 msgid "The context menu"
 msgstr "上下文菜单"
 
-#: docs/user-guide/studio/canvas.md:188
+#: docs/user-guide/studio/canvas.md:189
 msgid "The menu is about what you right-clicked, and only that. While it is open the canvas waits: nothing behind the menu moves, scrolls or lights up; the first click outside closes it and does nothing else; a right-click somewhere else moves it there. Use ↑ ↓ ⏎ and Esc as in any menu."
 msgstr "菜单只关于你右键点击的那个对象。菜单打开期间，画布等待：菜单后面没有任何东西会移动、滚动或高亮；在外面第一次点击只会关闭菜单，不做别的；在别处右键点击则把菜单移到那里。↑ ↓ ⏎ 和 Esc 与任何菜单中一样。"
 
-#: docs/user-guide/studio/canvas.md:193
-msgid "On **empty canvas**: **Add Block ▸** — _of Tilt_, _of Brightness_, … one entry per concept of the design, each making a block of that concept where you clicked (a Source until you give it a formula); then **New Concept ▸** — _Recent_, the four kinds of value (_On / off_, _Count_, _Level_, _Decide later_), _Quantities ▸_ (_Angle_, _Length_, …), _More…_ (which opens the Library tab), each opening the [concept sheet](library.md#creating-a-concept) where you name the concept, which is created together with a block of it at the point; **Add Source ▸** — _New source…_, opening the [Source sheet](library.md#sources), where you choose the concept the Source provides — an existing one, or a new one made with it; **Add Instance ▸** _component_ and **New Behavior Group**; then **Select All** and **Frame All**; then **Arrange Automatically** and **Undo Arrange** (see [The nodes](#the-nodes))."
-msgstr "在**空白画布**上：**添加块 ▸**——_Tilt 的块_、_Brightness 的块_……设计中的每个概念一项，各在你点击处创建该概念的一个块（在你给它公式之前是来源）；然后是**新概念 ▸**——_最近使用_、四种值类型（_开 / 关_、_计数_、_程度_、_稍后决定_）、_物理量 ▸_（_角度_、_长度_……）、_更多…_（打开库标签页），每一项都会打开[概念表单](library.md#creating-a-concept)让你为概念命名，概念会连同它的一个块一起在该点创建；**添加来源 ▸**——_新建来源…_，打开[来源表单](library.md#sources)，在其中选择该来源提供的概念——已有的，或随之新建的；**添加实例 ▸** _组件_ 和**新建行为组**；然后是**全选**和**显示全部**；再然后是**自动排列**和**撤销自动排列**（见[节点](#the-nodes)）。"
+#: docs/user-guide/studio/canvas.md:194
+msgid "On **empty canvas**: **Add Block ▸** — _of Tilt_, _of Brightness_, … one entry per concept of the design, each opening the **block sheet** over that concept: you name the block — the thing it is in your product (`lidTilt`, `roomTemp`) — and it lands where you clicked, a Source until you give it a formula. Dragging a concept's row from the Project sidebar onto the canvas opens the same sheet at the drop point. Then **New Concept ▸** — _Recent_, the four kinds of value (_On / off_, _Count_, _Level_, _Decide later_), _Quantities ▸_ (_Angle_, _Length_, …), _More…_ (which opens the Library tab), each opening the [concept sheet](library.md#creating-a-concept) where you name the concept, which is created together with a block of it at the point; **Add Source ▸** — _New source…_, opening the [Source sheet](library.md#sources), where you choose the concept the Source provides — an existing one, or a new one made with it; **Add Instance ▸** _component_ and **New Behavior Group**; then **Select All** and **Frame All**; then **Arrange Automatically** and **Undo Arrange** (see [The nodes](#the-nodes))."
+msgstr "在**空白画布**上：**Add Block ▸**——_of Tilt_、_of Brightness_……设计中每个概念一项，每项打开该概念的**块表单**：你为块命名——它在你产品里对应的实物（`lidTilt`、`roomTemp`）——它落在你点击的位置，在你给它公式之前是一个来源。把概念在项目侧栏中的行拖到画布上，会在放下的位置打开同一个表单。然后是 **New Concept ▸**——_Recent_、四种值（_On / off_、_Count_、_Level_、_Decide later_）、_Quantities ▸_（_Angle_、_Length_……）、_More…_（打开 Library 标签页），每项打开[概念表单](library.md#creating-a-concept)，在那里为概念命名，概念连同它的一个块一起在该点创建；**Add Source ▸**——_New source…_，打开[来源表单](library.md#sources)，在那里选择来源提供的概念——已有的，或随之新建的；**Add Instance ▸** _组件_ 和 **New Behavior Group**；然后是 **Select All** 和 **Frame All**；然后是 **Arrange Automatically** 和 **Undo Arrange**（见[节点](#the-nodes)）。"
 
-#: docs/user-guide/studio/canvas.md:206
+#: docs/user-guide/studio/canvas.md:210
 msgid "On a **block** or its **mapping block** (one menu: they are one declaration): **Edit Definition** (not for a Source — the environment provides its value), **Show Formula** / **Hide Formula** (when it has one), **Rename**, **Reveal in Code** (the Split view opens at its declaration); **Fix ▸** — the fixes the compiler offers for it, as in the inspector's Fixes section: a ready fix runs, one that needs a choice lists the choices, one the language cannot express yet is shown greyed with the reason; then **Group as Behavior**, **Add to Group ▸** or **Remove from …**; and **Delete _name_**."
 msgstr "在一个**块**或它的**映射块**上（同一个菜单：它们是同一个声明）：**Edit Definition**（来源没有——其值由环境提供）、**Show Formula** / **Hide Formula**（有公式时）、**Rename**、**Reveal in Code**（Split 视图在其声明处打开）；**Fix ▸**——编译器为它提供的修复，与检查器的 Fixes 部分相同：就绪的修复直接执行，需要选择的列出选项，语言尚不能表达的以灰色显示并附原因；然后是 **Group as Behavior**、**Add to Group ▸** 或 **Remove from …**；以及 **Delete _名字_**。"
 
-#: docs/user-guide/studio/canvas.md:215
+#: docs/user-guide/studio/canvas.md:219
 msgid "On an **output**: **Show Driver: _name_**, **Rename**, **Reveal in Code**, **Fix ▸** (connect a value, disconnect a driver), **Delete _name_**. On a **link**: **Show _one end_**, **Show _the other_**, **Disconnect** (and **Show Binding** for a binding between components). A right-click selects the link first, as it selects a node. **Disconnect** is offered where the design can lose that one link: an output's driver, a binding, a read link (the name in the formula becomes `?`). The short joint from a mapping block into its block is the formula itself and has none — _Detach definition_ in the inspector takes the whole formula away. On an **instance**: **Edit Source**, **Rename**, **Reveal in Code**, **Delete _name_**. On a **behavior**: **Rename**, **Collapse** / **Expand**, **Package as Reusable Component…**, **Ungroup**. A concept has no node: its menu is in the sidebar."
 msgstr "在一个**输出**上：**Show Driver: _名字_**、**Rename**、**Reveal in Code**、**Fix ▸**（连接一个值、断开一个驱动者）、**Delete _名字_**。在一条**连线**上：**Show _一端_**、**Show _另一端_**、**Disconnect**（组件之间的绑定还有 **Show Binding**）。右击会先选中连线，如同选中节点。**Disconnect** 只在设计可以失去这一条连线时提供：输出的驱动者、绑定、读取连线（公式中的名字变成 `?`）。从映射块接入其块的短接头就是公式本身，没有此项——检查器里的 _Detach definition_ 会拿走整个公式。在一个**实例**上：**Edit Source**、**Rename**、**Reveal in Code**、**Delete _名字_**。在一个**行为**上：**Rename**、**Collapse** / **Expand**、**Package as Reusable Component…**、**Ungroup**。概念没有节点：它的菜单在侧栏。"
 
-#: docs/user-guide/studio/canvas.md:228
+#: docs/user-guide/studio/canvas.md:232
 msgid "On one of **several selected nodes**: the menu is about all of them — **Group as Behavior (_n_ relationships)** and **Delete _n_ objects**."
 msgstr "在**多个选中节点**之一上：菜单关于它们全体——**归为行为（_n_ 个关系）**和**删除 _n_ 个对象**。"
 
-#: docs/user-guide/studio/canvas.md:231
+#: docs/user-guide/studio/canvas.md:235
 msgid "What the canvas never shows"
 msgstr "画布永远不显示的"
 
-#: docs/user-guide/studio/canvas.md:233
+#: docs/user-guide/studio/canvas.md:237
 msgid "Draft formulas (a typed but unadded formula changes nothing on the canvas — nor its links; the status line counts it), values (those are on the Simulate page), a relationship's memory of its own last value (`delay` draws no link), and identifiers or type names (those are in Explain)."
 msgstr "草稿公式（键入但未添加的公式不会改变画布上的任何东西——包括它的连线；状态行会计数）、值（在仿真页）、关系对自己上一个值的记忆（`delay` 不画连线），以及标识符或类型名（在解释区）。"
 
-#: docs/user-guide/studio/canvas.md:240
+#: docs/user-guide/studio/canvas.md:244
 msgid "[Workspace](workspace.md) · [Inspector](inspector.md) · [System projects](system-projects.md) · [Keyboard and mouse](../reference/keyboard-and-mouse.md)"
 msgstr "[工作区](workspace.md) · [检查器](inspector.md) · [系统项目](system-projects.md) · [键盘与鼠标](../reference/keyboard-and-mouse.md)"
 

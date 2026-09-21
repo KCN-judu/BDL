@@ -946,6 +946,22 @@ NodeRef asDeclaration(NodeRef n) => n.kind == NodeKind.definition ? NodeRef.mapp
 /// block along at this offset.
 Offset attachedBlockPosition(Offset sem) => Offset(sem.dx - 200 - 2 * 16, sem.dy);
 
+/// `roomTemperature`, `roomTemperature2`: the name of a new Sem block of a
+/// concept — the concept's name in lower camel case, kept unique among
+/// [taken] (the design's names).
+String blockNameFor(String conceptName, Iterable<String> taken) {
+  final base = conceptName.isEmpty
+      ? 'block'
+      : conceptName[0].toLowerCase() + conceptName.substring(1);
+  final names = taken.toSet();
+  if (!names.contains(base)) return base;
+  var i = 2;
+  while (names.contains('$base$i')) {
+    i++;
+  }
+  return '$base$i';
+}
+
 /// The single selection of one canvas node.
 Selection singleSelection(NodeRef ref) => switch (ref.kind) {
   NodeKind.concept => ConceptSelected(ref.id),
@@ -1672,11 +1688,16 @@ class SourceSheetState {
     required this.revision,
     this.position,
     this.candidates,
+    this.conceptId,
   });
 
   /// The Source item whose preset prefills the sheet; empty for the
   /// generic *New Source…*.
   final String presetId;
+
+  /// A block sheet (ADR-0044): the concept is this one and not chosen on
+  /// the sheet — the designer names the block, the thing it is.
+  final int? conceptId;
 
   /// The revision the candidates were asked for.
   final int revision;
@@ -1687,8 +1708,13 @@ class SourceSheetState {
 
   bool get ready => candidates != null;
 
-  SourceSheetState withCandidates(pb.SourceCandidatesResponse c) =>
-      SourceSheetState(presetId: presetId, revision: revision, position: position, candidates: c);
+  SourceSheetState withCandidates(pb.SourceCandidatesResponse c) => SourceSheetState(
+    presetId: presetId,
+    revision: revision,
+    position: position,
+    candidates: c,
+    conceptId: conceptId,
+  );
 }
 
 /// A committed definition's projection for an expanded node on the canvas:

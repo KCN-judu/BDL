@@ -311,29 +311,22 @@ Transition reduce(AppState s, AppAction action) {
     ),
     AddBlockRequested(:final conceptId, :final position) => _whenProject(s, () {
       if (s.editor.pendingInsert != null) return Transition(s);
-      final concept = s.project!.concepts.where((c) => c.id.toInt() == conceptId).firstOrNull;
-      if (concept == null) return Transition(s);
-      final busy = pending(s);
+      if (!s.project!.concepts.any((c) => c.id.toInt() == conceptId)) return Transition(s);
+      // the block sheet: the concept is decided, the name is asked; no
+      // candidates to rank, so the sheet is on screen at once
       return Transition(
-        busy.copyWith(
-          editor: busy.editor.copyWith(
-            pendingInsert: PendingInsert(
-              templateId: PendingInsert.kSourceInsert,
+        s.copyWith(
+          editor: s.editor.copyWith(
+            sourceSheet: SourceSheetState(
+              presetId: '',
+              revision: s.revision,
               position: position,
-              named: true,
+              conceptId: conceptId,
+              candidates: pb.SourceCandidatesResponse(),
             ),
             clearRenaming: true,
           ),
         ),
-        [
-          CreateSource(
-            baseRevision: s.revision,
-            sourceName: freshBlockName(s, concept.name),
-            description: '',
-            existingConcept: conceptId,
-            component: s.editor.componentScope,
-          ),
-        ],
       );
     }),
     AutoLayoutRequested() => _whenProject(s, () => Transition(s, const [ArrangeLayout()])),
@@ -1105,18 +1098,9 @@ List<RecentProject> _remember(List<RecentProject> recent, pb.ProjectProjection p
 /// `roomTemperature`, `roomTemperature2`: the name of a new Sem block of a
 /// concept — the concept's name in lower camel case, kept unique among the
 /// design's relationships.
-String freshBlockName(AppState s, String conceptName) {
-  final base = conceptName.isEmpty
-      ? 'block'
-      : conceptName[0].toLowerCase() + conceptName.substring(1);
-  final taken = {for (final m in s.project?.mappings ?? const <pb.MappingView>[]) m.name};
-  if (!taken.contains(base)) return base;
-  var i = 2;
-  while (taken.contains('$base$i')) {
-    i++;
-  }
-  return '$base$i';
-}
+String freshBlockName(AppState s, String conceptName) => blockNameFor(conceptName, [
+  for (final m in s.project?.mappings ?? const <pb.MappingView>[]) m.name,
+]);
 
 /// The one semantic disconnect of an edge, by what it joins.  Nothing here
 /// decides more than the model or the compiler already can: a Sem block

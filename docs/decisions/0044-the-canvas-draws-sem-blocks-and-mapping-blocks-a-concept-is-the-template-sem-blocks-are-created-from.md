@@ -102,11 +102,14 @@ unchanged.
    (`SocketRole.slot`, from `MappingAnalysis.slots`), an output socket, and the
    formula line with its disclosure. A **concept** is the template a Sem block
    is created from — its name, value form and hue, in the sidebar and on every
-   socket that carries it; the Concept sheet (ADR-0041) creates the template,
-   _Add Block ▸ of C_ instantiates it, as often as the product has such values.
-   A **rule** — a relationship with inputs — is the template a mapping block
-   applies: in the sidebar with its own inspector, where its parameters over
-   concepts are edited (ADR-0013), never a node of the value graph.
+   socket that carries it; the Concept sheet (ADR-0041) creates the template;
+   _Add Block ▸ of C_ and the concept's row dragged from the sidebar onto the
+   canvas instantiate it through the **block sheet** — the concept fixed, the
+   block named for the thing it is in the product — as often as the product has
+   such values. A **rule** — a relationship with inputs — is the template a
+   mapping block applies: in the sidebar with its own inspector, where its
+   parameters over concepts are edited (ADR-0013), never a node of the value
+   graph.
 
 2. **Edges.** A **read edge** from each Sem block a definition names into the
    mapping block's read socket for it — `MappingAnalysis.references` filtered to
