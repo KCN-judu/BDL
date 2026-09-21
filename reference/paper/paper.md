@@ -57,7 +57,7 @@ The system is **BDL**, a Behavior Design Language. BDL is organized around a wor
 The central example is a relationship. Instead of decomposing a design into procedural steps such as “read tilt,” “calculate brightness,” and “set the LED,” BDL represents one mapping:
 
 $$
-?f : \text{Tilt} \to \text{Brightness}.
+?f : \mathsf{Tilt} \to \mathsf{Brightness}.
 $$
 
 The mapping may exist before its body. A formula, curve, examples, or a fitted function can later be attached as a definition of the same block. Once a formula is supplied, for example
@@ -542,9 +542,9 @@ The foundational kernel object is a **design declaration**,
 
 $$
 \begin{aligned}
-\text{DesignDecl} = \langle\; &\mathit{id} : \text{DeclId},\\
-&\mathit{interface} : \text{DeclInterface},\\
-&\mathit{realization} : \text{Option}\;\text{Expr}\;\rangle,
+\mathsf{DesignDecl} = \langle\; &\mathit{id} : \mathsf{DeclId},\\
+&\mathit{interface} : \mathsf{DeclInterface},\\
+&\mathit{realization} : \mathsf{Option}\;\mathsf{Expr}\;\rangle,
 \end{aligned}
 $$
 
@@ -552,22 +552,22 @@ where an interface is an expected type together with a set of public commitments
 
 $$
 \begin{aligned}
-\text{DeclInterface} = \langle\; &\mathit{expectedType} : \text{Ty},\\
-&\mathit{commitments} : \text{PropertyId}^{*}\;\rangle.
+\mathsf{DeclInterface} = \langle\; &\mathit{expectedType} : \mathsf{Ty},\\
+&\mathit{commitments} : \mathsf{PropertyId}^{*}\;\rangle.
 \end{aligned}
 $$
 
-A design is an environment $\Delta : \text{DeclId} \to \text{Option}\;\text{DesignDecl}$. An unresolved declaration is one whose realization is `none`; nothing else distinguishes it. Display names are not part of the kernel.
+A design is an environment $\Delta : \mathsf{DeclId} \to \mathsf{Option}\;\mathsf{DesignDecl}$. An unresolved declaration is one whose realization is `none`; nothing else distinguishes it. Display names are not part of the kernel.
 
 #### Typing through the type view
 
-Terms refer to declarations by identity, $\text{declRef}\;d$. The typing judgment $\Theta;\Delta;G;\Gamma \vdash e : \tau$ takes a concept environment $\Theta$ and a grant $G$, both introduced in the next section, and a declaration environment $\Delta$ which it consults through exactly one projection, the type view $\Delta^{\mathrm{ty}}(d)$, the expected type of $d$ if declared:
+Terms refer to declarations by their constant name $\delta$. The typing judgment $\Theta;\Delta;\Gamma \vdash_{G} e : \tau$ takes a concept environment $\Theta$ and a grant $G$, both introduced in the next section, and a declaration environment $\Delta$ which it consults through exactly one projection, the type view $\Delta \ni \delta : \tau$, the expected type of $\delta$ if declared:
 
 $$
-\frac{\Delta^{\mathrm{ty}}(d) = \text{some}\;\tau}{\Theta;\Delta;G;\Gamma \vdash \text{declRef}\;d : \tau}.
+\frac{\Delta \ni d : \tau}{\Theta;\Delta;\Gamma \vdash_{G} d : \tau}.
 $$
 
-This is the only rule that reads $\Delta$. A client of $d$ is therefore typed against $d$'s interface and never against its body, whether or not a body exists. Inference is syntax-directed and decidable, and an inference function is proved sound, complete, and unique against the judgment.
+This is the only rule that reads $\Delta$. A client of $\delta$ is therefore typed against $\delta$'s interface and never against its body, whether or not a body exists. Inference is syntax-directed and decidable, and an inference function is proved sound, complete, and unique against the judgment.
 
 #### Satisfaction, well-formedness, and refinement
 
@@ -575,27 +575,27 @@ A realization $e$ **satisfies** an interface $\mathcal{P}$ when it has the expec
 
 $$
 \begin{aligned}
-&\text{Satisfies}\;\mathit{ev}\;\Theta\;\Delta\;\Gamma\;e\;S \;:=\\
-&\quad \Theta;\Delta;\text{Grant.of}(S.\mathit{ty});\Gamma \vdash e : S.\mathit{ty}\\
-&\quad \land\; \forall p \in S.\mathit{commitments}.\;\mathit{ev}\;\Delta\;e\;p ,
+&\mathsf{Satisfies}\;\mathit{ev}\;\Theta\;\Delta\;\Gamma\;e\;\mathcal{P} \;:=\\
+&\quad \Theta;\Delta;\Gamma \vdash_{\mathrm{grant}(\mathcal{P}.\tau)} e : \mathcal{P}.\tau\\
+&\quad \land\; \forall p \in \mathcal{P}.\mathcal{K}.\;\mathit{ev}\;\Delta\;e\;p ,
 \end{aligned}
 $$
 
-where $\mathcal{P}.\mathit{ty}$ abbreviates the expected type. Here $\mathit{ev} : \text{DeclEnv} \to \text{Expr} \to \text{PropertyId} \to \text{Prop}$ is an abstract **evidence** relation supplied by the validation layer. It takes the environment as an argument because compositional discharge needs it: “$A$ is monotone because $B$ is committed to be monotone” consults $B$'s interface. A design is **globally well formed** when every stored declaration sits under its own identity and its realization, if any, satisfies its interface in that design.
+where $\mathcal{P}.\tau$ is the expected type and $\mathcal{P}.\mathcal{K}$ the commitment list. Here $\mathit{ev} : \mathsf{DeclEnv} \to \mathsf{Expr} \to \mathsf{PropertyId} \to \mathsf{Prop}$ is an abstract **evidence** relation supplied by the validation layer. It takes the environment as an argument because compositional discharge needs it: “$A$ is monotone because $B$ is committed to be monotone” consults $B$'s interface. A design is **globally well formed** when every stored declaration sits under its own identity and its realization, if any, satisfies its interface in that design.
 
-Interfaces are ordered by monotone refinement: $\mathcal{P} \sqsubseteq \mathcal{P}'$ when the expected type is unchanged and the commitments of $\mathcal{P}$ are contained in those of $\mathcal{P}'$. A declaration takes a refinement step in one of three ways. An unresolved declaration may have its interface refined; an unresolved declaration may be realized with a satisfying body; and a realized declaration may have its interface strengthened, provided the body is re-verified against the new interface. The reflexive-transitive closure of these steps is exactly the structural order together with well-formedness of the target, where the structural order $\text{DeclLeq}$ requires the same identity, interface refinement, and a write-once realization, and $\text{EnvRefines}\;\Delta_1\;\Delta_2$ lifts it pointwise while permitting new declarations.
+Interfaces are ordered by monotone refinement: $\mathcal{P} \sqsubseteq \mathcal{P}'$ when the expected type is unchanged and the commitments of $\mathcal{P}$ are contained in those of $\mathcal{P}'$. A declaration takes a refinement step in one of three ways. An unresolved declaration may have its interface refined; an unresolved declaration may be realized with a satisfying body; and a realized declaration may have its interface strengthened, provided the body is re-verified against the new interface. The reflexive-transitive closure of these steps is exactly the structural order together with well-formedness of the target, where the structural order $\mathsf{DeclLeq}$ requires the same identity, interface refinement, and a write-once realization, and $\mathsf{EnvRefines}\;\Delta_1\;\Delta_2$ lifts it pointwise while permitting new declarations.
 
 #### Client stability
 
 Can a declaration be refined or realized without editing its clients, and without invalidating what was previously established about them? The answer has two halves with deliberately different hypotheses.
 
-The typing half needs only the structural order. If $B$ is declared in $\Delta$ and $\text{DeclLeq}\;B\;B'$, then every typing judgment in $\Delta$ holds in $\Delta[B']$. This is a one-line consequence of typing references through the type view, and it should be read as such: its content is that the decision to let clients see interfaces and never bodies is *sufficient* for client stability. It is also necessary. Change $B$'s expected type while keeping its identity, and every client breaks.
+The typing half needs only the structural order. If $B$ is declared in $\Delta$ and $\mathsf{DeclLeq}\;B\;B'$, then every typing judgment in $\Delta$ holds in $\Delta[B']$. This is a one-line consequence of typing references through the type view, and it should be read as such: its content is that the decision to let clients see interfaces and never bodies is *sufficient* for client stability. It is also necessary. Change $B$'s expected type while keeping its identity, and every client breaks.
 
-The commitment half needs more. If $\Delta$ is globally well formed, $B$ takes a refinement step whose side conditions are checked in $\Delta$, and the evidence relation is **monotone** — stable under $\text{EnvRefines}$ — then $\Delta[B']$ is globally well formed, and the same holds for a whole lifecycle of $B$ checked against the original environment. The monotonicity hypothesis was not part of the original design. It appeared when the theorem was attacked. An evidence relation that consults the *absence* of information — one that discharges a property because a dependency is still unresolved, say — is destroyed by a perfectly valid realization step, and the non-monotonicity of that evidence can be derived from the failure of preservation. Any discharge mechanism intended to survive refinement must therefore be positive in the environment.
+The commitment half needs more. If $\Delta$ is globally well formed, $B$ takes a refinement step whose side conditions are checked in $\Delta$, and the evidence relation is **monotone** — stable under $\mathsf{EnvRefines}$ — then $\Delta[B']$ is globally well formed, and the same holds for a whole lifecycle of $B$ checked against the original environment. The monotonicity hypothesis was not part of the original design. It appeared when the theorem was attacked. An evidence relation that consults the *absence* of information — one that discharges a property because a dependency is still unresolved, say — is destroyed by a perfectly valid realization step, and the non-monotonicity of that evidence can be derived from the failure of preservation. Any discharge mechanism intended to survive refinement must therefore be positive in the environment.
 
 #### Refinement versus edit
 
-The preservation theorems cover refinement only. The table lists the operations examined and their classification; each row is witnessed by an example on a two-declaration design in which $A : \text{nat} \to \text{bool}$ is realized through an unresolved $B : \text{nat} \to \text{nat}$.
+The preservation theorems cover refinement only. The table lists the operations examined and their classification; each row is witnessed by an example on a two-declaration design in which $A : \mathsf{Nat} \to \mathsf{Bool}$ is realized through an unresolved $B : \mathsf{Nat} \to \mathsf{Nat}$.
 
 ```{=typst}
 #block(width: 100%)[
@@ -636,7 +636,7 @@ Suppose concepts were represented only by their representation types, so that `T
 The one that survived is a single nominal type constructor over an internal identity:
 
 $$
-\text{ConceptId},\qquad \text{Ty} \ni \text{sem}\;C .
+\mathsf{ConceptId},\qquad \mathsf{Ty} \ni C .
 $$
 
 Two distinct identities are distinct types regardless of representation, so the invalid wire is rejected by the ordinary rules of the simply typed calculus with no additional judgment. An explicit relationship between concepts, `tiltToMotor : Tilt -> MotorAngle`, is an ordinary declaration of arrow type — a design relationship that is itself signature-first and may remain unresolved — and it appears in the term wherever a crossing occurs. It is not a cast, coercion, or conversion; the kernel has no such mechanism.
@@ -649,21 +649,21 @@ Erasing all concept identities is sound — a well-typed semantic term is well t
 
 Nominal identity alone leaves Sem values opaque. Without a way to observe a representation and construct a value, no mapping can be realized by a formula; under nominal typing alone a Sem value can only originate from a declaration of concept type. That is the right state before representation is added. The question is how to add it without destroying what identity just bought.
 
-The obvious form — global $\text{rep}_C : \text{sem}\;C \to R$ and $\text{mk}_C : R \to \text{sem}\;C$ available to every term — destroys it immediately. $\lambda x.\;\text{mk}_{\text{Motor}}(\text{rep}_{\text{Tilt}}\;x)$ is a well-typed `Tilt -> MotorAngle` in the empty environment, with no declaration and no mapping; a motor angle can be manufactured from a literal; and the crossing can hide inside a body whose signature mentions no motor. Observation alone, with no construction, is safe but cannot realize a mapping. The surviving model separates the two:
+The obvious form — global $\mathsf{rep}_C : C \to R$ and $\mathsf{mk}_C : R \to C$ available to every term — destroys it immediately. $\lambda x.\;\mathsf{mk}_{\mathsf{Motor}}(\mathsf{rep}_{\mathsf{Tilt}}\;x)$ is a well-typed `Tilt -> MotorAngle` in the empty environment, with no declaration and no mapping; a motor angle can be manufactured from a literal; and the crossing can hide inside a body whose signature mentions no motor. Observation alone, with no construction, is safe but cannot realize a mapping. The surviving model separates the two:
 
-- a **concept environment** $\Theta : \text{ConceptId} \to \text{Option}\;\text{Ty}$ binds each concept, write-once, to a representation that mentions no concept type and contains no function type;
-- $\text{rep}\;e$ is typed at $R$ whenever $e : \text{sem}\;C$ and $\Theta\;C = \text{some}\;R$, everywhere;
-- $\text{mk}\;C\;e$ is typed at $\text{sem}\;C$ whenever $e : R$, $\Theta\;C = \text{some}\;R$, *and the grant permits $C$*.
-
-$$
-\frac{\Theta\;C = \text{some}\;R \quad \Theta;\Delta;G;\Gamma \vdash e : \text{sem}\;C}{\Theta;\Delta;G;\Gamma \vdash \text{rep}\;e : R}
-$$
+- a **concept environment** $\Theta : \mathsf{ConceptId} \to \mathsf{Option}\;\mathsf{Ty}$ binds each concept, write-once, to a representation that mentions no concept type and contains no function type;
+- $\mathsf{rep}\;e$ is typed at $R$ whenever $e : C$ and $\Theta(C) = R$, everywhere;
+- $\mathsf{mk}_C\;e$ is typed at $C$ whenever $e : R$, $\Theta(C) = R$, *and the grant permits $C$*.
 
 $$
-\frac{G\;C \quad \Theta\;C = \text{some}\;R \quad \Theta;\Delta;G;\Gamma \vdash e : R}{\Theta;\Delta;G;\Gamma \vdash \text{mk}\;C\;e : \text{sem}\;C}
+\frac{\Theta(C) = R \quad \Theta;\Delta;\Gamma \vdash_{G} e : C}{\Theta;\Delta;\Gamma \vdash_{G} \mathsf{rep}\;e : R}
 $$
 
-The grant $G$ is a predicate on concepts. Client code is typed under the empty grant. The realization of a declaration is typed under $\text{Grant.of}(\tau)$, the concepts in result position of its own signature $\tau$. A value of `MotorAngle` can therefore be constructed only inside a declaration that announces `MotorAngle` in its signature, which is exactly where a reader of the design would look for it. A well-typed term constructs $C$ only where granted $C$; the hidden crossing above is rejected under the grant of an unrelated declaration and becomes legal, and visible, once `tiltToMotor` is declared; binding an unbound concept is monotone for typing, satisfaction, and global well-formedness; and rebinding a concept to a different representation is an edit that breaks existing realizations.
+$$
+\frac{C \in G \quad \Theta(C) = R \quad \Theta;\Delta;\Gamma \vdash_{G} e : R}{\Theta;\Delta;\Gamma \vdash_{G} \mathsf{mk}_C\;e : C}
+$$
+
+The grant $G$ is a predicate on concepts. Client code is typed under the empty grant. The realization of a declaration is typed under $\mathrm{grant}(\tau)$, the concepts in result position of its own signature $\tau$. A value of `MotorAngle` can therefore be constructed only inside a declaration that announces `MotorAngle` in its signature, which is exactly where a reader of the design would look for it. A well-typed term constructs $C$ only where granted $C$; the hidden crossing above is rejected under the grant of an unrelated declaration and becomes legal, and visible, once `tiltToMotor` is declared; binding an unbound concept is monotone for typing, satisfaction, and global well-formedness; and rebinding a concept to a different representation is an edit that breaks existing realizations.
 
 Two constraints on the representation were not anticipated. Representation types must be free of concept types, because if `Tilt` may be represented *by* `MotorAngle` then `rep` itself is a hidden mapping under every policy, including observation-only. And they must be data types, a requirement that arrived later from the reactive semantics: a Sem value may be delayed, and a function-typed representation would carry a closure across ticks.
 
@@ -671,25 +671,25 @@ The grant is a known shape — a capability attached to a definition site, or eq
 
 ### Physical dimensions
 
-Physical quantities have type $\text{q}\;d$ for a dimension $d$, an exponent vector over a small set of base dimensions. There is no dimension-specific typing rule; the algebra lives entirely in the types of registered primitive operators,
+Physical quantities have type $\mathsf{Q}_{d}$ for a dimension $d$, an exponent vector over a small set of base dimensions. There is no dimension-specific typing rule; the algebra lives entirely in the types of registered primitive operators,
 
 $$
 \begin{aligned}
-\text{add}_d &: \text{q}\;d \to \text{q}\;d \to \text{q}\;d,\\
-\text{mul}_{d_1 d_2} &: \text{q}\;d_1 \to \text{q}\;d_2 \to \text{q}\;(d_1 + d_2),\\
-\text{div}_{d_1 d_2} &: \text{q}\;d_1 \to \text{q}\;d_2 \to \text{q}\;(d_1 - d_2),
+\mathsf{add}_d &: \mathsf{Q}_{d} \to \mathsf{Q}_{d} \to \mathsf{Q}_{d},\\
+\mathsf{mul}_{d_1 d_2} &: \mathsf{Q}_{d_1} \to \mathsf{Q}_{d_2} \to \mathsf{Q}_{(d_1 + d_2)},\\
+\mathsf{div}_{d_1 d_2} &: \mathsf{Q}_{d_1} \to \mathsf{Q}_{d_2} \to \mathsf{Q}_{(d_1 - d_2)},
 \end{aligned}
 $$
 
 and an application is checked by ordinary function application. Erasing every dimension to the zero vector is sound and accepts `length + time`, so the untyped numeric baseline is the erasure of dimensional typing in the same sense that the representation baseline is the erasure of nominal typing. Dimensions might instead have been validation metadata; the argument against is that multiplication and division *produce* dimensions, so any checker recomputes the same inference, but that family was argued against rather than excluded.
 
-Dimension and concept identity are orthogonal. `Tilt` and `MotorAngle` both bound to `q Angle` remain distinct types. A mapping realized by the dimensioned formula `λx. mk bright (rep x · gain)` with `gain : q (0 − Angle)` is typed; a dimension error inside the formula is caught by the same typing; and the formula cannot manufacture a `MotorAngle` despite the shared dimension. The association between a concept and its dimension lives in $\Theta$, not in the identity and not in the type constructor. The earlier draft's two-index $\text{Sem}[n,d]$ becomes $\text{sem}\;C$ together with $\Theta\;C = \text{some}\;(\text{q}\;d)$.
+Dimension and concept identity are orthogonal. `Tilt` and `MotorAngle` both bound to `q Angle` remain distinct types. A mapping realized by the dimensioned formula `λx. mk bright (rep x · gain)` with `gain : q (0 − Angle)` is typed; a dimension error inside the formula is caught by the same typing; and the formula cannot manufacture a `MotorAngle` despite the shared dimension. The association between a concept and its dimension lives in $\Theta$, not in the identity and not in the type constructor. The earlier draft's two-index $\mathsf{Sem}[n,d]$ becomes $C$ together with $\Theta(C) = (\mathsf{Q}_{d})$.
 
 Units are surface (§IV.4 in full). A literal `n u` elaborates to a dimensioned literal scaled by the unit's factor; changing the unit changes the value, never the type, and mixed-unit addition works after elaboration. Expressing a quantity in a unit — its *coordinate* — and building a quantity from a coordinate are the same arithmetic against a unit constant: `inUnit(q, u)` is `q` divided by the unit's scale and has dimension zero, `withUnit(x, u)` is `x` times the scale and has the unit's dimension, and a conversion between two units is their composition; each is elaborated, none is a kernel construct, and a unit choice never reaches a type (`1 m` and `100 cm` are equal values of one type). The unit laws — round trips, derived conversion, dimension safety — are proved over an abstract scalar domain and instantiated by a symbolic group in which `π` is a generator, so that a degree is exactly `π/180` radian; the executable kernel truncates to naturals and production approximates in floating point. A preferred display unit is presentation: it changes the number shown and no judgment of the design. Affine scales such as degrees Celsius are not linear (`0 °C` is `273.15 K`), yet their literals and coordinates elaborate exactly by adding an offset. Unit coordinates erase chart identity while preserving affine coordinate change: the conversion between two charts is an affine map, conversions compose and invert — compatible charts are isomorphic coordinate systems — and differences inherit the linear part of that transformation, so a difference of ten degrees Celsius is eighteen degrees Fahrenheit from any base point, while a conversion with a non-zero offset is not an additive homomorphism. The same abstraction covers sensor calibration and encoder offsets. These laws are proved over an abstract field and instantiated exactly at rationals; production floating point is held to a toleranced version of them. Whether a sum of two absolute temperatures should be permitted is a separate, optional validation question that the dimension does not decide and conversion does not need.
 
 ### The concept ladder (Phases 19–22)
 
-An audit late in the development (Phase 19) asked whether several declarations may produce values of one concept, and found that the kernel had always allowed it and that no judgment resolves a value by concept: the only ambiguity lay in a canvas that drew a concept as a node with a value. One phase (20) tried the opposite discipline — one producer per concept as a global invariant beside the single driver — and proved it preserved under refinement and composition; it was then set aside (FVD-0161 → FVD-0163) because the value already has a place: the declaration. The reading that closed the question is the **concept ladder** (FVD-0163, FVD-0164). A representation ($\Theta\;C = R$) is the type of a type. A **concept** — a $\text{ConceptId}$, the nominal type $\text{sem}\;C$ — is a *type*, a template. A **Sem block** — a declaration of type $\text{sem}\;C$ — is an *instance*: one value per tick, whose write-once realization is its **mapping block** and one producer, absent for a Source. A **value** $\text{sem}\;C\;v$ is the instance's state at a tick. In parallel, a rule (an arrow-typed declaration) is a template and a mapping block its instance. $\text{sem}\;C$ reads "a Sem of $C$". Several Sem blocks of one concept are ordinary — `sensorA`, `sensorB`, `roomTemp : Temperature` — and every reference is by declaration identity; the theorems that state this (`producedBy_unique`, `reads_iff_dependsOn`, `new_sem_transparent`, `Surface/Sem`) are restatements of Phases 0–1, 5 and 13, which is the point. Phase 22 fixed the vocabulary in the code (`SemanticId` became `ConceptId`; theorem names keep their historical spelling, "semantic identity" in a name reading "concept identity") and removed the proofs the misreading had produced.
+An audit late in the development (Phase 19) asked whether several declarations may produce values of one concept, and found that the kernel had always allowed it and that no judgment resolves a value by concept: the only ambiguity lay in a canvas that drew a concept as a node with a value. One phase (20) tried the opposite discipline — one producer per concept as a global invariant beside the single driver — and proved it preserved under refinement and composition; it was then set aside (FVD-0161 → FVD-0163) because the value already has a place: the declaration. The reading that closed the question is the **concept ladder** (FVD-0163, FVD-0164). A representation ($\Theta\;C = R$) is the type of a type. A **concept** — a $\mathsf{ConceptId}$, the nominal type $C$ — is a *type*, a template. A **Sem block** — a declaration of type $C$ — is an *instance*: one value per tick, whose write-once realization is its **mapping block** and one producer, absent for a Source. A **value** $\mathsf{mk}_C\,v$ is the instance's state at a tick. In parallel, a rule (an arrow-typed declaration) is a template and a mapping block its instance. $C$ reads "a Sem of $C$". Several Sem blocks of one concept are ordinary — `sensorA`, `sensorB`, `roomTemp : Temperature` — and every reference is by declaration identity; the theorems that state this (`producedBy_unique`, `reads_iff_dependsOn`, `new_sem_transparent`, `Surface/Sem`) are restatements of Phases 0–1, 5 and 13, which is the point. Phase 22 fixed the vocabulary in the code (`SemanticId` became `ConceptId`; theorem names keep their historical spelling, "semantic identity" in a name reading "concept identity") and removed the proofs the misreading had produced.
 
 ## IV.3 Data and equations
 
@@ -710,9 +710,9 @@ Four additions were made to the kernel; each was tested against a derivation fir
 **The list recursor.** `Expr.fold f z l`, with `fold f z [x₁,…,xₙ] = f x₁ (… (f xₙ z))`, is a *term former*, not a registered operator. The kernel has no recursion, deliberately; a total language needs an eliminator for its inductive data, and this is the one construct in BDL that applies a function value in the course of evaluation. Registered operators still never apply closures. Its evaluation rule unrolls syntactically through the environment:
 
 $$
-\frac{\Delta;I;t;\rho \vdash f \Downarrow v_f \quad z \Downarrow v_z \quad l \Downarrow [\,]}{\text{fold}\;f\;z\;l \Downarrow v_z}
+\frac{\Delta;I;t;\rho \vdash f \Downarrow v_f \quad z \Downarrow v_z \quad l \Downarrow [\,]}{\mathsf{fold}\;f\;z\;l \Downarrow v_z}
 \qquad
-\frac{f \Downarrow v_f \quad z \Downarrow v_z \quad l \Downarrow x :: xs \quad [xs, v_z, v_f] \vdash \text{fold}\;\#2\;\#1\;\#0 \Downarrow r \quad [r, x, v_f] \vdash \#2\,\#1\,\#0 \Downarrow v}{\text{fold}\;f\;z\;l \Downarrow v}
+\frac{f \Downarrow v_f \quad z \Downarrow v_z \quad l \Downarrow x :: xs \quad [xs, v_z, v_f] \vdash \mathsf{fold}\;\#2\;\#1\;\#0 \Downarrow r \quad [r, x, v_f] \vdash \#2\,\#1\,\#0 \Downarrow v}{\mathsf{fold}\;f\;z\;l \Downarrow v}
 $$
 
 The recursive premise evaluates the syntactic term `fold (var 2) (var 1) (var 0)` in an environment holding the three values; this keeps `Ev` an ordinary inductive relation with no mutual recursion, so every earlier proof by induction on `Ev` extends by one case. Totality is a separate lemma by induction on the list (`fold_total`, `mfold_total`), and the fundamental theorem's `fold` case uses it. Every collection operation — `map`, `filter`, `any`, `all`, `contains`, `append`, `sum`, `zip`, and, through `toList`, the option eliminators — is a definition over it (below). The alternative of one primitive per operation was rejected because a primitive cannot apply a closure and each would need its own evaluation rule; the alternative of bounded unrolling was rejected because lists (the Phase-9a buffer) are unbounded.
@@ -854,7 +854,7 @@ Temperature scales are affine: `canonical = scale·x + offset`. Phase 10 showed,
 Over one physical dimension, a chart is `⟨scale, offset⟩`, valid when `scale ≠ 0`, with
 
 $$
-\text{reconstruct}_u(x) = s_u\,x + o_u, \qquad \text{coord}_u(q) = (q - o_u)/s_u .
+\mathsf{reconstruct}_u(x) = s_u\,x + o_u, \qquad \mathsf{coord}_u(q) = (q - o_u)/s_u .
 $$
 
 The scalar domain is an abstract field (`Field K`: commutative, with inverses of non-zero elements, negatives and fractions) instantiated by `Q`, exact rationals built in the development as a quotient of `Int` fractions with every law proved from `Int`'s ring identities — because core Lean's `Rat` proves its algebra with `Classical.choice`, which this development has kept out of every proof. Concrete equalities are decided by cross-multiplication.
@@ -921,33 +921,33 @@ The lamp remembers its last brightness when set down, and its temperature update
 The reactive kernel adds one expression form and no types:
 
 $$
-\text{delay}\;\mathit{init}\;e .
+\mathsf{delay}\;\mathit{init}\;e .
 $$
 
-Its meaning is given by a tick-indexed big-step evaluation relation $\text{Ev}\;\Delta\;I\;t\;\rho\;e\;v$: the value of $e$ at tick $t$ under a local environment $\rho$, where $I : \text{DeclId} \to \mathbb{N} \to \text{Value}$ supplies the inputs. Every declaration is a stream by interpretation. An unresolved declaration is an input and takes its value from $I$; a realized declaration is evaluated from its body at the current tick; $\text{delay}\;\mathit{init}\;e$ evaluates $e$ at tick $t$ when read at tick $t+1$, and $\mathit{init}$ at tick $0$:
+Its meaning is given by a tick-indexed big-step evaluation relation $\mathsf{Ev}\;\Delta\;I\;t\;\rho\;e\;v$: the value of $e$ at tick $t$ under a local environment $\rho$, where $I : \mathsf{DeclId} \to \mathbb{N} \to \mathsf{Value}$ supplies the inputs. Every declaration is a stream by interpretation. An unresolved declaration is an input and takes its value from $I$; a realized declaration is evaluated from its body at the current tick; $\mathsf{delay}\;\mathit{init}\;e$ evaluates $e$ at tick $t$ when read at tick $t+1$, and $\mathit{init}$ at tick $0$:
 
 $$
-\frac{\Delta^{\mathrm{real}}(d) = \text{none}}{\text{Ev}\;\Delta\;I\;t\;\rho\;(\text{declRef}\;d)\;(I\;d\;t)}
+\frac{d \notin \mathrm{def}(\Delta)}{\mathsf{Ev}\;\Delta\;I\;t\;\rho\;(d)\;(I\;d\;t)}
 $$
 
 $$
-\frac{\text{Ev}\;\Delta\;I\;0\;\rho\;\mathit{init}\;v}{\text{Ev}\;\Delta\;I\;0\;\rho\;(\text{delay}\;\mathit{init}\;e)\;v}
+\frac{\mathsf{Ev}\;\Delta\;I\;0\;\rho\;\mathit{init}\;v}{\mathsf{Ev}\;\Delta\;I\;0\;\rho\;(\mathsf{delay}\;\mathit{init}\;e)\;v}
 \qquad
-\frac{\text{Ev}\;\Delta\;I\;t\;\rho\;e\;v}{\text{Ev}\;\Delta\;I\;(t{+}1)\;\rho\;(\text{delay}\;\mathit{init}\;e)\;v}.
+\frac{\mathsf{Ev}\;\Delta\;I\;t\;\rho\;e\;v}{\mathsf{Ev}\;\Delta\;I\;(t{+}1)\;\rho\;(\mathsf{delay}\;\mathit{init}\;e)\;v}.
 $$
 
-There is no signal type in $\text{Ty}$. Under this semantics a signal type would be inhabited by exactly the terms of the underlying type and would reject nothing. The information a reactive type would carry in a multi-domain setting is *which clock*, and the next section places that information in a judgment rather than a type. There is likewise no event type. Within one domain an input delivers at most one value per tick by construction, so an occurrence is a stream of optional type, and the streams of type $\text{opt}\;\tau$ are exactly the streams of multiplicity at most one. What separates an occurrence from an optional value — two occurrences falling in one observation interval — can only be seen when a source ticks faster than its observer. That is a cross-domain question and is treated at the end of this part.
+There is no signal type in $\mathsf{Ty}$. Under this semantics a signal type would be inhabited by exactly the terms of the underlying type and would reject nothing. The information a reactive type would carry in a multi-domain setting is *which clock*, and the next section places that information in a judgment rather than a type. There is likewise no event type. Within one domain an input delivers at most one value per tick by construction, so an occurrence is a stream of optional type, and the streams of type $\mathsf{Option}\;\tau$ are exactly the streams of multiplicity at most one. What separates an occurrence from an optional value — two occurrences falling in one observation interval — can only be seen when a source ticks faster than its observer. That is a cross-domain question and is treated at the end of this part.
 
-Two restrictions on $\text{delay}$ were forced by the totality proof rather than chosen. The delayed type must be a **data** type, one with no function type inside, because a delayed closure would have to persist across ticks and the logical relation for closures is tick-indexed and cannot be transported. And $\text{delay}$ may occur only at **top level**, under no binder, because a delay under a lambda would re-evaluate its operand at the previous tick in an environment created at the current tick. Temporal state therefore belongs to declarations, and mappings are pointwise. This is the arrangement of `pre` in Lustre, where it lives in nodes rather than in functions [@halbwachs1991lustre], and its practical consequence is that a reusable stateful component is instantiated into fresh declarations rather than abstracted over.
+Two restrictions on $\mathsf{delay}$ were forced by the totality proof rather than chosen. The delayed type must be a **data** type, one with no function type inside, because a delayed closure would have to persist across ticks and the logical relation for closures is tick-indexed and cannot be transported. And $\mathsf{delay}$ may occur only at **top level**, under no binder, because a delay under a lambda would re-evaluate its operand at the previous tick in an environment created at the current tick. Temporal state therefore belongs to declarations, and mappings are pointwise. This is the arrangement of `pre` in Lustre, where it lives in nodes rather than in functions [@halbwachs1991lustre], and its practical consequence is that a reusable stateful component is instantiated into fresh declarations rather than abstracted over.
 
 #### Causality
 
-The dependency graph on declarations comes in three variants. Structural dependency, $\text{DependsOn}$, records every reference in a body. Instantaneous dependency, $\text{InstDependsOn}$, excludes references under the delayed operand of a $\text{delay}$ (the initial value is read at tick $0$ and counts as instantaneous). A design is **causal** when its instantaneous graph is acyclic, witnessed by a bounded rank:
+The dependency graph on declarations comes in three variants. Structural dependency, $\mathsf{DependsOn}$, records every reference in a body. Instantaneous dependency, $\mathsf{InstDependsOn}$, excludes references under the delayed operand of a $\mathsf{delay}$ (the initial value is read at tick $0$ and counts as instantaneous). A design is **causal** when its instantaneous graph is acyclic, witnessed by a bounded rank:
 
 $$
 \begin{aligned}
-\text{Causal}\;\Delta \;:=\; \exists\,\mathit{rank},R.\;&(\forall d.\;\mathit{rank}\;d < R)\;\land\\
-\forall a\,b.\;&\text{InstDependsOn}\;\Delta\;a\;b \to \mathit{rank}\;b < \mathit{rank}\;a .
+\mathsf{Causal}\;\Delta \;:=\; \exists\,\mathit{rank},R.\;&(\forall d.\;\mathit{rank}\;d < R)\;\land\\
+\forall a\,b.\;&\mathsf{InstDependsOn}\;\Delta\;a\;b \to \mathit{rank}\;b < \mathit{rank}\;a .
 \end{aligned}
 $$
 
@@ -955,11 +955,11 @@ On the delay-free fragment this coincides with structural acyclicity, so the ear
 
 Evaluation is a partial function: one tick, one environment, one term, at most one value, with no hidden evaluation order, and this holds unconditionally. It is total on causal designs: if $\Delta$ is causal and globally well formed and the inputs are well typed, every declaration has a value at every tick, related to its type by a logical relation, by an induction on tick, rank, and derivation. An executable interpreter is proved sound for the relation, and every trace reported in Part IV was obtained by running it.
 
-One gap should be recorded. A cycle guarded by a lambda, `A := λx. A x`, is rejected by $\text{Causal}$, yet `declRef A` does evaluate — to a closure; only applying it diverges. $\text{Causal}$ is conservative for lambda-guarded cycles, and the negative theorem covers strict cycles only.
+One gap should be recorded. A cycle guarded by a lambda, `A := λx. A x`, is rejected by $\mathsf{Causal}$, yet `declRef A` does evaluate — to a closure; only applying it diverges. $\mathsf{Causal}$ is conservative for lambda-guarded cycles, and the negative theorem covers strict cycles only.
 
 #### Derived operators
 
-Every temporal operator of the surface language reduces to $\text{delay}$ and the primitive operators. There is no independent kernel definition of `count` for the reduction to be proved equivalent to; what was done instead was to elaborate each operator, check its typing and causality, and run it on a concrete input trace. In each row the declaration refers to itself. Each is a self-delayed cycle, the class that structural acyclicity forbade and causality licenses.
+Every temporal operator of the surface language reduces to $\mathsf{delay}$ and the primitive operators. There is no independent kernel definition of `count` for the reduction to be proved equivalent to; what was done instead was to elaborate each operator, check its typing and causality, and run it on a concrete input trace. In each row the declaration refers to itself. Each is a self-delayed cycle, the class that structural acyclicity forbade and causality licenses.
 
 ```{=typst}
 #block(width: 100%)[
@@ -980,21 +980,21 @@ Every temporal operator of the surface language reduces to $\text{delay}$ and th
 ]
 ```
 
-State has no identity of its own. A cell is a $\text{delay}$ in a declaration body, and nothing refers to it because consumers refer to the declaration. There is consequently no notion of two writers to one cell in this kernel.
+State has no identity of its own. A cell is a $\mathsf{delay}$ in a declaration body, and nothing refers to it because consumers refer to the declaration. There is consequently no notion of two writers to one cell in this kernel.
 
-State preserves concept identity and dimension. The typing rule is $\text{delay} : \tau \to \tau \to \tau$ for data $\tau$, so a delayed tilt is a tilt and a backward difference over a time step has dimension $\text{Length} - \text{Time}$ with no derivative primitive. Provenance holds in the reactive setting too: if no signature announces a concept and no input carries it, no value at any tick carries it. Temporal state carries tags; it never creates them.
+State preserves concept identity and dimension. The typing rule is $\mathsf{delay} : \tau \to \tau \to \tau$ for data $\tau$, so a delayed tilt is a tilt and a backward difference over a time step has dimension $\mathsf{Length} - \mathsf{Time}$ with no derivative primitive. Provenance holds in the reactive setting too: if no signature announces a concept and no input carries it, no value at any tick carries it. Temporal state carries tags; it never creates them.
 
-Initialization is semantic, not validation. Every $\text{delay}$ carries an explicit initial value. Two toy relations without one show why: the first tick is either undefined or nondeterministic. Adding or removing a delay, or changing an initial value, is an edit.
+Initialization is semantic, not validation. Every $\mathsf{delay}$ carries an explicit initial value. Two toy relations without one show why: the first tick is either undefined or nondeterministic. Adding or removing a delay, or changing an initial value, is an edit.
 
 ### Clock Domains
 
 #### Identity, not rate
 
-“Contact and orientation move with the interaction; temperature moves with the environment.” A designer can say this before any rate is known, and it is a statement about which quantities are updated together, not about how often. BDL records it as a nominal **clock domain**, $\text{ClockId}$, and treats rate as validation data that never enters the kernel.
+“Contact and orientation move with the interaction; temperature moves with the environment.” A designer can say this before any rate is known, and it is a statement about which quantities are updated together, not about how often. BDL records it as a nominal **clock domain**, $\mathsf{ClockId}$, and treats rate as validation data that never enters the kernel.
 
-The time model is one global base tick and a schedule $S : \text{ClockId} \to \mathbb{N} \to \text{Bool}$ saying at which global ticks each domain activates. A period $n$ induces the schedule $t \bmod n = 0$; the schedule lives outside the design. Domain-local time is not a separate counter but the sequence of a domain's activations.
+The time model is one global base tick and a schedule $S : \mathsf{ClockId} \to \mathbb{N} \to \mathsf{Bool}$ saying at which global ticks each domain activates. A period $n$ induces the schedule $t \bmod n = 0$; the schedule lives outside the design. Domain-local time is not a separate counter but the sequence of a domain's activations.
 
-Each non-agnostic declaration is assigned a domain by a **clock environment** $\mathrm{K} : \text{DeclId} \to \text{Option}\;\text{ClockId}$; a declaration with no domain is a pure mapping that may serve any domain. The clock is interface data in every sense that matters — clients' validity depends on it, it is frozen under refinement, and changing it is an edit — and it is stored as a projection beside the interface, exactly as a concept's representation is stored in $\Theta$ rather than in the type. Whether to fold it into the interface record is churn rather than semantics.
+Each non-agnostic declaration is assigned a domain by a **clock environment** $\mathrm{K} : \mathsf{DeclId} \to \mathsf{Option}\;\mathsf{ClockId}$; a declaration with no domain is a pure mapping that may serve any domain. The clock is interface data in every sense that matters — clients' validity depends on it, it is frozen under refinement, and changing it is an edit — and it is stored as a projection beside the interface, exactly as a concept's representation is stored in $\Theta$ rather than in the type. Whether to fold it into the interface record is churn rather than semantics.
 
 Rate and identity are distinct. A clone of a domain with the identical schedule is a different domain, and a direct wire between them is rejected; a domain at the same rate but shifted in phase reads different values through a transport. Rate changes are validation-only. They change the induced schedule and hence the observed values, but no client's well-formedness. This is where BDL departs from synchronous languages that recover clocks by inference [@colaco2003clocks]. The domain is authored, because the information needed to infer it does not arrive until realization binding, which in this workflow is the point at which the designer is least able to make the decision.
 
@@ -1003,28 +1003,28 @@ Rate and identity are distinct. A clone of a domain with the identical schedule 
 Cross-domain reading is the second and last temporal form:
 
 $$
-\text{sync}\;\kappa\;\mathit{init}\;e ,
+\mathsf{sync}_{\kappa}\;\mathit{init}\;e ,
 $$
 
-the value of $e$, evaluated in domain $\kappa$, at the last activation of $\kappa$ strictly before the current tick, and $\mathit{init}$ if there has been none. The multi-domain evaluation relation $\text{MEv}\;S\;\Delta\;I\;\kappa\;t\;\rho\;e\;v$ indexes evaluation by the domain in which it takes place, and its two transport rules are
+the value of $e$, evaluated in domain $\kappa$, at the last activation of $\kappa$ strictly before the current tick, and $\mathit{init}$ if there has been none. The multi-domain evaluation relation $\mathsf{MEv}\;S\;\Delta\;I\;\kappa\;t\;\rho\;e\;v$ indexes evaluation by the domain in which it takes place, and its two transport rules are
 
 $$
-\frac{\text{prevAct}\;S\;\kappa'\;t = \text{none} \quad \text{MEv}\;S\;\Delta\;I\;\kappa\;t\;\rho\;\mathit{init}\;v}{\text{MEv}\;S\;\Delta\;I\;\kappa\;t\;\rho\;(\text{sync}\;\kappa'\;\mathit{init}\;e)\;v}
+\frac{\mathsf{prevAct}\;S\;\kappa'\;t = \mathsf{none} \quad \mathsf{MEv}\;S\;\Delta\;I\;\kappa\;t\;\rho\;\mathit{init}\;v}{\mathsf{MEv}\;S\;\Delta\;I\;\kappa\;t\;\rho\;(\mathsf{sync}_{\kappa'}\;\mathit{init}\;e)\;v}
 $$
 
 $$
-\frac{\text{prevAct}\;S\;\kappa'\;t = \text{some}\;t' \quad \text{MEv}\;S\;\Delta\;I\;\kappa'\;t'\;\rho\;e\;v}{\text{MEv}\;S\;\Delta\;I\;\kappa\;t\;\rho\;(\text{sync}\;\kappa'\;\mathit{init}\;e)\;v}.
+\frac{\mathsf{prevAct}\;S\;\kappa'\;t = \mathsf{some}\;t' \quad \mathsf{MEv}\;S\;\Delta\;I\;\kappa'\;t'\;\rho\;e\;v}{\mathsf{MEv}\;S\;\Delta\;I\;\kappa\;t\;\rho\;(\mathsf{sync}_{\kappa'}\;\mathit{init}\;e)\;v}.
 $$
 
-$\text{delay}$ is $\text{sync}$ at the expression's own domain: $\text{delay}\;\mathit{init}\;e \equiv \text{sync}\;\kappa\;\mathit{init}\;e$ in domain $\kappa$, as an equivalence of the two relations. The kernel therefore has one temporal primitive — read a domain at its previous activation — and the single-domain semantics of the previous section is its diagonal. Under the always-active schedule, $\text{MEv}$ coincides with $\text{Ev}$ in every domain, so the earlier results are the one-domain special case rather than a replaced machine. A `delay` in a slow domain reads three global ticks back where a `delay` in a fast one reads one, with the same syntax.
+$\mathsf{delay}$ is $\mathsf{sync}$ at the expression's own domain: $\mathsf{delay}\;\mathit{init}\;e \equiv \mathsf{sync}_{\kappa}\;\mathit{init}\;e$ in domain $\kappa$, as an equivalence of the two relations. The kernel therefore has one temporal primitive — read a domain at its previous activation — and the single-domain semantics of the previous section is its diagonal. Under the always-active schedule, $\mathsf{MEv}$ coincides with $\mathsf{Ev}$ in every domain, so the earlier results are the one-domain special case rather than a replaced machine. A `delay` in a slow domain reads three global ticks back where a `delay` in a fast one reads one, with the same syntax.
 
-A **domain judgment** $\text{Clocked}\;\mathrm{K}\;\kappa\;e$ rejects every other cross-domain reference: a reference stays in its domain or is agnostic, a delay needs a domain, and $\text{sync}\;\kappa'$ switches the domain of its operand. Typing is unchanged and is blind to domains; the direct wire between two domains at the same value type is well typed and rejected only by the domain judgment. Placing the domain in the type instead was tried and set aside. Every pure mapping would need clock polymorphism, and nothing the type rejects is missed by the judgment.
+A **domain judgment** $\mathsf{Clocked}\;\mathrm{K}\;\kappa\;e$ rejects every other cross-domain reference: a reference stays in its domain or is agnostic, a delay needs a domain, and $\mathsf{sync}_{\kappa'}$ switches the domain of its operand. Typing is unchanged and is blind to domains; the direct wire between two domains at the same value type is well typed and rejected only by the domain judgment. Placing the domain in the type instead was tried and set aside. Every pure mapping would need clock polymorphism, and nothing the type rejects is missed by the judgment.
 
 #### Strictly before
 
-A transport sees only source activations strictly before the destination tick. That is a choice with an observable alternative, and the alternative was built. A transport that lets simultaneously active domains see each other's current values makes the scheduler order observable: two priorities between the domains give two outputs. The strictly-before rule has no such parameter, and multi-domain evaluation is deterministic with no order between simultaneously active domains appearing in the semantics. It also makes cross-domain causality free. A transport's operand is never instantaneous, so $\text{Causal}\;\Delta$ is unchanged and no cross-domain cycle can be instantaneous. Every crossing costs one destination-visible step; “synchronous sub-domains evaluated in one instant” are, in this model, the same domain.
+A transport sees only source activations strictly before the destination tick. That is a choice with an observable alternative, and the alternative was built. A transport that lets simultaneously active domains see each other's current values makes the scheduler order observable: two priorities between the domains give two outputs. The strictly-before rule has no such parameter, and multi-domain evaluation is deterministic with no order between simultaneously active domains appearing in the semantics. It also makes cross-domain causality free. A transport's operand is never instantaneous, so $\mathsf{Causal}\;\Delta$ is unchanged and no cross-domain cycle can be instantaneous. Every crossing costs one destination-visible step; “synchronous sub-domains evaluated in one instant” are, in this model, the same domain.
 
-Every $\text{sync}$ carries an explicit initial value, used at a destination activation with no earlier source activation. Totality extends to the multi-domain case — a causal, globally well formed design with well-typed inputs has a value in every domain at every tick — so the first activation is deterministic with the stated initial values. Concept identity and dimension pass through transport untouched, by the typing rule; a crossing from `Tilt@fast` to `Tilt@slow` authorizes neither `Tilt -> MotorAngle` nor `q Length -> q Time`.
+Every $\mathsf{sync}$ carries an explicit initial value, used at a destination activation with no earlier source activation. Totality extends to the multi-domain case — a causal, globally well formed design with well-typed inputs has a value in every domain at every tick — so the first activation is deterministic with the stated initial values. Concept identity and dimension pass through transport untouched, by the typing rule; a crossing from `Tilt@fast` to `Tilt@slow` authorizes neither `Tilt -> MotorAngle` nor `q Length -> q Time`.
 
 
 ### Cross-domain occurrences and lossless buffering
@@ -1050,7 +1050,7 @@ window  @dst :  reverse (take (seen − cursor) logD)  -- the new entries, oldes
 Nothing new is evaluated: `delay`, `sync` and registered operators. `logD` is the one cross-domain read, an explicit `sync` with the explicit initial value `nil`. **Theorem M** (`buffer_window_correspondence`, **formally proved**): for every schedule, every input, every destination domain and every tick,
 
 $$
-\text{MEv}\;S\;\Delta\;I\;dst\;t\;[\,]\;\text{window} \Downarrow \text{list}\,(\text{map}\,(I\,src)\,(\text{windowTicks}\;S\;src\;dst\;t)),
+\mathsf{MEv}\;S\;\Delta\;I\;dst\;t\;[\,]\;\mathsf{window} \Downarrow \mathsf{list}\,(\mathsf{map}\,(I\,src)\,(\mathsf{windowTicks}\;S\;src\;dst\;t)),
 $$
 
 whenever the six declarations are realized as above and `src` is an input. The strictly-before rule is untouched — the window at `t` contains source activations `< t` only. The elaboration is well typed in any environment with the declared types (`buffer_elaboration_well_typed`) and well clocked with `src`, `log` in the source domain and the rest in the destination (`buffer_elaboration_well_clocked`). The list summary is lossless by injectivity (`buffer_lossless`); its entries are indexed by the window ticks in strictly increasing order (`window_to_list_preserves_order`), and for every predicate on values the number of entries satisfying it equals the number of window activations whose value does (`window_to_list_preserves_multiplicity`).
@@ -1188,32 +1188,32 @@ Two consequences the kernel already fixed, restated in the role vocabulary. **A 
 
 A declaration computes a value; it does not move hardware. Physical effect happens only through an explicit **drive edge** from a declaration to a **logical output** — Phase 6 called it a *physical sink*, meaning *outside the behavior, terminal*, and Phase 14 (below) fixes the reading: it is the behavior's semantic intent at the boundary, physically realized by a deployment-chosen machine sink. The Lean names are unchanged, and the relation `PhysicalOutput` — the value a logical output carries at a tick — keeps its historical name; the machine sink is Phase 14's `p`:
 
-- $\text{OutputId}$ — the nominal identity of a sink, a logical actuator channel;
-- $\Omega : \text{OutputId} \to \text{Option}\;\text{OutputSpec}$, a sink's accepted type and clock, declared by the deployment;
-- $\beta : \text{DeclId} \to \text{Option}\;\text{OutputId}$ — the drive edges, a write-once per-declaration projection of the same shape as $\mathrm{K}$;
-- $\text{DriveWF}\;\Omega\;\mathrm{K}\;\Delta\;\beta$ — each edge is well formed when the driver's expected type *equals* the sink's accepted type and the driver's clock is the sink's clock;
-- $\text{SingleDriver}\;\beta$ — at most one driver per sink: if $\beta\;d_1$ and $\beta\;d_2$ are both $\text{some}\;o$ then $d_1 = d_2$;
-- $\text{CompleteOutputs}\;\beta\;\mathit{req}$ — every required sink is driven.
+- $\mathsf{OutputId}$ — the nominal identity of a sink, a logical actuator channel;
+- $\Omega : \mathsf{OutputId} \to \mathsf{Option}\;\mathsf{OutputSpec}$, a sink's accepted type and clock, declared by the deployment;
+- $\beta : \mathsf{DeclId} \to \mathsf{Option}\;\mathsf{OutputId}$ — the drive edges, a write-once per-declaration projection of the same shape as $\mathrm{K}$;
+- $\mathsf{DriveWF}\;\Omega\;\mathrm{K}\;\Delta\;\beta$ — each edge is well formed when the driver's expected type *equals* the sink's accepted type and the driver's clock is the sink's clock;
+- $\mathsf{SingleDriver}\;\beta$ — at most one driver per sink: if $\beta\;\delta_1$ and $\beta\;\delta_2$ are both $\mathsf{some}\;o$ then $\delta_1 = \delta_2$;
+- $\mathsf{CompleteOutputs}\;\beta\;\mathit{req}$ — every required sink is driven.
 
-Nothing was added to types, typing, the domain judgment, the evaluation relation, or the grant. The binding neither coerces nor converts nor synchronizes. A declaration typed `Tilt`, or bare `q Angle`, cannot drive a `MotorAngle` sink. A sink that accepts a representation type needs an explicit `rep`-typed declaration in front of it, so the distinction between semantic target and hardware representation stays visible. A slow driver reading a fast value must $\text{sync}$ it upstream, since a fast driver cannot drive a slow sink and the edge never synchronizes.
+Nothing was added to types, typing, the domain judgment, the evaluation relation, or the grant. The binding neither coerces nor converts nor synchronizes. A declaration typed `Tilt`, or bare `q Angle`, cannot drive a `MotorAngle` sink. A sink that accepts a representation type needs an explicit `rep`-typed declaration in front of it, so the distinction between semantic target and hardware representation stays visible. A slow driver reading a fast value must $\mathsf{sync}$ it upstream, since a fast driver cannot drive a slow sink and the edge never synchronizes.
 
 Sink identity is nominal for the same reason concept identity is. Keying the binding by type collides when two servos accept the same type; keying by concept conflates a concept with a device, since one concept may feed several; keying by declaration makes two declarations that both mean the steering motor into two sinks, and the multiple-driver counterexample cannot even be stated. “Desired steering angle” is a value; “the steering motor” is a resource; the kernel keeps them in different sorts.
 
 #### One final driver
 
-The principle is *many contributors, one explicit final driver*. Take two declarations driving one sink, each globally well typed, well clocked, causal, and individually well formed. Only $\text{SingleDriver}$ fails, and it fails globally rather than at either edge. What has gone wrong is semantic: with two drivers the physical output is not a function of the tick, and there is a tick at which the sink receives two values. With one driver, the physical output is a partial function of the tick, and with $\text{SingleDriver}$ it is unique wherever it exists:
+The principle is *many contributors, one explicit final driver*. Take two declarations driving one sink, each globally well typed, well clocked, causal, and individually well formed. Only $\mathsf{SingleDriver}$ fails, and it fails globally rather than at either edge. What has gone wrong is semantic: with two drivers the physical output is not a function of the tick, and there is a tick at which the sink receives two values. With one driver, the physical output is a partial function of the tick, and with $\mathsf{SingleDriver}$ it is unique wherever it exists:
 
 $$
 \begin{aligned}
-&\text{PhysicalOutput}\;S\;\Delta\;I\;\Omega\;\beta\;o\;t\;v \;:=\; \exists d\,\mathit{spec}.\\
-&\quad \beta\;d = \text{some}\;o \;\land\; \Omega\;o = \text{some}\;\mathit{spec}\\
-&\quad \land\; \text{MEv}\;S\;\Delta\;I\;\mathit{spec}.\mathit{clock}\;t\;[]\;(\text{declRef}\;d)\;v .
+&\mathsf{PhysicalOutput}\;S\;\Delta\;I\;\Omega\;\beta\;o\;t\;v \;:=\; \exists d\,\mathit{spec}.\\
+&\quad \beta\;d = \mathsf{some}\;o \;\land\; \Omega\;o = \mathsf{some}\;\mathit{spec}\\
+&\quad \land\; \mathsf{MEv}\;S\;\Delta\;I\;\mathit{spec}.\mathit{clock}\;t\;[]\;(d)\;v .
 \end{aligned}
 $$
 
 Contributors are dependencies, not drivers. `base + corr -> final -> motor` passes every check; priority is an ordinary conditional in the single driver; blend, maximum, and clamp are ordinary declarations of the target type. Why arbitration must be explicit is best shown rather than argued: first-wins, last-wins, and maximum over the same value graph give three different physical outputs. A hidden policy is a design decision made on the designer's behalf.
 
-Binding an unbound declaration to an undriven sink is a refinement and preserves $\text{SingleDriver}$. Binding to an already-driven sink is invalid. Retargeting a sink's accepted type, renaming a sink, or detaching an edge invalidates an unchanged design. Partial designs may leave sinks undriven; executable designs may not.
+Binding an unbound declaration to an undriven sink is a refinement and preserves $\mathsf{SingleDriver}$. Binding to an already-driven sink is invalid. Retargeting a sink's accepted type, renaming a sink, or detaching an edge invalidates an unchanged design. Partial designs may leave sinks undriven; executable designs may not.
 
 #### What was removed
 
@@ -1241,7 +1241,7 @@ The design file keeps `mapping TempSensor : () -> RoomTemp`; the deployment supp
 **The construction.** A *channel* is a representation type `rep`, a term `tr`, its transfer function `transfer` on values, and the coherence `computes` (the term computes the function on every raw-typed value); the term is **pure** — no `declRef`, `delay` or `sync`. A *device profile* is a raw type (sem-free data) and its channels; it mentions no concept. A *provision* is one fresh raw declaration `r` with its clock and an assignment of channels to target Sources — several targets may share one raw reading (an IMU image feeding pitch, roll and acceleration), and one target is the singleton case. Then
 
 $$
-\mathrm{provision}(\Delta, P)\ =\ \Delta\,[\,r \mapsto \langle \mathit{raw}, [\,]\rangle\ \text{unresolved}\,]\,[\,\delta \mapsto \mathrm{mk}_C\,(\mathrm{tr}\ (\mathrm{declRef}\ r))\ \text{for each target } \delta : \mathrm{sem}\ C\,],
+\mathrm{provision}(\Delta, P)\ =\ \Delta\,[\,r \mapsto \langle \mathit{raw}, [\,]\rangle\ \mathsf{unresolved}\,]\,[\,\delta \mapsto \mathsf{mk}_C\,(\mathrm{tr}\ (r))\ \text{for each target } \delta : C\,],
 $$
 
 with `tr (declRef r)` alone at a representation-typed Source; the raw declaration's kernel type is `raw` and its canonical type `() -> raw` (above). Fitting is decidable: at `sem c` the concept's representation is the channel's; at a representation type the types coincide. Nothing enters the kernel: `provision` is a function on environments built from `DesignDecl`, `declRef`, `app` and `mk`.
@@ -1293,7 +1293,7 @@ The drive edge names a receiver and delivers a value of the accepted type; it sa
 **Two models, one specification.** The tempting construction — retarget `o.accepts` to the raw type and drive an encoder into it — is refuted: the existing edge `d -> o` fails `DriveWF` because the driver is typed at the concept (`retarget_breaks_driveWF`, **formally proved**; executed in `exI`), so `β` would have to be rewritten and the abstract output's meaning lost; Phase 6 already calls retargeting an edit. What survives is a pair. The *specification* is a relation on the unchanged design, `RawCommand S Δ I Ω β R t w`: the command *specified* for realization `R` at tick `t` is `transfer` of what `o` carries (`PhysicalOutput`). The machine sink `p` does not occur in it — it says what the command is, not who receives it; that the lowered design's `p` carries exactly this command is the theorem below, not the definition. This is the machine boundary — a relation on commands, not a term; the backend that consumes it is outside the semantics, and no effectful `R -> ()`, `Expr.write`, effect row or `IO` exists (FVD-0134; the reason is the `A -> ()` result above). The *lowering* implements it in the existing kernel:
 
 $$
-\Delta' = \Delta[\,e \mapsto \langle \mathit{raw}, [\,]\rangle := \mathrm{encode}\,(\mathrm{rep}\,(\mathrm{declRef}\ d))\,],\quad
+\Delta' = \Delta[\,e \mapsto \langle \mathit{raw}, [\,]\rangle := \mathrm{encode}\,(\mathrm{rep}\,(d))\,],\quad
 \Omega' = \Omega[\,p \mapsto \langle \mathit{raw}, \mathit{clock}_o\rangle\,],\quad
 \beta' = \beta[\,e \mapsto p\,],\quad
 \mathrm{K}' = \mathrm{K}[\,e \mapsto \mathit{clock}_o\,],
@@ -1306,7 +1306,7 @@ with `o`, `d`, the edge `d -> o` and every other declaration untouched. The new 
 **Correspondence, directional.** The central theorem is `lower_correspondence`: the machine sink's value in the lowered design is exactly the specified command,
 
 $$
-\mathrm{PhysicalOutput}(\Delta', p, t, w)\ \iff\ \mathrm{RawCommand}(\Delta, R, t, w),\qquad\text{i.e.}\quad \text{raw trace} = \mathrm{transfer} \circ \text{abstract trace},
+\mathrm{PhysicalOutput}(\Delta', p, t, w)\ \iff\ \mathrm{RawCommand}(\Delta, R, t, w),\qquad\mathsf{i.e.}\quad \text{raw trace} = \mathrm{transfer} \circ \text{abstract trace},
 $$
 
 tick by tick in the output's clock, under: a well-formed single-driver drive environment, a design that mentions no `e` (every globally well-typed design), inputs whose closures avoid `e`, and a logical output carrying typed representation values — which Phase 5's totality supplies in a causal, well-formed design (`output_value_typed`). The theorem is an equivalence of *observations at `p`*, but the construction is directional by nature: `p` is downstream of `o`, nothing flows back, and no "induced output" exists. Nor is any exactness needed: two abstract values may encode to one command — a 4-bit PWM sends duty 6 for 40 % and for 41 % (`exB_quantized`) — and a round-trip `decode(encode x) = x` is neither assumed nor provable; the profile-declared transfer *is* the intended realization (FVD-0135). Where provision needed a joint section because abstract inputs had to be *reached* from raw ones, realization only has to *deliver* what the behavior produced.
@@ -1334,7 +1334,7 @@ Phase 14 stops at the raw command; production's first embedded adapter (ADR-0037
 **The explicit device clock.** Phase 14 refused an implicit crossing; Phase 15 builds the explicit one (`Surface/DeviceClock.lean`): the encoder declaration lives in a device domain `dc` and reads the driver's representation through Phase 5's transport,
 
 $$
-e := \mathrm{encode}\,(\mathrm{sync}\ \kappa\ \mathit{initRep}\ (\mathrm{rep}\ d)),\qquad e, p \text{ in } dc,
+e := \mathrm{encode}\,(\mathsf{sync}_{\kappa}\ \mathit{initRep}\ (\mathrm{rep}\ d)),\qquad e, p \text{ in } dc,
 $$
 
 with `c` the output's clock and `initRep` a pure closed representation value for the ticks before `c`'s first activation. What must be explicit in the lowering is exactly `dc` and `initRep`; both are deployment's choices, and the design still says nothing about a device; the carrier frequency stays configuration (FVD-0141). Every preservation theorem survives — the behavior is literally unchanged off `e`, the lowering is a refinement, well formed, well clocked with the transported operand in the output's clock, single-driver — and causality survives with *no new instantaneous edge at all*, because the transport is never instantaneous (`lowerSync_causal`). The correspondence samples strictly before: at a device tick `t` the sink carries `transfer` of the command the output specified at the last activation of `c` before `t`, or of `initRep` if there was none (`lowerSync_correspondence`). Executed: the device domain on odd ticks and the output's clock on even, the sink carrying 102 at tick 1 and 107 at tick 3 with `prevAct` naming 0 and 2; the initial representation before the first activation (`exD_*`).
@@ -1424,7 +1424,7 @@ The symmetry of the two halves is real and limited. Both are constructions over 
 
 #### Why the signature is a design object
 
-The most consequential decision in BDL is treating a declared relationship as visible product intent. In programming, a signature is often documentation and a static contract around code. In BDL it can precede any code-like definition and remain useful on its own: $?f : \text{Tilt} \to \text{Brightness}$ says that the designer has committed to a causal design relationship and to its semantic boundary, and does not say how the mapping is computed. Clients are typed against the type view and depend on the interface only through it and through monotone evidence, so the partial commitment is not a weaker form of a complete one. It is the form on which everything downstream already rests.
+The most consequential decision in BDL is treating a declared relationship as visible product intent. In programming, a signature is often documentation and a static contract around code. In BDL it can precede any code-like definition and remain useful on its own: $?f : \mathsf{Tilt} \to \mathsf{Brightness}$ says that the designer has committed to a causal design relationship and to its semantic boundary, and does not say how the mapping is computed. Clients are typed against the type view and depend on the interface only through it and through monotone evidence, so the partial commitment is not a weaker form of a complete one. It is the form on which everything downstream already rests.
 
 #### Nominal identity in three places
 
@@ -1456,16 +1456,16 @@ A design's needs are **requirements**. Each has an identity, one capability, an 
 
 $$
 \begin{aligned}
-\text{Requirement} = \langle\; &\mathit{id},\; \mathit{cap},\\
-&\mathit{fixed} : \text{Option}\;\text{ResourceId},\\
-&\mathit{group} : \text{Option}\;(\mathbb{N} \times \text{UnitRel})\;\rangle .
+\mathsf{Requirement} = \langle\; &\mathit{id},\; \mathit{cap},\\
+&\mathit{fixed} : \mathsf{Option}\;\mathsf{ResourceId},\\
+&\mathit{group} : \mathsf{Option}\;(\mathbb{N} \times \mathsf{UnitRel})\;\rangle .
 \end{aligned}
 $$
 
 Requirements are generated from the logical outputs of the previous section by a **device kind** (the requirements half of a device profile; the encoder half is the realization section above): an H-bridge channel needs a PWM line and a digital output; an I2C sensor needs SDA and SCL on the same unit; a quadrature encoder needs two interrupt lines. The pipeline is
 
 $$
-\text{OutputId} \to \text{DeviceKind} \to \text{Requirements} \to \text{solve} \to \text{Assignment},
+\mathsf{OutputId} \to \mathsf{DeviceKind} \to \mathsf{Requirements} \to \mathsf{solve} \to \mathsf{Assignment},
 $$
 
 and the sink never enumerates pins, so swapping the board is re-solving the same requirements with the design untouched. Requirement identity is independent of sink and declaration identity: one sink generates several requirements, and two identical PWM needs must be two distinct variables.
@@ -1494,7 +1494,7 @@ The explanation facility reports the first dead end under greedy placement. For 
 
 #### Two kinds of evidence
 
-Hardware feasibility is evidence about the pair (design, target), and it is not monotone in the sense the preservation theorems require. Six actuators are satisfiable; adding a seventh — a monotone extension of the design by a declaration and its sink — is not. The distinction drawn earlier between evidence that survives refinement and evidence that is rechecked after every change is here concrete. Commitments discharged compositionally survive $\text{EnvRefines}$; deployability on a target is re-solved; and the two are never merged. This is why the workspace reports them as different states.
+Hardware feasibility is evidence about the pair (design, target), and it is not monotone in the sense the preservation theorems require. Six actuators are satisfiable; adding a seventh — a monotone extension of the design by a declaration and its sink — is not. The distinction drawn earlier between evidence that survives refinement and evidence that is rechecked after every change is here concrete. Commitments discharged compositionally survive $\mathsf{EnvRefines}$; deployability on a target is re-solved; and the two are never merged. This is why the workspace reports them as different states.
 
 What the layer does not model should be stated as plainly. Voltage, current, thermal budgets, memory, processor load, deadlines, bus bandwidth, torque, travel, and PWM frequency values are outside it. Some of these need summation constraints that are not binary, and while the architecture leaves room for a compatibility predicate over sets, nothing here establishes it. Units are one integer per capability per resource, which models which timer or which UART but not timer modes.
 
@@ -1575,7 +1575,7 @@ The surface editor and kernel are connected by an elaboration function from surf
 
 **Name and signature resolution.** Resolve concepts to identities, Mapping signatures to declaration interfaces, contexts, device kinds, units, and imported components. At this stage an unresolved `Tilt -> Brightness` mapping already has a stable identity and an expected type, and every reference to it is typed.
 
-**Formula elaboration.** For each Mapping with a definition, check the definition against the declared codomain under the grant of the declaration's own signature. A scalar formula attached to a `Brightness` output elaborates to $\text{mk}_{\text{Brightness}}(\ldots)$ because the surrounding signature announces the concept; the constructor is inserted by the elaborator and is legal only there. Units elaborate to scaled dimensioned literals. Curve, example, and component definitions elaborate to the same realization form.
+**Formula elaboration.** For each Mapping with a definition, check the definition against the declared codomain under the grant of the declaration's own signature. A scalar formula attached to a `Brightness` output elaborates to $\mathsf{mk}_{\mathsf{Brightness}}(\ldots)$ because the surrounding signature announces the concept; the constructor is inserted by the elaborator and is legal only there. Units elaborate to scaled dimensioned literals. Curve, example, and component definitions elaborate to the same realization form.
 
 **Temporal lowering.** Surface temporal phrases lower to the declaration shapes of the derived-operator table. A context lowers to an activation declaration, an entry declaration, gated and reset local state, and a conditional in each output's driver. A reusable stateful component is instantiated into fresh declarations at each use, because temporal state cannot occur under a binder.
 
@@ -1585,7 +1585,7 @@ The surface editor and kernel are connected by an elaboration function from surf
 
 **Hardware validation.** Generate requirements from device kinds, run the solver against the selected target, and attach the assignment or the explanation to the bindings.
 
-**Normalization and erasure.** After checking is complete, concept identities, dimensions, and domains carry no computational content and may be erased; erasure is proved sound for identities and for dimensions. Nominal wrappers introduced by elaboration cancel, $\text{rep}(\text{mk}_C\;e) \rightsquigarrow e$, and the flattened program is checked under the universal grant because every construction was authorized at its declaration. Unfolding all realizations into a closed term preserves typing on the delay-free fragment and agrees with tick-by-tick evaluation on first-order designs; the higher-order case holds up to closure equivalence and was not formalized. Erasure is applied selectively at boundaries the checker cannot see through — supplied blocks, device bindings, the public interface of generated code — where wrappers are retained so that the host compiler continues to check what BDL cannot.
+**Normalization and erasure.** After checking is complete, concept identities, dimensions, and domains carry no computational content and may be erased; erasure is proved sound for identities and for dimensions. Nominal wrappers introduced by elaboration cancel, $\mathsf{rep}(\mathsf{mk}_C\;e) \rightsquigarrow e$, and the flattened program is checked under the universal grant because every construction was authorized at its declaration. Unfolding all realizations into a closed term preserves typing on the delay-free fragment and agrees with tick-by-tick evaluation on first-order designs; the higher-order case holds up to closure equivalence and was not formalized. Erasure is applied selectively at boundaries the checker cannot see through — supplied blocks, device bindings, the public interface of generated code — where wrappers are retained so that the host compiler continues to check what BDL cannot.
 
 The kernel never depends on normalization to decide type equality; it is not dependently typed, and normalization is an analysis and code-generation instrument. Floating-point arithmetic is not associative, so any symbolic normalization over the reals must record the resulting numerical deviation as an obligation rather than silently altering the property being checked.
 
@@ -2272,7 +2272,7 @@ The notation is the Lean development's, kept uniform across Part IV; where an ea
 | symbol | Lean object | meaning |
 |---|---|---|
 | $\Delta$ | `DeclEnv : DeclId → Option DesignDecl` | the design: an environment of declarations |
-| $d$, `DeclId` | `DeclId` | a declaration's stable identity; display names are not modelled |
+| $\delta$, `DeclId` | `DeclId` | a declaration's stable identity; display names are not modelled |
 | `DesignDecl` | `⟨id, interface, realization⟩` | a declaration: identity, interface, optional realization |
 | `DeclInterface` | `⟨expectedType, commitments⟩` | the frozen expected type and the monotone public commitment list |
 | $\Delta^{\mathrm{ty}}$ | `DeclEnv.tyView` | the type view: the expected type of each declared identity |
@@ -2286,7 +2286,7 @@ The notation is the Lean development's, kept uniform across Part IV; where an ea
 | `delay init e` | `Expr.delay` | last activation's value of `e` in the own domain, `init` before |
 | `sync c init e` | `Expr.sync` | the value of `e` in domain `c` at `c`'s last activation strictly before now, `init` if none |
 | `fold f z l` | `Expr.fold` | the list recursor, the one term former that applies a function value |
-| $\Theta;\Delta;G;\Gamma \vdash e : \tau$ | `HasType Θ Δ G Γ e τ` | typing; reads $\Delta$ only through the type view |
+| $\Theta;\Delta;\Gamma \vdash_{G} e : \tau$ | `HasType Θ Δ G Γ e τ` | typing; reads $\Delta$ only through the type view |
 | `Satisfies ev Θ Δ Γ e S` | `Satisfies` | `e` has `S`'s type under `S`'s grant and evidence discharges every commitment |
 | `GlobalWF ev Θ Δ` | `GlobalWF` | every stored declaration sits under its identity and its realization satisfies its interface |
 | $\sqsubseteq$, `InterfaceRefines` | `InterfaceRefines` | same type, commitments grow |
