@@ -493,17 +493,29 @@ fn a_hand_written_project_is_placed_on_open_and_new_items_on_commit() {
     };
     let s = s.system.unwrap();
     let base = s.base.as_ref().unwrap();
-    for concept in &base.concepts {
-        assert!(
-            layout.concepts.iter().any(|n| n.id == concept.id),
-            "{} unplaced",
-            concept.name
-        );
-    }
+    // the nodes are the ladder's (ADR-0044): every Sem block (unit-domain
+    // declaration) and, when defined, its mapping block; a concept and a
+    // rule are templates and get no position
+    assert!(layout.concepts.is_empty());
     for m in &base.mappings {
+        let sig = m.signature.as_ref().unwrap();
+        if !sig.inputs.is_empty() {
+            assert!(
+                !layout.mappings.iter().any(|n| n.id == m.id),
+                "{} is a rule, not a node",
+                m.name
+            );
+            continue;
+        }
         assert!(
             layout.mappings.iter().any(|n| n.id == m.id),
             "{} unplaced",
+            m.name
+        );
+        assert_eq!(
+            layout.definitions.iter().any(|n| n.id == m.id),
+            m.definition.is_some(),
+            "{}'s mapping block",
             m.name
         );
     }
@@ -534,29 +546,34 @@ fn a_hand_written_project_is_placed_on_open_and_new_items_on_commit() {
     let p2 = c.open(&root);
     assert_eq!(p2.layout, p.layout);
 
-    // a commit places what it created and leaves everything else alone
+    // a commit places what it created and leaves everything else alone:
+    // a new Sem block of an existing concept
     let tilt = base.concepts.iter().find(|x| x.name == "Tilt").unwrap().id;
     let before = p2.layout.clone().unwrap();
-    let tilt_at = *before.concepts.iter().find(|n| n.id == tilt).unwrap();
     let created = c
-        .base(pb::edit_op::Op::CreateConcept(pb::CreateConcept {
-            name: "Warmth".into(),
-            description: String::new(),
-            representation: quantity(pb::Dim::default()),
+        .base(pb::edit_op::Op::CreateMapping(pb::CreateMapping {
+            name: "tiltAgain".into(),
+            signature: Some(pb::Signature {
+                inputs: vec![],
+                output: tilt,
+            }),
+            ..Default::default()
         }))
-        .created_concept
+        .created_mapping
         .unwrap();
     let after = c.project().layout.unwrap();
     assert!(
-        after.concepts.iter().any(|n| n.id == created),
+        after.mappings.iter().any(|n| n.id == created),
         "placed on commit"
     );
-    assert_eq!(
-        after.concepts.iter().find(|n| n.id == tilt).unwrap(),
-        &tilt_at,
-        "a positioned node never moves"
-    );
-    assert_eq!(after.mappings, before.mappings);
+    for n in &before.mappings {
+        assert_eq!(
+            after.mappings.iter().find(|x| x.id == n.id).unwrap(),
+            n,
+            "a positioned node never moves"
+        );
+    }
+    assert_eq!(after.definitions, before.definitions);
     assert_eq!(after.outputs, before.outputs);
     assert_eq!(after.instances, before.instances);
 }
@@ -650,14 +667,15 @@ fn code_view_edits_flow_through_the_model_and_keep_identities() {
         tilt,
         "identities survive a text edit"
     );
+    // a rule is a template, not a node (ADR-0044): nothing is placed for it
     assert!(
-        p.layout
+        !p.layout
             .as_ref()
             .unwrap()
             .mappings
             .iter()
             .any(|n| n.id == dim.id),
-        "placed by the layout service on commit"
+        "a rule gets no position"
     );
     let dim_id = dim.id;
 

@@ -1021,16 +1021,38 @@ impl<'a> Elab<'a> {
                 self.push(d);
                 self.placeholder()
             }
-            Lookup::NotAnInput(_, concept_name) => {
+            Lookup::NotAnInput(concept, concept_name) => {
                 let mapping = self.mapping.name.clone();
-                let d = self
-                    .error(
+                // the concept is read more than once, under parameter
+                // names (ADR-0044): the formula must say which one
+                let under: Vec<&str> = self
+                    .inputs
+                    .inputs
+                    .iter()
+                    .filter(|(c, _)| *c == concept)
+                    .map(|(_, n)| n.as_str())
+                    .collect();
+                let d = if under.is_empty() {
+                    self.error(
                         "formula.name.not_an_input",
                         span,
                         format!("{mapping} does not read {concept_name}."),
                     )
                     .explain("A formula can only use the concepts its mapping reads.")
-                    .fix(format!("Connect {concept_name} to {mapping} as an input."));
+                    .fix(format!("Connect {concept_name} to {mapping} as an input."))
+                } else {
+                    self.error(
+                        "formula.name.ambiguous",
+                        span,
+                        format!(
+                            "{mapping} reads {concept_name} {} times, as {}.",
+                            under.len(),
+                            under.join(" and ")
+                        ),
+                    )
+                    .explain("A formula names each input by its own name when one concept is read more than once.")
+                    .fix(format!("Write {} or {}.", under[0], under[under.len() - 1]))
+                };
                 self.push(d);
                 self.placeholder()
             }

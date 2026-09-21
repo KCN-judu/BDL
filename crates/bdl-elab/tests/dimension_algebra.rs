@@ -195,20 +195,18 @@ fn scaled(d: Dim, n: i8) -> Dim {
 fn multiplication_adds_dimensions_through_the_pipeline() {
     let mut b = Bench::new();
     let cases: &[(&[&str], &str, Dim)] = &[
+        // one input read twice: `x · x` is `L²` (a rule reading the same
+        // concept twice names its inputs `length1`, `length2` — ADR-0044)
+        (&["Length"], "Length * Length", scaled(Dim::LENGTH, 2)),
         (
-            &["Length", "Length"],
-            "Length * Length",
-            scaled(Dim::LENGTH, 2),
-        ),
-        (
-            &["Length", "Length", "Length"],
+            &["Length"],
             "Length * Length * Length",
             scaled(Dim::LENGTH, 3),
         ),
         (&["Force", "Length"], "Force * Length", dim("Torque")),
         (&["Voltage", "Current"], "Voltage * Current", dim("Power")),
         (&["Scalar", "Length"], "Scalar * Length", Dim::LENGTH),
-        (&["Angle", "Angle"], "Angle * Angle", scaled(Dim::ANGLE, 2)),
+        (&["Angle"], "Angle * Angle", scaled(Dim::ANGLE, 2)),
     ];
     for (inputs, formula, expected) in cases {
         assert_eq!(b.dim_of(inputs, formula, *expected), *expected, "{formula}");
@@ -321,11 +319,14 @@ fn every_named_derived_quantity_is_its_decomposition_from_base_dimensions() {
             }
         }
         assert_eq!(acc, expected, "{name}: Dim algebra");
-        // … and through the pipeline, with `Scalar` written as `1`
-        let inputs: Vec<&str> = formula
-            .split_whitespace()
-            .filter(|t| *t != "*" && *t != "/" && *t != "Scalar")
-            .collect();
+        // … and through the pipeline, with `Scalar` written as `1` and
+        // each base concept read once (a repeated read names its inputs)
+        let mut inputs: Vec<&str> = Vec::new();
+        for t in formula.split_whitespace() {
+            if t != "*" && t != "/" && t != "Scalar" && !inputs.contains(&t) {
+                inputs.push(t);
+            }
+        }
         let formula = formula.replace("Scalar", "1");
         assert_eq!(b.dim_of(&inputs, &formula, expected), expected, "{name}");
     }
@@ -457,4 +458,60 @@ fn composite_unit_faults_are_named_for_the_designer() {
     // the day they are (tested at the algebra level in bdl-model)
     let d = diag(&mut b, "10 °C per s", dim("Speed"));
     assert!(!d.is_empty());
+}
+
+/// A rule reading one concept twice names its inputs (ADR-0044): the
+/// concept's own name is ambiguous there and said so; the derived names
+/// resolve, and the dimension algebra is unchanged.
+#[test]
+fn a_concept_read_twice_is_named_by_its_parameters() {
+    let mut b = Bench::new();
+    let out = b.concept("Area", scaled(Dim::LENGTH, 2));
+    let length = b.concepts["Length"];
+    let mut make = |formula: &str| {
+        let a = apply_edit(
+            &b.s,
+            &EditOp::CreateMapping {
+                name: format!("f{}", b.s.design.mappings.len()),
+                description: String::new(),
+                signature: Signature {
+                    inputs: vec![length, length],
+                    output: out,
+                },
+                definition: Some(Definition::Formula {
+                    source: formula.into(),
+                }),
+                clock: None,
+            },
+        )
+        .unwrap();
+        b.s = a.snapshot;
+        let id = a.outcome.created_mapping.unwrap();
+        assert_eq!(
+            b.s.design.mappings[&id].parameters,
+            vec!["length1".to_owned(), "length2".to_owned()]
+        );
+        let e = elaborate_design(&b.s.design);
+        let m = &e.mappings[&id];
+        let codes: Vec<String> = m
+            .diagnostics
+            .iter()
+            .map(|d| d.code.as_str().to_owned())
+            .collect();
+        (
+            matches!(m.outcome, RealizationOutcome::Elaborated(_)),
+            codes,
+        )
+    };
+    let (ok, codes) = make("Length * Length");
+    assert!(!ok);
+    assert_eq!(
+        codes,
+        vec![
+            "formula.name.ambiguous".to_owned(),
+            "formula.name.ambiguous".to_owned()
+        ]
+    );
+    let (ok, codes) = make("length1 * length2");
+    assert!(ok, "{codes:?}");
 }
