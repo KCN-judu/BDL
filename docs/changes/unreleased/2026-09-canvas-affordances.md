@@ -8,6 +8,12 @@
 
 ## What changed
 
+_Superseded in part on 2026-09-21 by [2026-09 Sem blocks](2026-09-sem-blocks.md)
+(ADR-0044): ISS-0020 is resolved, the concept node and the produce edge are
+gone, a read edge has no disconnect, and the drive edge is the one
+`DisconnectLinkRequested` path. The affordance, the selection algebra and the
+arrangement stand._
+
 - **An edge is an object.** Hovering a signature or drive edge says it is
   interactive — the hand cursor and a soft halo under the same stroke, no icon,
   no thicker line. A click selects it (`LinkSelected`, by its ends; a binding

@@ -142,12 +142,13 @@ open project:
 - layout never enters the model: moving a node changes the layout file and no
   revision; the layout service (`bdl-layout`) runs on open and on every commit,
   deterministically — a project with no position anywhere is arranged as a whole
-  (`arrange_with`: ranks over signature, drive, binding and reference edges,
-  columns by rank, no overlap) and the arrangement saved; one with some
-  positions gets only its gaps filled (`place_missing`) and nothing placed
-  moves; a complete layout is preserved. A whole-graph rearrangement is answered
-  on request (`ArrangeLayout`, protocol 0.29) and applied by Studio as one
-  layout write. Studio arranges nothing at render time.
+  (`arrange_with`: ranks mapping blocks, Sem blocks, sinks, instances and groups
+  over read, produce, drive and binding edges — a concept and a rule take no
+  column (ADR-0044) — columns by rank, no overlap) and the arrangement saved;
+  one with some positions gets only its gaps filled (`place_missing`) and
+  nothing placed moves; a complete layout is preserved. A whole-graph
+  rearrangement is answered on request (`ArrangeLayout`, protocol 0.29) and
+  applied by Studio as one layout write. Studio arranges nothing at render time.
 
 ## The generated core is an implementation of the reference evaluator
 

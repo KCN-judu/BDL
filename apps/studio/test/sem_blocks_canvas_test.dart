@@ -1,4 +1,4 @@
-/// The Sem-block canvas (ADR-0043; BDL_FV Phase 21): the design's value
+/// The Sem-block canvas (ADR-0044; BDL_FV Phase 21): the design's value
 /// graph is Sem blocks — `TempSensor`, `ButtonInput` (Sources) and `acOn`
 /// (a Sem block whose mapping block applies the rule
 /// `AirConditionerCtrl` to both) — joined by read edges the analysis

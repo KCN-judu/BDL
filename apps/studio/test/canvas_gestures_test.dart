@@ -333,7 +333,7 @@ void main() {
         expect(link.source.hasBaseDecl(), isTrue);
         expect(link.source.baseDecl.toInt(), a, reason: 'the concrete member, not the group');
         // in: the aggregate input stands for A's read of tiltValue — a name
-        // in A's formula (ADR-0043): a Sem block dropped on it reaches no
+        // in A's formula (ADR-0044): a Sem block dropped on it reaches no
         // socket that takes a link, and nothing is made
         actions.clear();
         final bOut = scene

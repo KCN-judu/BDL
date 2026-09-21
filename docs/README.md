@@ -156,9 +156,7 @@ each of its questions was answered is in the
   modifiers, `zip`'s cost in the core, the compiler's diagnostic sentences in
   one language, output realization beyond a pure encoder (ISS-0017), the input
   half beyond one line read once per tick (ISS-0018), a concept's display unit
-  (ISS-0019), a concept's producers and what an edge into it may do — the
-  canvas's edge projection is frozen until the formal audit concludes
-  (ISS-0020); one proposal (PRP-0001, Source provision by device profile —
+  (ISS-0019); one proposal (PRP-0001, Source provision by device profile —
   consumed by ADR-0038). Realization on both sides — how a logical output
   reaches PWM, GPIO, I²C or an H-bridge, and how a Source is provided by a line,
   without the behaviour model knowing — is ADR-0036 / ADR-0038,
@@ -172,12 +170,20 @@ each of its questions was answered is in the
   [evidence/pico-smoke-test.md](evidence/pico-smoke-test.md)), is priority 1;
   the platform adapter beyond one line and one duty (ISS-0018, ISS-0017) is
   second; nothing else is in progress in this repository.
-- **Recently changed:** the concept ladder's vocabulary (ADR-0043 — a concept is
-  a type named by `ConceptId`, a Sem block its instance; `SemanticId` is gone,
-  the `concept.*` diagnostic codes with an alias table; no semantics, no bytes
-  changed — `docs/changes/unreleased/2026-09-concept-ladder.md`); edges as
-  canvas objects with a contextual affordance, one disconnect path, the
-  first-open arrangement and _Arrange Automatically_ (protocol 0.29, ISS-0020 —
+- **Recently changed:** the Sem-block canvas (ADR-0044, protocol 0.30 — the
+  canvas draws Sem blocks and, beside each, its mapping block, a concept is the
+  template Sem blocks are created from and a rule the template mapping blocks
+  apply; read edges from the analysis into a mapping block's sockets, a produce
+  edge into its block, every gesture a text edit or the drive, no concept node;
+  `MappingAnalysis.slots`, `Layout.definitions`, `ComposeAction.unreference` /
+  `read`; parameters named where a concept repeats; ISS-0020 resolved —
+  `docs/changes/unreleased/2026-09-sem-blocks.md`); the concept ladder's
+  vocabulary (ADR-0043 — a concept is a type named by `ConceptId`, a Sem block
+  its instance; `SemanticId` is gone, the `concept.*` diagnostic codes with an
+  alias table; no semantics, no bytes changed —
+  `docs/changes/unreleased/2026-09-concept-ladder.md`); edges as canvas objects
+  with a contextual affordance, one disconnect path, the first-open arrangement
+  and _Arrange Automatically_ (protocol 0.29 —
   `docs/changes/unreleased/2026-09-canvas-affordances.md`); the authoring UX
   slice (ADR-0041, ADR-0042, protocol 0.28 — the Standard Library as 22 value
   categories with the concept sheet naming a concept before it exists and the

@@ -646,7 +646,7 @@ void main() {
     final mapping = s.project!.mappings.last.id.toInt();
     expect(s.project!.concepts.last.name, 'Temperature');
     // the Sem block lands where the designer pointed and is selected; the
-    // concept is its template and takes no place (ADR-0043)
+    // concept is its template and takes no place (ADR-0044)
     expect(s.editor.layout[NodeRef.mapping(mapping)], const Offset(300, 100));
     expect(s.editor.layout[NodeRef.concept(concept)], isNull);
     expect((s.editor.selection as MappingSelected).id, mapping);

@@ -1,4 +1,4 @@
-/// The Sem-block canvas against the real `bdld` (ADR-0043; BDL_FV Phase 21,
+/// The Sem-block canvas against the real `bdld` (ADR-0044; BDL_FV Phase 21,
 /// `lamp_picture`, `rule_template`, `sensors_natural`): `pressed` a Source
 /// Sem block, `lit` a rule template (not a node), `litV` a Sem block whose
 /// mapping block applies the rule; the canvas draws Sem blocks and sinks

@@ -1,4 +1,4 @@
-/// The canvas's wire gesture in the reducer (ADR-0043): a Sem block
+/// The canvas's wire gesture in the reducer (ADR-0044): a Sem block
 /// dropped on a Source is one attach edit of the block's name; dropped on
 /// a mapping block with an open position it is the compiler's fill of the
 /// first slot (`ComposeAction.fill` on `MappingAnalysis.slots`) after the

@@ -58,7 +58,7 @@ void main() {
       final d = opOf(drive).setMappingDrive;
       expect(d.id.toInt(), value);
       expect(d.hasOutputId(), isFalse);
-      // a read edge is a name in the reading block's formula (ADR-0043):
+      // a read edge is a name in the reading block's formula (ADR-0044):
       // no signature edit, no edit at all
       expect(readEdge.disconnectable, isFalse);
       expect(reduce(connected(), const DisconnectLinkRequested(readEdge)).effects, isEmpty);

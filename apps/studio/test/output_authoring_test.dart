@@ -1,4 +1,4 @@
-/// Driving a sink (ADR-0043): the driver is a Sem block, and the gesture is
+/// Driving a sink (ADR-0044): the driver is a Sem block, and the gesture is
 /// the Sem block's output socket dropped on the sink accepting its concept
 /// — the drive edge, `SetMappingDrive`.  The sink's inspector still offers
 /// the eligible drivers by name (`driveCandidates`: a value or Source

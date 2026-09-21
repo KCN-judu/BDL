@@ -53,7 +53,7 @@ class Inspector extends StatelessWidget {
           key: ValueKey('c$id'),
           concept: project.concepts.firstWhere((c) => c.id.toInt() == id),
           // the template's instances: the Sem blocks typed by it; and the
-          // rule templates whose signature mentions it (ADR-0043)
+          // rule templates whose signature mentions it (ADR-0044)
           blocks: project.mappings
               .where((m) => m.signature.inputs.isEmpty && m.signature.output.toInt() == id)
               .toList(),
@@ -329,7 +329,7 @@ class _NameLinks extends StatelessWidget {
 // ---------------------------------------------------------------------------
 
 /// A concept is a product meaning and the template Sem blocks are created
-/// from (ADR-0043): what it means, what form its value takes, which
+/// from (ADR-0044): what it means, what form its value takes, which
 /// blocks are of it, which rules are over it.
 class _ConceptInspector extends StatelessWidget {
   const _ConceptInspector({
@@ -847,7 +847,7 @@ class _MappingInspector extends StatelessWidget {
           ],
         ),
         // The rule template's parameters, over concepts (ADR-0013): the one
-        // place a signature's inputs are edited (ADR-0043 — the canvas
+        // place a signature's inputs are edited (ADR-0044 — the canvas
         // wires Sem blocks into formulas, never into signatures).  A Sem
         // block has no inputs and no such section.
         if (role == RelationshipRole.rule)
@@ -986,7 +986,7 @@ class _MappingInspector extends StatelessWidget {
                 focusGeneration: definitionFocus,
                 dispatch: dispatch,
               ),
-            // What the definition names, as rows (ADR-0043): for a Sem
+            // What the definition names, as rows (ADR-0044): for a Sem
             // block, the Sem blocks its mapping block reads — the read
             // edges of the canvas — and the rules it applies; for a rule,
             // what it depends on.  Then who names this one: the blocks

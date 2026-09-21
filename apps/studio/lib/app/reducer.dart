@@ -91,7 +91,7 @@ Transition reduce(AppState s, AppAction action) {
         if (s.editor.pendingInsert != null) return Transition(s);
         // From the canvas (a point): the concept is the template and a Sem
         // block of it is what lands at the point — one daemon transaction,
-        // the Source path's (ADR-0043).  From the Library (no point): the
+        // the Source path's (ADR-0044).  From the Library (no point): the
         // template alone.
         if (position != null) {
           final busy = pending(s);
@@ -1564,7 +1564,7 @@ Transition projectReceived(
   // Create-then-rename: the concept a template insertion created lands
   // where the designer pointed, is selected, and opens for naming.
   final insert = s.editor.pendingInsert;
-  // What lands where the designer pointed (ADR-0043): the Sem block a
+  // What lands where the designer pointed (ADR-0044): the Sem block a
   // canvas insertion created — over a new concept or an existing one —
   // selected.  A concept created alone at a point (a library item's
   // fragment, an older path) is a template and not a node: a Sem block of

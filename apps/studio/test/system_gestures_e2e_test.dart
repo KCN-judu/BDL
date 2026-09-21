@@ -130,7 +130,7 @@ void main() {
     final level = conceptId('Brightness');
     await mapping(tester, 'raw', null, tilt, at: const Offset(400, 40));
     await mapping(tester, 'tiltValue', 'raw', tilt, at: const Offset(400, 400));
-    // Sem blocks (ADR-0043): dimByTilt reads tiltValue by name; brightness
+    // Sem blocks (ADR-0044): dimByTilt reads tiltValue by name; brightness
     // reads dimByTilt.  A rule template would not be a node to box-select.
     await mapping(tester, 'dimByTilt', 'tiltValue / 90 deg', level, at: const Offset(700, 40));
     await mapping(tester, 'brightness', 'dimByTilt', level, at: const Offset(700, 200));
@@ -442,7 +442,7 @@ void main() {
         expect(viaProxy.source.hasBaseDecl(), isTrue);
         expect(viaProxy.source.baseDecl.toInt(), mappingId('consumerA'));
         // input proxy: the aggregate input stands for consumerA's read of
-        // tiltValue — a name in its formula (ADR-0043): a Sem block dropped
+        // tiltValue — a name in its formula (ADR-0044): a Sem block dropped
         // on it reaches no socket that takes a link, and nothing changes
         final aBefore = s.project!.mappings
             .firstWhere((m) => m.name == 'consumerA')

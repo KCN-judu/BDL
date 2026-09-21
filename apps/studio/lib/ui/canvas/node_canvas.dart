@@ -1409,7 +1409,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
       }
     }
     // The design's concepts, the templates a Sem block is created from
-    // (ADR-0043): one block each per click, as many times as the product
+    // (ADR-0044): one block each per click, as many times as the product
     // has them.
     final conceptsOfDesign = [...widget.project.concepts]
       ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
@@ -1680,7 +1680,7 @@ class _NodeCanvasState extends State<NodeCanvas> {
       return;
     }
     // A Sem block into an open position of a mapping block: the text edit
-    // that fills it (ADR-0043).
+    // that fills it (ADR-0044).
     if (inp.role == SocketRole.slot && out.node.kind == NodeKind.mapping) {
       widget.dispatch(
         WireSemBlockRequested(mappingId: inp.node.id, semId: out.node.id, slot: inp.index),
@@ -2345,7 +2345,7 @@ class _CanvasPainter extends CustomPainter {
       );
     }
 
-    // Every edge in the hue of the concept it carries (ADR-0043: a read
+    // Every edge in the hue of the concept it carries (ADR-0044: a read
     // edge carries the read Sem block's; a drive edge the driver's).
     for (final l in scene.links) {
       final isSelected =
@@ -2506,7 +2506,7 @@ class _CanvasPainter extends CustomPainter {
   String _describe(NodeShape n) {
     switch (n.ref.kind) {
       case NodeKind.concept:
-        // not drawn (ADR-0043: a concept is a template, not a node)
+        // not drawn (ADR-0044: a concept is a template, not a node)
         return '${n.title}, concept';
       case NodeKind.mapping:
         final produces = n.sockets

@@ -126,7 +126,7 @@ language's unresolved declaration, a first-class state.
 `docs/spec/textual-syntax.md` §11 for what elaborates; ADR-0013 for the formula
 language's naming rule. The links on the canvas are the kernel's `dependsOn`
 (`docs/spec/kernel.md` §5) — `refs` of the realization, carried per relationship
-in the analysis (`MappingAnalysis.references`, ADR-0034, ADR-0043).
+in the analysis (`MappingAnalysis.references`, ADR-0034, ADR-0044).
 
 ## Related
 

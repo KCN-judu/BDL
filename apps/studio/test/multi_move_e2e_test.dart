@@ -4,7 +4,7 @@
 /// them; dragging one moves all three, spacing kept, as one layout write;
 /// a save, a close and a reopen bring the positions back.  Then the drive:
 /// a Sem block dragged onto the sink is the drive edge, and the output
-/// pass agrees; a second one is a conflict the pass reports (ADR-0043).
+/// pass agrees; a second one is a conflict the pass reports (ADR-0044).
 @Tags(['daemon', 'filesystem', 'e2e'])
 library;
 
@@ -184,7 +184,7 @@ void main() {
         }
         expect(s.editor.selection, const NoSelection(), reason: 'selection is editor state');
 
-        // a Sem block → the sink is the drive edge (ADR-0043): at once,
+        // a Sem block → the sink is the drive edge (ADR-0044): at once,
         // and the pass agrees; a second block dropped on the driven sink is
         // a second drive, which the output pass reports as a conflict
         s = await analysed();

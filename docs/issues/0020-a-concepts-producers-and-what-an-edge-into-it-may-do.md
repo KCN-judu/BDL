@@ -1,9 +1,9 @@
 ---
 id: ISS-0020
-state: open
+state: resolved
 area: formal
 opened: 2026-09-21
-resolved-by: []
+resolved-by: [ADR-0044]
 related: [ADR-0034, ADR-0003, ISS-0002]
 ---
 
@@ -52,6 +52,13 @@ definitions, one active) touches the same question from the definition's side.
 
 ## Resolution
 
-Open. When the audit concludes: an ADR records what a produce edge is and what
-may be done to it; the freeze in studio-ui §2 is lifted or made permanent by
-that record.
+Resolved by ADR-0044 (2026-09-21). The audit (BDL_FV Phase 21, FVD-0163)
+withdrew the question rather than answering it either way: the value is the
+declaration's, not the concept's — a Sem block has one producer by construction
+(`producedBy_unique`), several Sem blocks of one concept are ordinary, and a
+formula names Sem blocks by `declRef`. The canvas no longer draws a concept
+node, so there is no edge into a concept to act on; the produce edge is the
+attachment of a mapping block to its Sem block; a read edge is a name in a
+formula and gets no destructive action; no diagnostic counts a concept's blocks
+(Phase 20's `ProducerUnique` stays an optional judgment of the formal
+development, unbuilt here).

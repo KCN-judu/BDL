@@ -87,7 +87,7 @@ _As built: [workspace](../user-guide/assets/studio/workspace.png)._
 │  Timing dom.  │                                      │                   │
 │  Outputs      │                                      │                   │
 ├───────────────┴──────────────────────────────────────┴───────────────────┤
-│ r12 · 2 concepts · 1 mapping · dimByTilt: declared            bdld 0.1.0 │  status line
+│ r12 · 2 concepts · 2 blocks · brightness: no formula          bdld 0.1.0 │  status line
 ├──────────────────────────────────────────────────────────────────────────┤
 │ [⊞]        Design      Simulate      Deploy      Monitor            [⚙] │  page bar
 └──────────────────────────────────────────────────────────────────────────┘
@@ -120,18 +120,26 @@ as a banner above the page content, never as a modal.
 ### Anatomy
 
 _As built: [node anatomy](../user-guide/assets/studio/node-anatomy.png); the
-header word precedence is `Source` › `declared` › port word › sink state ›
-`required` › `rule`._
+header word precedence is `Source` › port word › sink state › `required`._
+
+The canvas draws the **value graph** (ADR-0044): a **Sem block** per unit-domain
+relationship — a declaration of a concept holding one value per tick — and,
+beside each Sem block with a definition of its own, its **mapping block**: the
+definition drawn as a node of its own, keyed by the Sem block's id (one
+declaration, two nodes, two positions — `Layout.definitions`). A **concept** is
+the template a Sem block is created from and is not a node; a **rule** — a
+relationship with inputs — is the template a mapping block applies and is not a
+node either: both live in the sidebar with their own inspectors.
 
 ```text
-   ●────[ Tilt ]────●                       concept: one row — name, in-socket, out-socket
-
-        ┌─────────────────────────┐
-        │ dimByTilt        declared│   header: title · the one state word (only while declared)
-   ●────┤ Tilt                     │   input socket per read concept (left), hue = identity
-   ◆────┤ Held          Brightness ├────●   output socket (right)
-        │ ● clamp(0.2 + 0.8·θ/60°) │   definition region: summary line; red mark = does not check
-        └─────────────────────────┘
+        ┌─────────────────────────┐          ┌──────────────────────┐
+        │ dimByTilt               │          │ brightness           │   Sem block: header (title · the
+   ●────┤ tilt                    ├────●━━━●─┤ ↻ main    Brightness ├────●   one state word), then its concept
+   ◆────┤ held                    │          └──────────────────────┘   at the output socket; the produce
+   ○────┤ ?                       │   mapping block: header = the rules   socket on the left takes the joint
+        │ ● dimByTilt(tilt, held) │   applied (or "Formula"); a read
+        └─────────────────────────┘   socket per Sem block named; a slot
+                                      socket per open position; the formula line
 ```
 
 - **A relationship without inputs has no input socket.** Its canonical type is
@@ -185,68 +193,95 @@ header word precedence is `Source` › `declared` › port word › sink state �
   value form is not chosen yet is a hollow ring. The same glyph, drawn by the
   same code, appears in the library, in chips, toggles and pop-ups. No type
   words are written beside a socket anywhere.
-- **Concept node**: a single row — the name, an input socket on the left (a
-  mapping producing this concept connects here) and an output socket on the
-  right (values of this concept flow out). Nothing else: what it measures and
-  what it means are the inspector's.
-- **Mapping node**: one input socket per read concept (labelled), one output
-  socket, and a definition region below the sockets. The region holds the
-  definition's summary line, or nothing while declared. A definition the
-  compiler cannot accept gets a **red mark at the definition line** — where the
-  problem lives — and no word in the header. A defined mapping's region ends in
-  a **disclosure** (a chevron at the definition line): open, the node extends
-  downward with the formula **unfolded** — the same rendering the Formula view
-  draws (`ui/expanded_formula.dart` over `FormulaRender`, dense), read-only,
-  from the daemon's projection of the committed definition
+- **No concept node.** A concept is on the canvas only as the hue and the socket
+  shape of every socket that carries it and as the concept word at a Sem block's
+  output socket; its name, value form and meaning are the inspector's, reached
+  from the sidebar. _Add Block ▸ of C_ instantiates it at a point, as often as
+  the product has such values; two Sem blocks of one concept are ordinary and
+  raise nothing (ADR-0044 §5).
+- **Sem block**: the declaration — a two-row node (`NodeMetrics.semWidth` ×
+  `semHeight`, the numbers `bdl_layout::metrics` places): the title is its name,
+  the row carries its concept's name at the output socket on the right and its
+  timing domain at the left; on the left edge the socket its definition arrives
+  at — the **produce socket** (`SocketRole.produce`) when it has a mapping
+  block, the hollow **realisation socket** (§11) while a binding could realise
+  it, a filled one once a binding does. A Sem block with no definition is a
+  Source (above), never _declared_ and never dashed: a Sem block has no inputs
+  (`Signature.inputs` is the rule template's), so there is no
+  read-without-definition state to draw.
+- **Mapping block** (`NodeKind.definition`, `NodeRef.definition(id)` — the Sem
+  block's id): the definition drawn as a node of its own, placed by the layout
+  service beside the block (`Layout.definitions`; unplaced, the canvas draws it
+  attached directly to the left, `attachedBlockPosition`). Its header names the
+  rules the definition applies (`NodeShape.applies`, from the references that
+  are rules; the quiet word _Formula_ when it applies none); one **read socket**
+  per Sem block the definition names (`SocketRole.read`, `readsOf` from
+  `MappingAnalysis.references` filtered to unit-domain declarations; index = the
+  read block's id; in the read block's hue, labelled with its name), one hollow
+  **slot socket** per open position of the definition (`SocketRole.slot`, from
+  `MappingAnalysis.slots`, protocol 0.30; unhued — a `?` accepts any block), an
+  output socket on the right in the block's hue, then the definition region with
+  the summary line. A definition the compiler cannot accept gets a **red mark at
+  the definition line** — where the problem lives — and no word in the header.
+  The region ends in a **disclosure** (a chevron at the definition line): open,
+  the node extends downward with the formula **unfolded** — the same rendering
+  the Formula view draws (`ui/expanded_formula.dart` over `FormulaRender`,
+  dense), read-only, from the daemon's projection of the committed definition
   (`GetFormulaProjection` per revision, `EditorState.formulaPreviews`), with the
   first finding beneath it and _Edit Formula_ to open the inspector; while the
   projection is on its way, or when the compiler cannot draw it, the region says
-  so in one line. Which nodes are open and how tall each is (measured, capped at
-  220 px) is `EditorState.expandedFormulas` — view state like a collapsed
+  so in one line. Which formulas are open and how tall each is (measured, capped
+  at 220 px) is `EditorState.expandedFormulas` — view state like a collapsed
   group's box, never a revision and never saved; the scene
-  (`buildScene(expanded:)`, `NodeShape.formulaRegion`) grows the node and moves
-  nothing else. A tap on the unfolded formula selects the node and nothing more;
-  no click on the canvas rewrites a formula (ADR-0042). A declared mapping — one
-  with reads and no definition — is drawn with a dashed outline and the word
-  _declared_; dashed survives selection (accent changes the colour, never the
-  meaning). Never red. A relationship with no reads and no definition is a
-  Source (above), not declared.
+  (`buildScene(expanded:)`, `NodeShape.formulaRegion`) grows the mapping block
+  and moves nothing else. A tap on the unfolded formula selects the block and
+  nothing more; no click on the canvas rewrites a formula (ADR-0042). **One
+  declaration, two nodes**: a click on a mapping block selects its Sem block
+  (`asDeclaration`, `singleSelection`), both wear the selection outline, one
+  inspector, one menu, one name (`InlineRenameStarted` on the declaration); a
+  Sem block dragged takes its mapping block along, a mapping block dragged moves
+  alone (its own position). A base relationship a binding realises has no
+  mapping block: the binding's edge into its filled realisation socket is its
+  definition.
 - **Links** are cubic Béziers from an output socket (right edge) to an input
   socket (left edge), tangents horizontal, colour of the concept, 2 px. Hovered:
   a soft halo of the same colour under the same stroke and the hand cursor —
   interactive, nothing more. Selected: the accent, 3 px, and a ring at each end
   (a shape, not only a hue); a binding's selection has looked like this all
-  along. Data flows left → right. These are the **signature edges**: concept → a
-  relationship that reads it, relationship → the concept it produces, value →
-  the sink it drives — the interface, and what dragging edits. The hit area is
-  eight screen pixels from the stroke at every zoom (`linkTolerance`: `8 / zoom`
-  scene units, never under 6 nor over 32), the nearest edge within it wins
-  (`nearestLink`), and the stroke itself never widens for it.
-- **Reference edges** (ADR-0034) are the kernel's `dependsOn`: from the output
-  socket of every relationship a definition names into the **formula line** of
-  the relationship naming it — the left end of its definition region, not a
-  socket — in the secondary text colour, 1.5 px, under the signature edges, with
-  no hit area, halo or selection. They come from `MappingAnalysis.references`
-  (`buildScene(refs:)`, `LinkShape.reference`), never from the formula text;
-  without an analysis of the revision there are none, and an edge whose end the
-  projection does not show (a deleted relationship, an instance's private one)
-  is dropped. A self-reference draws nothing (the register mark, §7, is not
-  built). A hidden member of a collapsed group adds none of its own; an edge
-  from a hidden member leaves from the group's aggregate output socket.
-- **Rule, value, Source** are the daemon's three roles, told apart without the
-  formula: a relationship that reads something is a **rule** — its input sockets
-  are the shape and the header says _rule_ when no state word takes the slot
-  (`NodeShape.rule`); one that reads nothing and has a realization is a
-  **value** with no word; one that reads nothing and has none is a Source
-  (above). _Declared_ (dashed) is a state of a rule only — the one hole a
-  designer fills; _not applied_ (a hollow output socket) is the compiler's
-  `reactive.rule_unapplied`, a state of a rule; _does not check_ is a state of a
-  rule or a value. Assistive technology hears _name, rule, reads …, produces …,
-  depends on …, applied by nothing_ / _name, value, produces …_ / for a
-  port-backed relationship of an open component the port's word.
-- **Empty canvas**: one tertiary line naming the first step (add a concept from
-  the Library). Painted nodes expose semantics in product language for assistive
-  technology.
+  along. Data flows left → right. Three kinds join the value graph (`LinkKind`):
+  the **read edge** from each Sem block a definition names into its mapping
+  block's read socket for it — `MappingAnalysis.references`
+  (`buildScene(refs:)`), the kernel's `dependsOn` (`reads_iff_dependsOn`), never
+  the formula text; without an analysis of the revision there are none, and an
+  edge whose end the projection does not show (a deleted relationship, an
+  instance's private one, a rule) is dropped; the **produce edge** from a
+  mapping block's output socket into its Sem block's produce socket — the
+  definition itself, functional and write-once (`producedBy_unique`), a short
+  joint the layout keeps beside the block, selectable like any edge but starting
+  no link and taking none; and the **drive edge** from a Sem block into the sink
+  it drives, as authored. Bindings and a collapsed group's aggregate edges as
+  before, over Sem blocks only; a hidden member adds no edge of its own (its
+  mapping block is hidden with it), and an edge from a hidden member leaves from
+  the group's aggregate output socket; a crossing-in edge into a collapsed group
+  stands for the members' mapping blocks that read it. No edge joins two mapping
+  blocks. The hit area is eight screen pixels from the stroke at every zoom
+  (`linkTolerance`: `8 / zoom` scene units, never under 6 nor over 32), the
+  nearest edge within it wins (`nearestLink`), and the stroke itself never
+  widens for it.
+- **Value and Source** are the two roles a block wears, told apart without the
+  formula: a Sem block with a realization is a **value** with no word; one
+  without is a Source (above). A **rule** — `Signature.inputs` non-empty — is
+  not drawn (`buildScene` skips it): its parameters over concepts are the
+  inspector's chips, its application is the word in the applying mapping block's
+  header, and _not applied_ (`reactive.rule_unapplied`) is its finding in the
+  inspector and on Simulate, not a socket. _Does not check_ is the red mark at
+  the definition line. Assistive technology hears _name, value, produces …,
+  reads …, applies …_ / _name, Source …_ / for a port-backed relationship of an
+  open component the port's word / _mapping block of name: its definition, reads
+  …, applies …_.
+- **Empty canvas**: one tertiary line naming the first step (add a block from
+  the canvas menu or the Library). Painted nodes expose semantics in product
+  language for assistive technology.
 
 ### Interaction — desktop CAD selection over a node editor
 
@@ -262,37 +297,38 @@ space pans, B for box select) was the first version and is replaced: it made a
 plain drag ambiguous between pan and select, needed a modifier to start a
 rectangle, and used ⇧ where every other desktop tool uses ⌘.
 
-| Gesture                                                         | Result                                                                                                                                                                                                  |
-| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| click node                                                      | select it alone; on a member of the selected set: keep the set, make it the active object                                                                                                               |
-| click empty canvas                                              | clear the selection                                                                                                                                                                                     |
-| ⌘-click (Ctrl on Windows / Linux)                               | toggle the node in the set; the node toggled in becomes active                                                                                                                                          |
-| ⇧-click node                                                    | the one shortest chain of signature edges from the active object to it, when exactly one exists; otherwise the node alone is added (never a guessed branch; reference edges never count)                |
-| drag on empty canvas, left → right                              | **window** marquee: nodes wholly inside are selected — solid outline, restrained fill                                                                                                                   |
-| drag on empty canvas, right → left                              | **crossing** marquee: nodes inside or touched — dashed outline, fainter fill; the vertical direction means nothing                                                                                      |
-| ⌘-marquee / ⇧-marquee                                           | union into / subtraction from the selected set (a `+` / `−` at the moving corner); what the release will do is previewed on the nodes before the button comes up                                        |
-| drag a selected node                                            | the selected movable set moves together, offsets kept, committed on release as one layout write (`NodesMoved`, no revision); a lone relationship dropped into or out of a region changes its membership |
-| drag an unselected node                                         | it becomes the selection (⌘: joins it) and moves                                                                                                                                                        |
-| drag a group's title band                                       | its members move                                                                                                                                                                                        |
-| middle-button drag · Space + drag · trackpad two-finger scroll  | pan                                                                                                                                                                                                     |
-| mouse wheel · pinch · ⌘ + trackpad scroll                       | zoom about the pointer (0.25–3×)                                                                                                                                                                        |
-| drag from output socket to input socket                         | make link (adds the concept to the mapping's reads, sets the mapping's output, drives the sink); every socket the link could land on wears a halo, an incompatible one the forbidden cursor             |
-| drag a **concept**'s value socket onto a **sink** accepting it  | Concept → Output (below): the relationship that can drive the sink connects                                                                                                                             |
-| drag from a connected input socket away, release on empty space | disconnect — the one `DisconnectLinkRequested` path (below)                                                                                                                                             |
-| hover an edge                                                   | the hand cursor and a halo; no icon, no selection change                                                                                                                                                |
-| click an edge                                                   | select it (`LinkSelected`, by its ends; a binding: `BindingSelected`); the inspector says what it joins; the selection persists like a node's                                                           |
-| hover the selected edge / node / group                          | its contextual affordance appears beside it (below); it stays while the pointer crosses to an icon                                                                                                      |
-| ⌫ / Delete on a selected edge                                   | disconnect it, when the model can (a read, a drive, a binding); otherwise nothing                                                                                                                       |
-| menu key · ⇧F10                                                 | the contextual menu of the selection, where the affordance's menu icon would open it                                                                                                                    |
-| drop a new link on empty space                                  | discard (no auto-create)                                                                                                                                                                                |
-| ⌫ / Delete                                                      | delete the selection — a set as one checked plan (below); a concept in use → banner: "_Tilt_ is used by _dimByTilt_"                                                                                    |
-| ⌘A                                                              | select every visible node of the canvas on screen (a collapsed group is its box; hidden members, links and reference edges are not nodes)                                                               |
-| Esc                                                             | the innermost thing first: a submenu, a menu, a gesture in progress (nothing is committed), then the selection                                                                                          |
-| ← → ↑ ↓                                                         | nudge the selected set one grid step (8 pt); ⇧: one point                                                                                                                                               |
-| Home / ⌘0                                                       | frame all (the canvas also frames once, by itself, after an arrangement — never on the designer's own moves)                                                                                            |
-| double-click node header                                        | rename inline (an instance: open its source)                                                                                                                                                            |
-| right-click · Control-click (macOS)                             | the contextual menu for what is under the pointer (below)                                                                                                                                               |
-| drop a Library row                                              | a Concept item: insert the concept at the drop point; a Source preset: open the Source sheet                                                                                                            |
+| Gesture                                                                                               | Result                                                                                                                                                                                                                                                                                                                                                                                                                |
+| ----------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| click node                                                                                            | select it alone; on a member of the selected set: keep the set, make it the active object                                                                                                                                                                                                                                                                                                                             |
+| click empty canvas                                                                                    | clear the selection                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ⌘-click (Ctrl on Windows / Linux)                                                                     | toggle the node in the set; the node toggled in becomes active                                                                                                                                                                                                                                                                                                                                                        |
+| ⇧-click node                                                                                          | the one shortest chain of read and drive edges from the active object to it, when exactly one exists; otherwise the node alone is added (never a guessed branch; bindings never count)                                                                                                                                                                                                                                |
+| drag on empty canvas, left → right                                                                    | **window** marquee: nodes wholly inside are selected — solid outline, restrained fill                                                                                                                                                                                                                                                                                                                                 |
+| drag on empty canvas, right → left                                                                    | **crossing** marquee: nodes inside or touched — dashed outline, fainter fill; the vertical direction means nothing                                                                                                                                                                                                                                                                                                    |
+| ⌘-marquee / ⇧-marquee                                                                                 | union into / subtraction from the selected set (a `+` / `−` at the moving corner); what the release will do is previewed on the nodes before the button comes up                                                                                                                                                                                                                                                      |
+| drag a selected node                                                                                  | the selected movable set moves together, offsets kept — a Sem block with its mapping block — committed on release as one layout write (`NodesMoved`, no revision); a lone relationship dropped into or out of a region changes its membership; a mapping block grabbed by itself moves alone                                                                                                                          |
+| drag an unselected node                                                                               | it becomes the selection (⌘: joins it) and moves                                                                                                                                                                                                                                                                                                                                                                      |
+| drag a group's title band                                                                             | its members move                                                                                                                                                                                                                                                                                                                                                                                                      |
+| middle-button drag · Space + drag · trackpad two-finger scroll                                        | pan                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| mouse wheel · pinch · ⌘ + trackpad scroll                                                             | zoom about the pointer (0.25–3×)                                                                                                                                                                                                                                                                                                                                                                                      |
+| drag a **Sem block**'s output socket onto a **slot** socket, or onto a Source                         | **wire** (`WireSemBlockRequested`): the block's name becomes the Source's definition (`AttachDefinition`), or fills the compiler's first open position (`ComposeAction.fill` on the slot `MappingAnalysis.slots` names, then one `ReplaceDefinition`) — a text edit, never a signature edit and never a client-side parse; every socket the wire could land on wears a halo, an incompatible one the forbidden cursor |
+| drag a **Sem block** onto a node                                                                      | the same wire, by node (`blockDropTarget`): onto a Source, its definition; onto a mapping block with an open position — or a Sem block whose mapping block has one — the first slot; onto anything else, nothing (the forbidden cursor)                                                                                                                                                                               |
+| drag a **Sem block**'s output socket onto a **sink** accepting its concept                            | drive (`SetMappingDrive`); a driven sink gets a second driver the output pass reports as a conflict                                                                                                                                                                                                                                                                                                                   |
+| drag from a driven sink's socket, or from a mapping block's read socket, away; release on empty space | disconnect — the one `DisconnectLinkRequested` path (below): the drive, or the read edge as the compiler's `unreference`                                                                                                                                                                                                                                                                                              |
+| hover an edge                                                                                         | the hand cursor and a halo; no icon, no selection change                                                                                                                                                                                                                                                                                                                                                              |
+| click an edge                                                                                         | select it (`LinkSelected`, by its ends; a binding: `BindingSelected`); the inspector says what it joins; the selection persists like a node's                                                                                                                                                                                                                                                                         |
+| hover the selected edge / node / group                                                                | its contextual affordance appears beside it (below); it stays while the pointer crosses to an icon                                                                                                                                                                                                                                                                                                                    |
+| ⌫ / Delete on a selected edge                                                                         | disconnect it, when the model or the compiler can (a drive, a read edge, a binding); a produce edge: nothing                                                                                                                                                                                                                                                                                                          |
+| menu key · ⇧F10                                                                                       | the contextual menu of the selection, where the affordance's menu icon would open it                                                                                                                                                                                                                                                                                                                                  |
+| drop a new link on empty space                                                                        | discard (no auto-create)                                                                                                                                                                                                                                                                                                                                                                                              |
+| ⌫ / Delete                                                                                            | delete the selection — a set as one checked plan (below); a concept is deleted from the sidebar, refused while a block of it exists: "_Tilt_ is used by _tilt_"                                                                                                                                                                                                                                                       |
+| ⌘A                                                                                                    | select every visible node of the canvas on screen (a collapsed group is its box; hidden members and links are not nodes)                                                                                                                                                                                                                                                                                              |
+| Esc                                                                                                   | the innermost thing first: a submenu, a menu, a gesture in progress (nothing is committed), then the selection                                                                                                                                                                                                                                                                                                        |
+| ← → ↑ ↓                                                                                               | nudge the selected set one grid step (8 pt); ⇧: one point                                                                                                                                                                                                                                                                                                                                                             |
+| Home / ⌘0                                                                                             | frame all (the canvas also frames once, by itself, after an arrangement — never on the designer's own moves)                                                                                                                                                                                                                                                                                                          |
+| double-click node header                                                                              | rename inline (a mapping block: its Sem block; an instance: open its source)                                                                                                                                                                                                                                                                                                                                          |
+| right-click · Control-click (macOS)                                                                   | the contextual menu for what is under the pointer (below)                                                                                                                                                                                                                                                                                                                                                             |
+| drop a Library row                                                                                    | a Concept item: the concept sheet, and on _Create_ the concept and one Sem block of it at the drop point, in one transaction; a Source preset: open the Source sheet                                                                                                                                                                                                                                                  |
 
 Cursors: precise over a socket and during a marquee; forbidden over a socket the
 link cannot reach; move while nodes are dragged; grab while Space is held,
@@ -328,31 +364,31 @@ as a follow-up); a refusal ends the plan, as every queued plan does. A lone
 group deletes as an ungroup (its relationships stay); a group among other
 objects is left alone.
 
-**Concept → Output.** A sink is driven by a relationship (`SetMappingDrive`,
-DriveWF, SingleDriver), never by a concept — and the designer reaches for the
-concept, not for whichever relationship happens to produce it. So a concept's
-value socket dropped on a sink that accepts the concept is an _authoring
-gesture_ over the model's own edit: the candidates are read off the projection
-by the pass's rule (`driveCandidates`: a value or a Source — never a rule, whose
-type is an arrow — producing exactly the accepted concept, updating in the
-sink's domain when it has one, not the final target of another sink), the same
-list the sink's inspector offers under _Connect_. One candidate connects at
-once. Several are offered by name in the chooser (_Drive with brightness_ /
-_Drive with dimmer_); nothing is chosen for the designer. None: the chooser says
-so where the pointer is (_Servo accepts ServoPosition, but no current
-relationship can drive it_) and offers the sink in the inspector; nothing is
-synthesized. A driven sink is offered a _replacement_ (_Replace lifted with
-rest_), one plan in which the current driver lets go before the next connects
-(`ReplaceDriverRequested`) — the sink never has two drivers in between, and the
-direct Mapping → Output drag keeps today's semantics (a second drive is a
-conflict the output pass reports). `canLink` is unchanged: the concept never
-links the sink; `isAuthoringTarget` names the gesture, and the sink's socket
-wears the halo while the concept is dragged. The projection is unchanged too:
-the drive edge is drawn from the driver's own output socket (the true
-SingleDriver identity), the producer edge from the driver to its concept — both
-true; routing the drive through the concept would say the concept drives, which
-is false. Its inspector, its contextual menu (_Show Driver: brightness_) and the
-socket's halo make the driver legible from the concept's side.
+**The wire is a text edit.** Dragging a Sem block into a mapping block is the
+one authoring gesture of the value graph, and it edits the _formula_, never a
+signature (ADR-0044 §3). Its reducer path (`app/wiring.dart`,
+`WireSemBlockRequested {mapping, sem, slot?}`) has two cases and no third: the
+target is a **Source** — the block's name becomes its definition in one
+`AttachDefinition`; the target has an **open position** — the compiler is asked
+to fill the first slot the analysis names (`ComposeAction.fill` on
+`MappingAnalysis.slots[0]`, or the slot socket the wire landed on), and its
+answer is committed as one `ReplaceDefinition` (`composeAndCommit`,
+`ComposerState.commitOnCompose`, `commitText`), without a draft the designer is
+still typing and without Studio reading a token of the formula. While the
+compiler answers, the wire is `EditorState.pendingWire` (the `ComposeAction` it
+waits to send); a refusal ends it. A mapping block with no open position accepts
+nothing (the forbidden cursor): the place to change what it names is the
+formula, in the inspector or the Formula view. The read edge's _Disconnect_ is
+the same path the other way — `unreferenceRequested`,
+`ComposeAction.unreference`: every occurrence of the name becomes a slot, which
+the mapping block then shows as a hollow socket. The Concept → Output gesture of
+the concept-node canvas is withdrawn with the concept node; the sink's inspector
+keeps the same `driveCandidates` list under _Connect_, and a block's own output
+socket dropped on a sink is the drive as before. `canLink` is the nominal typing
+rule and the slot rule together: a read socket accepts nothing (it is a name), a
+produce socket accepts nothing (it is the joint), a mapping block's output
+starts nothing (it produces its own block), a slot socket accepts any Sem block,
+a sink accepts a block of its concept.
 
 ### Edges as objects and the contextual affordance
 
@@ -377,14 +413,14 @@ order, the object's **menu icon** (`more_horiz`, _Connection menu_ / _Node menu_
 under the row) and then the object's own quick actions, only those its menu
 already has:
 
-| Owner                                              | Icons                                                                                                      |
-| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| a read or a drive edge                             | menu · **× Disconnect**                                                                                    |
-| a binding                                          | menu · **× Disconnect** (`UnbindRequested`)                                                                |
-| a produce edge; a collapsed group's aggregate edge | menu only — no × (ISS-0020, below)                                                                         |
-| a node (one selected)                              | menu · **× Delete _name_** (`DeleteSelectionRequested`; not on a port-backed relationship, as in its menu) |
-| a group (band or box)                              | menu · **Collapse / Expand**                                                                               |
-| a selected set; an instance's port; a socket       | none — the strongest cases only; a set's commands are in its menu, a port's in its inspector               |
+| Owner                                              | Icons                                                                                                                                              |
+| -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| a drive edge; a read edge                          | menu · **× Disconnect** (a read edge: the compiler's `unreference`)                                                                                |
+| a binding                                          | menu · **× Disconnect** (`UnbindRequested`)                                                                                                        |
+| a produce edge; a collapsed group's aggregate edge | menu only — no × (the produce edge is the definition itself — the inspector's _Detach definition_ takes it away; the aggregate edge is many edges) |
+| a node (one selected)                              | menu · **× Delete _name_** (`DeleteSelectionRequested`; not on a port-backed relationship, as in its menu)                                         |
+| a group (band or box)                              | menu · **Collapse / Expand**                                                                                                                       |
+| a selected set; an instance's port; a socket       | none — the strongest cases only; a set's commands are in its menu, a port's in its inspector                                                       |
 
 It shows only while its owner is selected **and** hovered (or the pointer is on
 the row itself: the owner's hit area and the row, inflated by 12 pt, are one
@@ -400,19 +436,18 @@ never also a click on what lies under it.
 
 **One disconnect.** `DisconnectLinkRequested(LinkId)` is the single semantic
 path behind the link menu's _Disconnect_, the ×, the inspector's button, ⌫ /
-Delete on a selected edge and the drag-away: a relationship's read becomes
-`UnlinkMappingInput`, a sink's driver `SetMappingDrive` to none, and the
-selection goes with the edge. `LinkId.disconnectable` says which edges the model
-can take away alone; the reducer refuses the rest, the menu offers no item for
-them (nothing greyed, nothing implied) and the affordance no ×.
-
-**Frozen while ISS-0020 is open.** Whether a concept has one producer or several
-is under formal audit. Until it concludes the Concept ↔ Mapping topology and the
-Mapping → Output drive projection stay exactly as drawn today, every producer's
-edge is drawn (`lit → Lit` beside `lit → lamp`; never `lit → Lit → lamp`), no
-producer marker, sequencing or count is shown, and no edge into a concept gets a
-destructive action. `LinkSelected` names an edge by its ends
-(`LinkId {from, to, concept, index}`), which is stable across revisions and
+Delete on a selected edge and the drag-away: a sink's driver becomes
+`SetMappingDrive` to none; a read edge becomes the compiler's
+`ComposeAction.unreference` of the name, committed as one replace edit; and the
+selection goes with the edge. `LinkId.disconnectable` (`LinkKind.drive`,
+`LinkKind.read`; a binding has `UnbindRequested`) says which edges can be taken
+away alone — the reducer refuses the rest, the menu offers no item for them
+(nothing greyed, nothing implied) and the affordance no ×. A **produce edge** is
+the definition itself: it goes only with the whole definition, through the
+inspector's _Detach definition_ (ISS-0020 is resolved by ADR-0044: there is no
+edge into a concept any more, and the produce edge is the joint of a block and
+its definition, which nothing can reroute). `LinkSelected` names an edge by its
+ends (`LinkId {from, to, concept, index}`), which is stable across revisions and
 needs no edge identity from the model; when the edge is no longer drawn (an edit
 made elsewhere), the canvas clears the selection.
 
@@ -425,11 +460,11 @@ the menu and does nothing else (the same press never selects, pans, moves or
 draws). A right-click elsewhere while a menu is open retargets it: the old menu
 closes, the new context is set, the items are rebuilt from it in the next frame
 and the menu opens there — never the last target's items at a new place. The
-chooser (aggregate sockets, Concept → Output) is the same kind of overlay and
-the two are never both open. A menu whose target is deleted, or whose canvas is
-left, closes. Esc closes a submenu, then the menu, before it touches anything
-else. Menus are keyboard menus: the first row has focus when the menu opens, ↑ ↓
-move, → opens a submenu, ⏎ runs the row.
+chooser (aggregate sockets) is the same kind of overlay and the two are never
+both open. A menu whose target is deleted, or whose canvas is left, closes. Esc
+closes a submenu, then the menu, before it touches anything else. Menus are
+keyboard menus: the first row has focus when the menu opens, ↑ ↓ move, → opens a
+submenu, ⏎ runs the row.
 
 The context is one explicit thing (`MenuContext`): the empty canvas at a point,
 a node, an expanded group's band, a link, or the selected set (a right-click on
@@ -440,17 +475,16 @@ stable groups in a fixed order — the object's primary command, IDE navigation,
 the service's fixes, structure, the destructive command — and each item is
 present only when its command exists for that object today:
 
-| Context                          | Items                                                                                                                                                                                                                                                                                                                                                         |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| empty canvas                     | Add Concept ▸ (Recent, the four value forms, Quantities ▸, a third-party library's groups, More…) · Add Source ▸ (New Source…, a third-party library's presets) · Add Instance ▸ (system canvas) · New Behavior Group — Select All ⌘A · Frame All ⌘0 — Arrange Automatically · Undo Arrange (enabled while a layout from before the last arrangement is kept) |
-| relationship — a rule or a value | Edit Definition · Show Formula / Hide Formula (when defined) · Rename · Reveal in Code — Fix ▸ — Group as Behavior · Add to Group ▸ / Remove from … — Delete _name_                                                                                                                                                                                           |
-| relationship — a Source          | Rename · Reveal in Code — Fix ▸ — the group commands — Delete _name_ (no definition to edit: the environment provides it; a port-backed relationship of an open component has no Delete — it goes with its port)                                                                                                                                              |
-| concept                          | Rename · Reveal in Code — Fix ▸ — Delete _name_                                                                                                                                                                                                                                                                                                               |
-| sink                             | Show Driver: _name_ · Rename · Reveal in Code — Fix ▸ (the output pass's actions: connect a value, disconnect a claimant, the blocked sync) — Delete _name_                                                                                                                                                                                                   |
-| instance                         | Edit Source · Rename · Reveal in Code — Delete _name_                                                                                                                                                                                                                                                                                                         |
-| group (band or collapsed box)    | Rename · Collapse / Expand · Package as Reusable Component… — Ungroup (a group's destructive delete is the named action in its inspector)                                                                                                                                                                                                                     |
-| link (signature edge or binding) | Show Binding (a binding) · Show _from_ · Show _to_ — Disconnect (a binding, a read, a drive; a produce edge and a collapsed group's edge have no item — ISS-0020). A right-click selects the edge first, as it selects a node                                                                                                                                 |
-| the selected set                 | Group as Behavior (_n_ relationships) — Delete _n_ objects (no single-object command on a set)                                                                                                                                                                                                                                                                |
+| Context                                                                  | Items                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| empty canvas                                                             | Add Block ▸ (_of C_ for every concept of the design: one Sem block of it at the point, `AddBlockRequested` → `CreateSource`; then New Concept ▸ — Recent, the four value forms, Quantities ▸, a third-party library's groups, More… — the concept sheet, whose _Create_ makes the concept and a block of it) · Add Source ▸ (New Source…, a third-party library's presets) · Add Instance ▸ (system canvas) · New Behavior Group — Select All ⌘A · Frame All ⌘0 — Arrange Automatically · Undo Arrange (enabled while a layout from before the last arrangement is kept) |
+| a Sem block with a definition (a value), or its mapping block — one menu | Edit Definition · Show Formula / Hide Formula · Rename · Reveal in Code — Fix ▸ — Group as Behavior · Add to Group ▸ / Remove from … — Delete _name_                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| a Sem block without one (a Source)                                       | Rename · Reveal in Code — Fix ▸ — the group commands — Delete _name_ (no definition to edit: the environment provides it; a port-backed relationship of an open component has no Delete — it goes with its port)                                                                                                                                                                                                                                                                                                                                                         |
+| sink                                                                     | Show Driver: _name_ · Rename · Reveal in Code — Fix ▸ (the output pass's actions: connect a value, disconnect a claimant, the blocked sync) — Delete _name_                                                                                                                                                                                                                                                                                                                                                                                                              |
+| instance                                                                 | Edit Source · Rename · Reveal in Code — Delete _name_                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| group (band or collapsed box)                                            | Rename · Collapse / Expand · Package as Reusable Component… — Ungroup (a group's destructive delete is the named action in its inspector)                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| link (a read, produce or drive edge, or a binding)                       | Show Binding (a binding) · Show _from_ · Show _to_ — Disconnect (a binding, a drive, a read edge — the compiler's unreference; a produce edge and a collapsed group's edge have no item). A right-click selects the edge first, as it selects a node                                                                                                                                                                                                                                                                                                                     |
+| the selected set                                                         | Group as Behavior (_n_ relationships) — Delete _n_ objects (no single-object command on a set)                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 
 **Fix ▸** is the IDE service's own list for the object — the one the reducer
 asks for on every selection (`ListSemanticActions`, `EditorState.actions`) and
@@ -491,20 +525,26 @@ relayout is built: _Arrange Automatically_ (`AutoLayoutRequested` →
 `EditorState.layoutBefore` for _Undo Arrange_, `frameRequest` bumped so the
 canvas frames the whole design once; the designer's viewports untouched; no
 revision). The arrangement itself is `bdl-layout::arrange_with` (ADR-0023 §7):
-ranks by longest path over signature, drive, binding and reference edges, orders
-each column by barycentre, one column per rank, no overlap — the same routine
-the daemon runs on a first open with no positions anywhere; a partial layout
-gets `place_missing` only, a complete one is preserved.
+ranks mapping blocks, Sem blocks, sinks, instances and groups by longest path
+over read, produce, drive and binding edges — a concept and a rule take no
+column and are never placed — orders each column by barycentre, one column per
+rank, no overlap; the daemon runs the same routine on a first open with no
+positions anywhere; a partial layout gets `place_missing_with` only — a mapping
+block without a position is attached directly left of its Sem block, centred on
+it — and a complete one is preserved.
 
 ### What the canvas never means
 
-Signature edges are the interface and reference edges are dependency; neither is
-execution order. Drawing order does not set output priority. Node position is
-layout only (ADR-0003): the canvas draws every node where the layout puts it and
-arranges nothing itself — an entity without a position is placed by the daemon's
-layout service on open and on commit (ADR-0023 §7,
-`docs/architecture/overview.md`), and the projection carries the result. No node
-type exists per arithmetic operator — formulas live in the inspector.
+A read edge is dependency (`dependsOn`), the produce edge is the definition and
+the drive edge is authorship; none is execution order. A concept has no value
+and no node: a block of it does, and a second block of the same concept is a
+second value, not a second producer of one. Drawing order does not set output
+priority. Node position is layout only (ADR-0003): the canvas draws every node
+where the layout puts it and arranges nothing itself — an entity without a
+position is placed by the daemon's layout service on open and on commit
+(ADR-0023 §7, `docs/architecture/overview.md`), and the projection carries the
+result. No node type exists per arithmetic operator — formulas live in the
+inspector.
 
 ### The concept sheet (library items)
 
@@ -513,12 +553,15 @@ physical quantity — and never a product concept (ADR-0041,
 `docs/spec/concept-library.md`): choosing one anywhere — the right-click menu, a
 drag from the Library tab, a row's double-click or Return, the Project tab's `+`
 — dispatches `NewConceptRequested(presetId?, position?)` and opens the **concept
-sheet** (`ui/concept_sheet.dart`, a `SheetScrim` sheet like the Source sheet's)
-with the category preset. Its one required answer is the **name** the concept
-has in this product — _Angle_ → `LidAngle` — an identifier, free in the design,
-refused on the sheet before the daemon would refuse it; then the category (one
-pop-up over the same items), _Measured in_, the meaning, a live preview of the
-node and the declaration the Code view will write. _Create_ dispatches
+sheet** — the template; from the canvas (a position) its _Create_ also makes one
+Sem block of the new concept at the point, in the same transaction, so that the
+design gains a value and not only a type (ADR-0044 §1) —
+(`ui/concept_sheet.dart`, a `SheetScrim` sheet like the Source sheet's) with the
+category preset. Its one required answer is the **name** the concept has in this
+product — _Angle_ → `LidAngle` — an identifier, free in the design, refused on
+the sheet before the daemon would refuse it; then the category (one pop-up over
+the same items), _Measured in_, the meaning, a live preview of the node and the
+declaration the Code view will write. _Create_ dispatches
 `CreateConceptRequested` — one `CreateConcept` edit; when the projection arrives
 the concept lands where the pointer was (layout, never a revision), selected and
 named as typed: nothing opens for renaming, because the name came first. Cancel
@@ -663,10 +706,10 @@ organised by what the designer means, not by the model's fields:
 | --------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
 | Concept                     | **Meaning**                    | Name, Meaning                                                                                                                                                                                                                                                                                                                               | Rename, SetDescription                                                                                                                           | refinement                                                                                                                   |
 | Concept                     | **Value**                      | a pop-up — Quantity / On–off / Count / Collection of… / Grouped value / Optional… / Decide later — then what the form needs: Unit (angle, length, … with the symbol in its own column), _Each_ (a collection's element form), _When present_, _First_ / _Second_ (nested editors of the same kind); _Order_ (checkbox, quantity forms only) | SetRepresentation                                                                                                                                | choosing is a refinement; **changing a chosen value form** is an edit, and the section says which relationships it re-checks |
-| Concept                     | **Relationships**              | Produced by, Used by — names as links that select the mapping                                                                                                                                                                                                                                                                               | —                                                                                                                                                | —                                                                                                                            |
+| Concept                     | **Blocks** / **Rules**         | the Sem blocks of the concept and the rules over it — names as links that select the block or the rule                                                                                                                                                                                                                                      | —                                                                                                                                                | —                                                                                                                            |
 | Concept                     | Delete `<name>`                | disabled while used, with the users named _at rest_ under the button                                                                                                                                                                                                                                                                        | DeleteConcept                                                                                                                                    | —                                                                                                                            |
 | Mapping                     | **Meaning**                    | Name, Meaning                                                                                                                                                                                                                                                                                                                               | Rename, SetDescription                                                                                                                           | refinement                                                                                                                   |
-| Mapping                     | **Reads**                      | chips with the socket glyph, removable; a pop-up to add                                                                                                                                                                                                                                                                                     | SetSignature                                                                                                                                     | edit                                                                                                                         |
+| Mapping                     | **Reads**                      | a rule: chips with the socket glyph, removable; a pop-up to add (`LinkConceptToMappingInput` / `UnlinkMappingInput` — the template's parameters, edited here only); a Sem block: the blocks its definition names, as name links, and _Applies_ / _Read by_                                                                                  | —                                                                                                                                                | —                                                                                                                            |
 | Mapping                     | **Produces**                   | pop-up with the socket glyph; titled **Provides** for a Source                                                                                                                                                                                                                                                                              | SetSignature                                                                                                                                     | edit                                                                                                                         |
 | Mapping                     | **Meaning › Role**             | _Source_ / _Rule_ / _Value_ (the daemon's `MappingView.role`) / the port word for a port-backed relationship of an open component — derived, never edited; a Source adds one sentence (_A value that enters the behavior model from the environment, observed once per activation. Nothing is missing…_)                                    | —                                                                                                                                                | —                                                                                                                            |
 | Source                      | **Relationship › Realization** | _Provided by the environment; no device is bound yet._ above the definition editor; the header word is _Source_, never _declared_                                                                                                                                                                                                           | —                                                                                                                                                | — (a device binding for a Source is ISS-0016)                                                                                |
@@ -746,8 +789,8 @@ Studio parses, types, converts a unit or decides what fits.
 
 **Encodings**, by channel (the table in §3 gains these rows): a **slot** — an
 expression not yet written, `?` in the text — is a dashed hollow chip (dashed =
-not decided, as the canvas's _declared_ node); a **reference** is a chip with
-its concept's socket glyph (shape = kind of value, as on the canvas); a
+not decided, as a hollow slot socket on the canvas); a **reference** is a chip
+with its concept's socket glyph (shape = kind of value, as on the canvas); a
 **literal** is its coordinate and its unit — a composite drawn as the compiler
 renders it (`unit_display`, `m/s²`) — with a unit pop-up when selected, listing
 the compiler's candidates for the literal's own dimension (`UnitCandidate`,
@@ -894,8 +937,9 @@ the sheet renders, live and at canvas fidelity, the node the entries will become
   _choose_, the preview's output socket is a hollow neutral ring, and Create
   stays disabled until a concept is chosen; a mapping that "produces" the first
   concept in the list would otherwise be created without anyone deciding so. The
-  preview is the mapping node with those input sockets, dashed, _declared_ — the
-  state it will be in.
+  preview is the rule's row as the inspector will show it, those inputs as
+  chips, _declared_ — the state it will be in; a rule is not a node of the
+  canvas (ADR-0044).
 
 Text fields (`MacTextField`): hairline, 5 pt radius, 24 pt; focus = 1 px accent
 border + 3 pt soft glow, nothing moves. Push buttons (`MacButton`): 22 pt, ≥ 72
@@ -967,15 +1011,16 @@ _now_ = implemented; _spec_ = agreed here, drawn when its compiler pass lands.
 | concept identity                            | `ConceptId`                                                                               | socket and link **hue** from the id, identical on every page; the name at every socket                                                                                                                                                                                                                                                                                                 | the name; never a number                                                                                                                                                                                                             | `ConceptId 3`                                                                           | now                                                                                                                                                                                  |
 | representation                              | `Θ s = q d / bool / nat / list R / R₁ × R₂ / opt R`                                       | socket **shape**: ○ quantity, ◇ on–off, □ count, ⧉ collection (a stack), ▯ grouped value (a split square), ◎ optional value (a ring with a hole) — what a collection holds is the inspector's word, not a second shape                                                                                                                                                                 | Value: Quantity / On–off / Count · Unit: angle, length, … with the symbol in its own column                                                                                                                                          | `Θ(3) = q[rad]`                                                                         | now                                                                                                                                                                                  |
 | representation not chosen                   | `Θ s = none`                                                                              | **hollow** socket ring                                                                                                                                                                                                                                                                                                                                                                 | Value: Decide later; "relationships can already use it"                                                                                                                                                                              | `Θ(3) = none`                                                                           | now                                                                                                                                                                                  |
-| order by declaration                        | `Concept::ordered` (`OrdDecl`, Phase 9c)                                                  | — (nothing on the canvas: order is not structure)                                                                                                                                                                                                                                                                                                                                      | _Order_ checkbox under a quantity value form: _values are magnitudes: <, smallest, largest, clamp, in range_ / _values are compared for equality only_                                                                               | `ordered concept …`; `concept.no_order` names the fix                                   |                                                                                                                                                                                      |
-| unresolved declaration                      | `realization = none`                                                                      | **dashed** outline, empty definition region, header word _declared_                                                                                                                                                                                                                                                                                                                    | Relationship: empty field + Attach                                                                                                                                                                                                   | `Δ(d).realization = none`                                                               | now                                                                                                                                                                                  |
-| mapping relationship                        | `Signature { inputs, output }` → `Interface`                                              | one input socket per read concept on the left, one output socket on the right, links in the concepts' hues                                                                                                                                                                                                                                                                             | Reads · Produces (chips and pop-up carry the socket glyph)                                                                                                                                                                           | `Interface: sem#0 → sem#3 → sem#1`                                                      | now                                                                                                                                                                                  |
-| dependency (`dependsOn`)                    | `MappingAnalysis.references` (`DependencyGraph::all`)                                     | a **reference edge**: secondary-colour 1.5 px link from the referenced relationship's output socket into the referencing relationship's formula line; no socket, no hit area (ADR-0034)                                                                                                                                                                                                | _Depends on_ / _Named in_ rows of name links; the _Role_ row _Rule_ / _Value_ / _Source_ with one sentence                                                                                                                           | `references` in kernel notation                                                         | now                                                                                                                                                                                  |
-| rule vs value                               | `Signature.inputs` non-empty vs empty with a definition                                   | input sockets (the shape) and the header word _rule_ when no state word takes the slot; a value has neither                                                                                                                                                                                                                                                                            | _Role: Rule_ / _Role: Value_; the creation sheet's sentence as the reads change                                                                                                                                                      | `type: A -> B` vs `() -> B`                                                             | now                                                                                                                                                                                  |
-| semantic construction                       | `mk s` under `Grant.of τ`                                                                 | a link forms only between sockets of one hue; the output socket is the produced concept                                                                                                                                                                                                                                                                                                | Produces                                                                                                                                                                                                                             | `Grant permits mk sem#1 in this realization`                                            | now (grant is invisible by design)                                                                                                                                                   |
+| order by declaration                        | `Concept::ordered` (`OrdDecl`, Phase 9c)                                                  | — (nothing on the canvas: order is not structure)                                                                                                                                                                                                                                                                                                                                      | _Order_ checkbox under a quantity value form: _values are magnitudes: <, smallest, largest, clamp, in range_ / _values are compared for equality only_                                                                               | `ordered concept …`; `semantic.no_order` names the fix                                  |                                                                                                                                                                                      |
+| unresolved declaration                      | `realization = none`                                                                      | a Sem block without a definition is a **Source** (the boundary bar and the role word); no dashed state — a Sem block has no inputs to be declared over                                                                                                                                                                                                                                 | _Source_ with one sentence; a rule's inspector says _declared_ while it has no definition                                                                                                                                            | `realization = none`                                                                    | now                                                                                                                                                                                  |
+| mapping relationship                        | `Signature { inputs, output }` → `Interface`                                              | a **Sem block** (unit domain): its concept at the output socket, the produce socket on the left; its **mapping block** as a node of its own beside it — read sockets, slot sockets, the definition line. A rule (inputs) is a template in the sidebar, not a node (ADR-0044)                                                                                                           | _Produces_ / _Provides_; a rule's _Reads_ chips are its parameters                                                                                                                                                                   | `Signature`, `Interface`                                                                | now                                                                                                                                                                                  |
+| dependency (`dependsOn`)                    | `MappingAnalysis.references` (`DependencyGraph::all`)                                     | a **read edge**: from the named Sem block's output socket into the mapping block's read socket for it, in the named block's hue, 2 px, selectable, × = the compiler's unreference (ADR-0044); a rule referenced is the mapping block's header word, not an edge                                                                                                                        | _Reads_ / _Read by_ rows of name links on a block; _Depends on_ / _Named in_ on a rule; the _Role_ row _Value_ / _Source_ / _Rule_ with one sentence                                                                                 | `references` in kernel notation                                                         | now                                                                                                                                                                                  |
+| realization (`producedBy`)                  | `Definition` on the declaration; `Layout.definitions`                                     | a **produce edge**: the short joint from a mapping block's output socket into its Sem block's produce socket, in the block's hue; selectable, no × — the definition goes only through _Detach definition_ (ADR-0044)                                                                                                                                                                   | the _Relationship_ section's editor; _Detach definition_                                                                                                                                                                             | `realization`, `producedBy_unique`                                                      | now                                                                                                                                                                                  |
+| rule vs value                               | `Signature.inputs` non-empty vs empty with a definition                                   | a value is a Sem block with a mapping block; a rule is not drawn — it is the header of every mapping block applying it                                                                                                                                                                                                                                                                 | the _Role_ row; a rule's parameter chips                                                                                                                                                                                             | `Ty` arrow vs `sem C`                                                                   | now                                                                                                                                                                                  |
+| semantic construction                       | `mk s` under `Grant.of τ`                                                                 | a drive link forms only between sockets of one hue; a slot socket accepts any block and the compiler types the result (`ComposeAction.fill`); the output socket is the produced concept                                                                                                                                                                                                | —                                                                                                                                                                                                                                    | `Grant`                                                                                 | now                                                                                                                                                                                  |
 | dimension mismatch                          | `Prim.ty` fails                                                                           | a **red mark at the formula line** on the node, nothing in the header                                                                                                                                                                                                                                                                                                                  | under the formula: "This adds an angle and a time." + fixes                                                                                                                                                                          | `+ : q[rad] → q[rad] → …, found q[s]`, code                                             | now                                                                                                                                                                                  |
-| rule nothing applies                        | `reactive.rule_unapplied` (no reverse edge in the dependency graph, no drive edge)        | **hollow** output socket (no value comes out of it), header word _not applied_ once defined; the accessibility label says "applied by nothing"                                                                                                                                                                                                                                         | the finding in _Relationship_ with its fix beside it (_Add a value that applies dimByTilt_); on Simulate a readiness note and the probe's _Applied by_                                                                               | `reverse_all = ∅`, `β = none`; the note's technical text                                | now                                                                                                                                                                                  |
-| waiting on an open value                    | `MappingStatus.OPEN`                                                                      | solid node whose read socket is hollow                                                                                                                                                                                                                                                                                                                                                 | under the formula: "Checked once _Temperature_'s value is decided."                                                                                                                                                                  | status enum                                                                             | now                                                                                                                                                                                  |
+| rule nothing applies                        | `reactive.rule_unapplied` (no reverse edge in the dependency graph, no drive edge)        | — (a rule is not a node); the finding is the inspector's and Simulate's                                                                                                                                                                                                                                                                                                                | the finding in _Relationship_ with its fix beside it (_Add a value that applies dimByTilt_); on Simulate a readiness note and the probe's _Applied by_                                                                               | `reverse_all = ∅`, `β = none`; the note's technical text                                | now                                                                                                                                                                                  |
+| waiting on an open value                    | `MappingStatus.OPEN`                                                                      | a hollow **slot socket** per open position (`MappingAnalysis.slots`); a wire dropped on it fills it                                                                                                                                                                                                                                                                                    | the formula editor's `?`                                                                                                                                                                                                             | `slots`                                                                                 | now                                                                                                                                                                                  |
 | temporal state                              | `delay init e`                                                                            | **register mark** on the link that crosses a tick, initial value beside it                                                                                                                                                                                                                                                                                                             | "Remembers _Held_, starting at _no_"                                                                                                                                                                                                 | `delay false (declRef d)`                                                               | spec for the canvas; today `delay(init, e)` is written in the formula and its value shows in the Simulate trace                                                                      |
 | clock / domain                              | `Κ d = some c`                                                                            | **lane**: labelled background region; domain-free mappings outside                                                                                                                                                                                                                                                                                                                     | _Updates in_ pop-up (pure = any domain); the domain is a name, never a rate                                                                                                                                                          | `Κ(d) = c₀`, `Clocked`                                                                  | now as a quiet word at the node's right edge, the library's _Timing domains_ section and the inspector pop-up; the lane is spec                                                      |
 | cross-domain observation                    | `sync src init e`                                                                         | **gate** on the link at the lane edge with the initial value; a crossing without a gate is broken at the boundary                                                                                                                                                                                                                                                                      | "Observes the latest _Temperature_, starting at 20 °C"                                                                                                                                                                               | `sync c₁ 293.15 (declRef d)`                                                            | spec for the canvas; today `sync(domain, init, e)` is written in the formula, an ungated crossing is a `clock.*` finding under _Timing_ and the status line's _reads across domains_ |
@@ -997,6 +1042,7 @@ _now_ = implemented; _spec_ = agreed here, drawn when its compiler pass lands.
 | packaging                                   | `preview_extraction`, `ExtractGroupAsComponent`                                           | after packaging the instance node stands where the group's box stood (or at the members' top-left); the component's own canvas starts from the members' positions                                                                                                                                                                                                                      | the sheet: Requires / Provides (the floor, not negotiable), open relationships _Treat as input · Keep internal_, physical outputs _Stays the system's · Moves inside_, timing parameters, internal, the compiler's warnings; Package | `Extract`, Theorem R (restricted)                                                       | now                                                                                                                                                                                  |
 | port-backed relationship (component source) | `Port.decl`                                                                               | header word _requires_ / _provides_ / _parameter_ on the relationship node                                                                                                                                                                                                                                                                                                             | Place: "Backs the port …: what instances see of it is the promise"                                                                                                                                                                   | `Port { decl, contract }`                                                               | now                                                                                                                                                                                  |
 | multi-selection                             | none — `MultiSelected` (Studio state)                                                     | accent outline on every selected node; a translucent accent marquee while box-selecting                                                                                                                                                                                                                                                                                                | _N selected_: the relationships as links; _Group as Behavior_ with a quiet suggestion when they read each other or share a domain                                                                                                    | —                                                                                       | now                                                                                                                                                                                  |
+| a concept                                   | `Concept` — a type template                                                               | no node: the hue, shape and word of every socket carrying it; _Add Block ▸ of C_ instantiates it (ADR-0044)                                                                                                                                                                                                                                                                            | _Blocks_ / _Rules_ on the concept                                                                                                                                                                                                    | `SemanticId`, `Ty.sem C`                                                                | now                                                                                                                                                                                  |
 
 Rules the matrix implies: hue is identity and nothing else; shape is
 representation and nothing else; dashed is _declared_ and nothing else; a red
@@ -1095,8 +1141,8 @@ _As built: [Simulate page](../user-guide/assets/studio/simulate-page.png) and
   segmented control (on–off), a whole number (count). A Source without a value
   is a third state, not _off_: the number fields carry the hint _no value yet_,
   the on–off control is drawn empty with a dashed outline
-  (`MacSegmented undecided`, the same "not decided" mark as a declared node and
-  a formula slot) and the words _no value yet_ beside it; one click on a segment
+  (`MacSegmented undecided`, the same "not decided" mark as a formula slot and a
+  slot socket) and the words _no value yet_ beside it; one click on a segment
   gives exactly that value and nothing is defaulted — a missing input is a
   runtime error by design (docs/spec/runtime-semantics.md). The row carries the
   concept's glyph and hue from the canvas and selects the same object as Design.

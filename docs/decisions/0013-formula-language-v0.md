@@ -5,7 +5,7 @@ date: 2026-09-15
 area: language
 supersedes: []
 superseded-by: []
-related: []
+related: [ADR-0044]
 fv: []
 ---
 
@@ -57,3 +57,24 @@ dimension-indexed primitives.
 - Boolean equality is encoded (`(a∧b)∨(¬a∧¬b)`) because the kernel has no
   boolean `eq`; count (`nat`) arithmetic is unsupported until the kernel gains
   `nat` primitives (DESIGN_ISSUES DI-12).
+
+## Amendment (2026-09-21, ADR-0044 — the Sem-block model)
+
+Extends the decision; every sentence above stays true for a rule whose inputs
+are of distinct concepts. Where a rule reads **one concept twice** the concept's
+display name cannot name both inputs — the exact spelling took the first, the
+loose spelling was ambiguous — so the model names such parameters itself:
+`CreateMapping` and `SetMappingSignature` derive a name for each repeated
+position (`derived_parameters` in `bdl-model::edit`: the concept's name with a
+lower-case initial and its ordinal among the repeats, `tilt1`, `tilt2`; every
+other input keeps the empty entry that falls back to its concept's name; names
+the text gave — `f(t, held) = …` — are kept while they still cover the
+signature; the test
+`a_sem_block_has_no_inputs_and_same_concept_inputs_get_parameter_names`) and
+store them in `MappingBlock::parameters`, the textual surface's positional
+parameter names (§14.4). A formula that spells the repeated concept's name is
+told the names instead (`formula.name.ambiguous`: _f reads Length 2 times, as
+length1 and length2_). Resolution is unchanged — an input by its name, then a
+relationship, then a concept that is not an input — and a unit-domain
+declaration (a Sem block) has no inputs and no parameters. `Signature` is
+unchanged.

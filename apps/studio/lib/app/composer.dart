@@ -212,7 +212,7 @@ Transition composeReceived(AppState s, int generation, pb.ComposeFormulaResponse
       ),
     );
   }
-  // a canvas wire (ADR-0043): the filled text is committed as one edit,
+  // a canvas wire (ADR-0044): the filled text is committed as one edit,
   // never a draft the designer is typing
   if (c.commitOnCompose) {
     final settled = s.copyWith(

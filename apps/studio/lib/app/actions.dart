@@ -1077,7 +1077,7 @@ class UnlinkMappingInput extends UserAction {
   final int conceptId;
 }
 
-/// A Sem block dropped on a mapping block (ADR-0043): the block's name
+/// A Sem block dropped on a mapping block (ADR-0044): the block's name
 /// becomes the definition of a Source, or fills the open position
 /// [slot] (the first when none is named) of a defined block — a text edit
 /// of the definition, committed as one edit.  Never a signature edit.

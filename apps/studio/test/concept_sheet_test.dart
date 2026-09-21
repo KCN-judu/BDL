@@ -206,7 +206,7 @@ void main() {
             presetId: 'std.quantity.angle',
           ),
         );
-        // the concept is the template (ADR-0043); the Sem block of it is what
+        // the concept is the template (ADR-0044); the Sem block of it is what
         // lands where the sheet was asked for — the Source path's one
         // transaction, the block named after the concept
         expect(t.effects, hasLength(1));

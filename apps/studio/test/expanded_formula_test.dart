@@ -48,7 +48,7 @@ pb.ProjectProjection lamp({int revision = 1, String? definition}) =>
         mappingView(
           id: Int64(dim),
           name: 'dimByTilt',
-          // a Sem block (ADR-0043): the formula is on its mapping block
+          // a Sem block (ADR-0044): the formula is on its mapping block
           signature: pb.Signature(output: Int64(brightness)),
           definition: definition == null ? null : pb.Definition(formula: definition),
         ),

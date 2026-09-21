@@ -718,7 +718,7 @@ class _Probe extends StatelessWidget {
         );
       case ConceptSelected(:final id):
         final c = p.concepts.firstWhere((c) => c.id.toInt() == id);
-        // A concept is a template (ADR-0043): the probe is per Sem block,
+        // A concept is a template (ADR-0044): the probe is per Sem block,
         // one value per tick each — every block of this concept, by name.
         // A rule over the concept has no value of its own.
         final blocks = [

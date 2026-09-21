@@ -97,7 +97,7 @@ Transition commitDefinition(AppState s, int id) {
 
 /// Commit [source] as the definition of [id] in one edit — attach when
 /// there is none, replace when there is — without a draft: the canvas's
-/// wire (ADR-0043), whose text is the compiler's answer, not something
+/// wire (ADR-0044), whose text is the compiler's answer, not something
 /// the designer is still typing.  Refused while a draft exists.
 Transition commitText(AppState s, int id, String source) {
   final m = s.mapping(id);

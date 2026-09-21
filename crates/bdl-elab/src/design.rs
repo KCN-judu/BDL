@@ -409,7 +409,7 @@ mod tests {
         assert_eq!(codes(&m.diagnostics), vec!["formula.name.not_an_input"]);
     }
 
-    /// The Sem-block model (ADR-0043) changes no resolution: a name is an
+    /// The Sem-block model (ADR-0044) changes no resolution: a name is an
     /// input, then a relationship of the design (a Sem block or a rule),
     /// then a concept that is not an input — never a value looked up by
     /// concept.  A rule reading one concept twice reaches each input by

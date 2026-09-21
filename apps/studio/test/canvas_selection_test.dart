@@ -36,7 +36,7 @@ pb.ConceptView concept(int id, String name) => pb.ConceptView(
 /// Tilt, Brightness; tiltSensor : () -> Tilt (a Source), dimByTilt : Tilt ->
 /// Brightness (a rule), brightness : () -> Brightness (a value); light, a
 /// sink accepting Brightness.
-/// The lamp as Sem blocks (ADR-0043): `tiltSensor : Tilt` a Source,
+/// The lamp as Sem blocks (ADR-0044): `tiltSensor : Tilt` a Source,
 /// `dimByTilt : Brightness = tiltSensor / 90 deg` and
 /// `brightness : Brightness = dimByTilt` two Sem blocks with mapping
 /// blocks, `light` the sink `brightness` drives.  (`rule` keeps its name

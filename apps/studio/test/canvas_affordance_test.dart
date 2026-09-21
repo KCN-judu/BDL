@@ -5,7 +5,7 @@
 /// persists; the affordance appears only on the selected, hovered object
 /// and stays while the pointer crosses to its icons; × is the one
 /// semantic disconnect and is absent where the model has none (a read
-/// edge is a name in the reading block's formula, ADR-0043); the menu icon
+/// edge is a name in the reading block's formula, ADR-0044); the menu icon
 /// opens the right-click menu; Delete and the drag-away go the same way; a
 /// selected edge that disappears is no selection; nodes get the same
 /// pattern; and the hit test takes an edge at every zoom and the nearest

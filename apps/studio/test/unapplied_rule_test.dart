@@ -426,7 +426,7 @@ void main() {
       expect(find.text('Fixes'), findsNothing, reason: 'one home: beside its finding');
     });
 
-    test('the canvas draws no rule (a template, ADR-0043): the finding lives in the inspector', () {
+    test('the canvas draws no rule (a template, ADR-0044): the finding lives in the inspector', () {
       final scene = buildScene(ac(), const {});
       expect(scene.nodes.where((n) => n.title == 'AirConditionerCtrl'), isEmpty);
       final applied = buildScene(ac(applied: true), const {});

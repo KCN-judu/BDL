@@ -530,7 +530,7 @@ class BindingInspector extends StatelessWidget {
 // ---------------------------------------------------------------------------
 
 /// What one edge means, in the designer's words, and the one thing that
-/// can be done to it on its own (ADR-0043).  A drive edge can be taken
+/// can be done to it on its own (ADR-0044).  A drive edge can be taken
 /// away; a read edge is a name in the reading block's formula and gets a
 /// sentence, not a button; a collapsed group's edges are a picture.
 class LinkInspector extends StatelessWidget {

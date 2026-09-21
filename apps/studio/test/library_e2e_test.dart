@@ -90,7 +90,7 @@ void main() {
       final first = store.state.project!.concepts.single;
       expect(first.name, 'RoomTemperature');
       // from the canvas: the concept and a Sem block of it, one transaction
-      // (ADR-0043); the block lands at the point, selected, named after it
+      // (ADR-0044); the block lands at the point, selected, named after it
       final firstBlock = store.state.project!.mappings.single;
       expect(firstBlock.name, 'roomTemperature');
       expect(firstBlock.signature.output, first.id);

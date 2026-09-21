@@ -1,10 +1,10 @@
 ---
 id: ADR-0034
-status: accepted
+status: superseded
 date: 2026-09-20
 area: studio
 supersedes: []
-superseded-by: []
+superseded-by: [ADR-0044]
 related: [ADR-0001, ADR-0003, ADR-0018, ADR-0019, ADR-0029, ADR-0032]
 fv: [BDL/Core/Dependency.lean]
 ---
@@ -12,6 +12,14 @@ fv: [BDL/Core/Dependency.lean]
 # ADR-0034: Canvas edges are signature edges and reference edges; _produces_ is the signature, _carried by_ is a value per tick
 
 ## Status
+
+Superseded by ADR-0044 (2026-09-21): right on the same evidence about what an
+edge is — dependency read off the analysis's `references`, never a client-side
+parse; the signature as what dragging edits — and wrong about what a node is.
+The concept node with an input socket for every producer and the produce edge
+drew an object the kernel does not have (BDL_FV Phase 21, FVD-0163); the canvas
+now draws Sem blocks and mapping blocks, and the read edges end at sockets. Left
+as written.
 
 Accepted (the reference-edges milestone, after the Source role of ADR-0032).
 

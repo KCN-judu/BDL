@@ -1,4 +1,4 @@
-//! The Sem-block model (ADR-0043; BDL_FV Phase 21, FVD-0163): a Sem block
+//! The Sem-block model (ADR-0044; BDL_FV Phase 21, FVD-0163): a Sem block
 //! is a unit-domain declaration with one value per tick; its mapping block
 //! is its definition; a rule is the template a mapping block applies.  The
 //! analysis reports the read edges of a mapping block as `dependencies.all`

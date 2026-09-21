@@ -125,7 +125,7 @@ void main() {
         representation: pb.Representation(quantity: pb.Dim()),
       ),
     );
-    // Sem blocks (ADR-0043): `tilt : Tilt` a Source, and `dimByTilt :
+    // Sem blocks (ADR-0044): `tilt : Tilt` a Source, and `dimByTilt :
     // Brightness` whose mapping block names it.
     await act(CreateMappingRequested(name: 'tilt', inputs: const [], output: conceptId('Tilt')));
     await act(

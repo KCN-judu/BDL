@@ -313,7 +313,7 @@ void main() {
 
         final resolved = scene.nodes.firstWhere((n) => n.ref == const NodeRef.mapping(pulse));
         expect(resolved.source, isFalse);
-        // a rule is a template (ADR-0043): the Project list and the inspector
+        // a rule is a template (ADR-0044): the Project list and the inspector
         // hold it, the value graph does not draw it
         expect(scene.nodes.where((n) => n.ref == const NodeRef.mapping(dimByTilt)), isEmpty);
       },
@@ -521,7 +521,7 @@ void main() {
           outcome: pb.EditOutcome(createdConcept: Int64(10), createdMapping: Int64(11)),
         ),
       );
-      // the block lands where the designer pointed (ADR-0043); the concept
+      // the block lands where the designer pointed (ADR-0044); the concept
       // is its template and takes no place
       expect(t.state.editor.layout[const NodeRef.mapping(11)], const Offset(300, 100));
       expect(t.state.editor.layout[const NodeRef.concept(10)], isNull);
