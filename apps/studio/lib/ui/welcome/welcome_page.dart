@@ -1,6 +1,9 @@
 /// The launcher shown when no project is open — DaVinci's Project Manager,
-/// laid out like VS Code's welcome page: hero and Start on the left,
-/// Recent on the right.  Presentation only.
+/// laid out like VS Code's welcome page: the hero and Start (New, Open,
+/// Preferences) on the left; Recent and, beneath it, the Demos on the
+/// right — where VS Code keeps its walkthroughs, so a first launch reads
+/// *start here* → *or try one of these* and the left column never scrolls.
+/// Presentation only.
 library;
 
 import 'dart:io';
@@ -34,23 +37,21 @@ class WelcomePage extends StatelessWidget {
       alignment: Alignment.center,
       child: LayoutBuilder(
         builder: (context, c) {
-          // Wide: hero + Start on the left, Recent on the right.
-          // Narrow (< 760 pt): one column, Recent below.
+          // Wide: hero + Start on the left, Recent and Demos on the right.
+          // Narrow (< 760 pt): one column, Recent and Demos below.
           final wide = c.maxWidth >= 760;
           final pad = c.maxWidth < 600 ? 20.0 : 40.0;
-          // The Start list (New, Open, Preferences, the demos) must stay
-          // above the fold at the smallest supported window: the hero
-          // keeps its aspect ratio but gives up height before the list
-          // does.
+          // The Start list (New, Open, Preferences) must stay above the
+          // fold at the smallest supported window, and the left column
+          // never scrolls: the hero keeps its aspect ratio but gives up
+          // height before the list does, within the page's own height cap.
           final startHeight =
               24.0 +
               48 +
-              33.0 *
-                  (3 +
-                      (state.editor.deploy.templates.isEmpty
-                          ? 0
-                          : 1 + state.editor.deploy.templates.length));
-          final heroMaxHeight = (c.maxHeight - 2 * pad - startHeight).clamp(240.0, 720.0);
+              33.0 * (3 + (state.editor.pickerUnavailable ? 2 : 0)) +
+              (connected ? 0 : 24);
+          final pageHeight = wide ? c.maxHeight.clamp(0.0, _maxPageHeight) : c.maxHeight;
+          final heroMaxHeight = (pageHeight - 2 * pad - startHeight).clamp(240.0, 720.0);
           final left = Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,
@@ -68,23 +69,26 @@ class WelcomePage extends StatelessWidget {
               _Start(
                 connected: connected,
                 dispatch: dispatch,
-                templates: state.editor.deploy.templates,
                 pathFallback: state.editor.pickerUnavailable,
               ),
             ],
           );
-          final recent = _Recent(state: state, dispatch: dispatch);
           if (wide) {
             return ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1360, maxHeight: 820),
+              constraints: const BoxConstraints(maxWidth: 1360, maxHeight: _maxPageHeight),
               child: Padding(
                 padding: EdgeInsets.all(pad),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Expanded(flex: 11, child: SingleChildScrollView(child: left)),
+                    Expanded(flex: 11, child: left),
                     SizedBox(width: pad),
-                    Expanded(flex: 9, child: recent),
+                    // the right column is the one that may scroll: a long
+                    // Recent list pushes the Demos down, never the Start
+                    Expanded(
+                      flex: 9,
+                      child: _Aside(state: state, dispatch: dispatch),
+                    ),
                   ],
                 ),
               ),
@@ -100,7 +104,7 @@ class WelcomePage extends StatelessWidget {
                 children: [
                   left,
                   const SizedBox(height: 28),
-                  SizedBox(height: 260, child: recent),
+                  _Aside(state: state, dispatch: dispatch, scrolls: false),
                 ],
               ),
             ),
@@ -111,16 +115,13 @@ class WelcomePage extends StatelessWidget {
   }
 }
 
-class _Start extends StatelessWidget {
-  const _Start({
-    required this.connected,
-    required this.dispatch,
-    this.templates = const [],
-    this.pathFallback = false,
-  });
+/// The page's height cap on a wide window: the hero is sized against it, so
+/// the left column fits without scrolling.
+const double _maxPageHeight = 820;
 
-  /// The designs a new project can start from, as bdld lists them.
-  final List<pb.TemplateView> templates;
+class _Start extends StatelessWidget {
+  const _Start({required this.connected, required this.dispatch, this.pathFallback = false});
+
   final bool connected;
   final void Function(AppAction) dispatch;
 
@@ -178,25 +179,6 @@ class _Start extends StatelessWidget {
           label: context.l10n.preferencesMenu,
           onTap: () => showPreferencesSheet(context, dispatch: dispatch),
         ),
-        if (templates.isNotEmpty) ...[
-          const SizedBox(height: MacMetrics.gapGroup),
-          Text(context.l10n.demos, style: Theme.of(context).textTheme.titleSmall),
-          const SizedBox(height: 8),
-          // A demo is a template: the same New Project, with a design in
-          // it (and, for the wired one, its deployment).
-          for (final tpl in templates)
-            Tooltip(
-              message: tpl.description,
-              waitDuration: const Duration(milliseconds: 600),
-              child: MacLink(
-                key: ValueKey('template-${tpl.id}'),
-                icon: Icons.memory_outlined,
-                label: tpl.displayName,
-                enabled: connected,
-                onTap: () => dispatch(NewProjectPickRequested(template: tpl.id)),
-              ),
-            ),
-        ],
         if (!connected)
           Padding(
             padding: const EdgeInsets.only(top: 6),
@@ -210,39 +192,108 @@ class _Start extends StatelessWidget {
   }
 }
 
-class _Recent extends StatelessWidget {
-  const _Recent({required this.state, required this.dispatch});
+/// The right column: Recent, then the Demos — what a returning designer
+/// reaches for first, then what a new one tries.  On a wide window it is
+/// the one part of the page that scrolls.
+class _Aside extends StatelessWidget {
+  const _Aside({required this.state, required this.dispatch, this.scrolls = true});
   final AppState state;
   final void Function(AppAction) dispatch;
+  final bool scrolls;
 
   @override
   Widget build(BuildContext context) {
     final t = MacTokens.of(context);
     final connected = state.connection is Connected;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(context.l10n.recent, style: Theme.of(context).textTheme.titleSmall),
+    final templates = state.editor.deploy.templates;
+    final children = [
+      Text(context.l10n.recent, style: Theme.of(context).textTheme.titleSmall),
+      const SizedBox(height: 8),
+      if (state.recent.isEmpty)
+        Text(
+          context.l10n.projectsYouOpenWillAppearHere,
+          style: TextStyle(fontSize: MacType.secondary, color: t.textTertiary),
+        )
+      else
+        for (final r in state.recent)
+          _RecentRow(
+            project: r,
+            enabled: connected,
+            onOpen: () => dispatch(OpenProjectRequested(r.path)),
+            onRemove: () => dispatch(RemoveRecentRequested(r.path)),
+          ),
+      if (templates.isNotEmpty) ...[
+        const SizedBox(height: 28),
+        Text(context.l10n.demos, style: Theme.of(context).textTheme.titleSmall),
         const SizedBox(height: 8),
-        Expanded(
-          child: state.recent.isEmpty
-              ? Text(
-                  context.l10n.projectsYouOpenWillAppearHere,
-                  style: TextStyle(fontSize: MacType.secondary, color: t.textTertiary),
-                )
-              : ListView(
-                  children: [
-                    for (final r in state.recent)
-                      _RecentRow(
-                        project: r,
-                        enabled: connected,
-                        onOpen: () => dispatch(OpenProjectRequested(r.path)),
-                        onRemove: () => dispatch(RemoveRecentRequested(r.path)),
-                      ),
-                  ],
-                ),
-        ),
+        // A demo is a template: the same New Project, with a design in
+        // it (and, for the wired one, its deployment).
+        for (final tpl in templates)
+          _DemoRow(
+            key: ValueKey('template-${tpl.id}'),
+            template: tpl,
+            enabled: connected,
+            onTap: () => dispatch(NewProjectPickRequested(template: tpl.id)),
+          ),
       ],
+    ];
+    return ListView(
+      shrinkWrap: !scrolls,
+      physics: scrolls ? null : const NeverScrollableScrollPhysics(),
+      children: children,
+    );
+  }
+}
+
+/// One demo: its name and what it is, laid out like a Recent row so the
+/// two lists read as one column.
+class _DemoRow extends StatelessWidget {
+  const _DemoRow({super.key, required this.template, required this.enabled, required this.onTap});
+  final pb.TemplateView template;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = MacTokens.of(context);
+    return MacInteractive(
+      onTap: enabled ? onTap : null,
+      radius: 6,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 1),
+            child: Icon(
+              Icons.memory_outlined,
+              size: 18,
+              color: enabled ? t.accent : t.textTertiary,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  template.displayName,
+                  style: TextStyle(
+                    fontSize: MacType.body,
+                    fontWeight: FontWeight.w500,
+                    color: enabled ? t.textPrimary : t.textTertiary,
+                  ),
+                ),
+                if (template.description.isNotEmpty)
+                  Text(
+                    template.description,
+                    style: TextStyle(fontSize: MacType.secondary, color: t.textTertiary),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

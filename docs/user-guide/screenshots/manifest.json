@@ -31,8 +31,8 @@
         "region": "window"
       },
       "output": "getting-started/project-manager.png",
-      "caption": "The project manager: Start actions on the left, Recent on the right.",
-      "alt": "Studio's start screen with New Project and Open Project buttons on the left, then Demos — Button → Lamp and Button → Lamp, wired — and an empty Recent list on the right; the status line at the bottom says no project and names the compiler version.",
+      "caption": "The project manager: Start actions on the left; Recent and the Demos on the right.",
+      "alt": "Studio's start screen with the wordmark, then New Project, Open Project and Preferences on the left; on the right an empty Recent list, then Demos — Button → Lamp and Button → Lamp, wired, each with a sentence saying what it is; the status line at the bottom says no project and names the compiler version.",
       "purpose": "What a reader sees first after launching Studio."
     },
     {
