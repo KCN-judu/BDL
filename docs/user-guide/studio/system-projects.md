@@ -23,7 +23,7 @@ whichever canvas is open.
 
 ## Instance nodes
 
-![A sheet titled Carry across timing domains for adaptiveLamp.brightness to slow, explaining that the source updates in main and slow in aux, that slow sees the last value committed strictly before its own activation and needs a value to start from, with a Starts at field and Cancel and Connect buttons.](../assets/studio/instance-nodes.png)
+![Two instance nodes, adaptiveLamp (outlined in the accent colour, selected, with the quick-action icons ⋯ and × above it) and second, each with a required socket tiltValue on the left, a provided socket brightness on the right and the component's name AdaptiveLamp with its timing parameter main in the body; to their left the top-level block tiltValue with its mapping block headed Formula (its formula raw), links from tiltValue into both required sockets, and from each provided socket into the filled left socket of the top-level blocks brightness and mirror, which the bindings define.](../assets/studio/instance-nodes.png)
 
 _Two instances of AdaptiveLamp, drawn from the component's promise, fed by one
 tiltValue and bound to brightness and mirror._
