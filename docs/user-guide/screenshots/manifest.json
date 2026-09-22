@@ -677,7 +677,7 @@
       },
       "output": "studio/instance-nodes.png",
       "caption": "Two instances of AdaptiveLamp, drawn from the component's promise, fed by one tiltValue and bound to brightness and mirror.",
-      "alt": "Two instance nodes, adaptiveLamp (outlined in the accent colour, selected) and second, each with a required socket tiltValue on the left, a provided socket brightness on the right and the component's name AdaptiveLamp with its timing parameter main in the body; links from the top-level block tiltValue into both required sockets and from each provided socket into the filled left socket of the top-level blocks brightness and mirror, which the bindings define.",
+      "alt": "Two instance nodes, adaptiveLamp (outlined in the accent colour, selected, with the quick-action icons ⋯ and × above it) and second, each with a required socket tiltValue on the left, a provided socket brightness on the right and the component's name AdaptiveLamp with its timing parameter main in the body; to their left the top-level block tiltValue with its mapping block headed Formula (its formula raw), links from tiltValue into both required sockets, and from each provided socket into the filled left socket of the top-level blocks brightness and mirror, which the bindings define.",
       "purpose": "Instance node anatomy and bindings on a real system canvas."
     },
     {
