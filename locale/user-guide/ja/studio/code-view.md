@@ -1,6 +1,8 @@
 <!-- scripts/docs_l10n.py が docs/user-guide/studio/code-view.md から生成しました。locale/user-guide/ja/user-guide.po を編集してください。このファイルは編集しないでください。 -->
 
 > 言語: [English](../../../../docs/user-guide/studio/code-view.md) · [简体中文](../../zh_Hans/studio/code-view.md) · 日本語
+>
+> このページはまだ完全には翻訳されていません。未翻訳の箇所は英語で表示されます。
 
 # 設計・コード・分割
 
@@ -18,7 +20,7 @@
 
 一度に 1 ファイルのテキスト。プロジェクトに複数の `.bdl` ファイルがあるとき、エディタ上部のポップアップがそれらを列挙します。まだビルドできないファイルは _— 未ビルド_ 付きで示されます。
 
-テキストはプロジェクトのファイルそのもので、キャンバスで行ったことがすべて書き込まれています。キャンバスでコンセプトの名前を変えると、テキストは使われているすべての場所で新しい名前を示し、コメントと空行はそのままです。キャンバスで関係を追加すると、`src/main.bdl` の末尾（`main.bdl` がないときは最初のファイルの末尾）、または属するコンポーネント本体の末尾に現れます。
+The text is the project's files with everything you did on the canvas written in: rename a block on the canvas, or a concept in the sidebar, and the text shows the new name at every place it is used, with your comments and blank lines untouched. Add a block on the canvas and it appears at the end of `src/main.bdl` (or of the first file, when there is no `main.bdl`), or at the end of the component body it belongs to.
 
 ## 色の意味
 

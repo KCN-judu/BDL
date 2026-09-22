@@ -43,7 +43,8 @@ their shortcuts but are reached by clicking today.
 | double-click an instance | open its component's source |
 | double-click a behavior's title | rename |
 | right-click · Control-click | context menu |
-| drag a Library row onto the canvas | insert a concept |
+| drag a Library row onto the canvas | the concept sheet: a new concept and a block of it |
+| drag a concept's Project-sidebar row onto the canvas | the block sheet: a block of that concept |
 
 ## Formula field
 

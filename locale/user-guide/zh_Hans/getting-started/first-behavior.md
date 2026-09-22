@@ -1,6 +1,8 @@
 <!-- 由 scripts/docs_l10n.py 从 docs/user-guide/getting-started/first-behavior.md 生成；请编辑 locale/user-guide/zh_Hans/user-guide.po，不要编辑本文件。 -->
 
 > 语言: [English](../../../../docs/user-guide/getting-started/first-behavior.md) · 简体中文 · [日本語](../../ja/getting-started/first-behavior.md)
+>
+> 本页尚未完全翻译；未翻译的段落以英文显示。
 
 # 你的第一个行为
 
@@ -19,11 +21,11 @@
 
 ## 2. 添加两个概念
 
-**概念**是带有含义的值——也是一个模板：画布上的块由它生成。这盏灯有两个：倾斜了多少，以及有多亮。
+A **concept** is a _kind_ of value with a meaning — a type, and the template the blocks on the canvas are made from; a **block** of it is one such value in your design, one per tick. The lamp has two kinds of value: how far it is tilted, and how bright it is.
 
 1. 在侧栏的**项目**标签页中，点击 _概念_ 旁的 **+**。
-2. 在 _新建概念_ 面板中：名称填 `Tilt`。在 _值_ 下选择**量**，单位选择**角度**（符号 `rad` 出现在它自己的一列）。点击**创建**。
-3. 再次点击 _概念_ 旁的 **+**：名称 `Brightness`，**量**，单位**无单位**。点击**创建**。
+2. In the _New concept_ sheet: under _Value_ choose **Angle** — the _Measured in_ row lists the units an angle is written in (`rad`, `deg`, `turn`); that is a fact, not a choice. Name it `Tilt`. Click **Create Concept**.
+3. Again **+** next to _Concepts_: Value **Level** (a plain number with no unit), Name `Brightness`. **Create Concept**.
 
 两个概念出现在侧栏里，而不是画布上：概念是模板，它的**块**才是持有值的东西。表单预览中的圆形表示 _物理量_；颜色是这个概念专属的，会标记每一个承载 _该_ 概念的插口。Brightness 是没有单位的物理量：0 到 1 之间的程度。
 

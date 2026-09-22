@@ -1,10 +1,15 @@
 # Relationships
 
-A **relationship** says how one concept follows from others. `dimByTilt` reads
-_Tilt_ and produces _Brightness_; `adaptBrightness` reads _Brightness_ and
-_Ambient light_ and produces _Brightness_. A relationship has a name, a
+A **relationship** is what you create with **+** by _Mappings_: a name, a
 **signature** — the concepts it _reads_ and the one it _produces_ — and, once
-you write it, a **formula**.
+you write it, a **formula**. It is one of two things. A relationship that
+**reads nothing** is a **block** (a _Sem block_): one value of its concept in
+the design, one per tick — `tilt`, `brightness`. A relationship that **reads
+something** is a **rule**: a template from concepts to a concept — `dimByTilt`
+reads _Tilt_ and produces _Brightness_; `adaptBrightness` reads _Brightness_ and
+_Ambient light_ and produces _Brightness_. A rule has no value of its own; a
+block's formula applies it, and that application is what the canvas draws as the
+block's **mapping block**. Rule : mapping block = template : application.
 
 In the sidebar and the creation sheet, relationships are labelled _Mappings_.
 Same thing.
@@ -25,20 +30,20 @@ produces an angle._
 
 ## Three shapes of relationship
 
-| Shape              | Reads                | Formula | What it is                                                                                                                                  |
-| ------------------ | -------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Rule**           | one or more concepts | yes     | a function from concepts to a concept: `dimByTilt : Tilt → Brightness = Tilt / 90 deg`                                                      |
-| **Source**         | nothing              | none    | a value the environment provides — from a sensor, a switch, an analog line. In simulation you type it; on a device the hardware supplies it |
-| **Computed value** | nothing              | yes     | a value of the design: `brightness = dimByTilt(tilt)`                                                                                       |
+| Shape              | Reads                | Formula | What it is                                                                                                                                                  |
+| ------------------ | -------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Rule**           | one or more concepts | yes     | a template: a function from concepts to a concept, `dimByTilt : Tilt → Brightness = Tilt / 90 deg`; applied by blocks' formulas, never a node on the canvas |
+| **Source**         | nothing              | none    | a block the environment provides — from a sensor, a switch, an analog line. In simulation you type it; on a device the hardware supplies it                 |
+| **Computed value** | nothing              | yes     | a block with a formula, drawn with its mapping block: `brightness = dimByTilt(tilt)`                                                                        |
 
-Only a relationship that _reads nothing_ is a value; a rule is something you
-apply. This matters in three places: a physical output can only be driven by a
-value; a formula applies a rule by calling it — `dimByTilt(tilt)` — and names a
-value by writing it — `tilt`; and only a value or a Source gives its concept a
-value at each tick. A rule _produces_ its concept in the sense of its signature
-— its output socket is that concept — but the concept is **carried** only by a
-value whose formula applies the rule. Until `brightness` exists, `dimByTilt` is
-a function nobody calls, and nothing carries _Brightness_.
+Only a relationship that _reads nothing_ — a block — has a value; a rule is
+something you apply. This matters in three places: a physical output can only be
+driven by a block; a formula applies a rule by calling it — `dimByTilt(tilt)` —
+and names a block by writing it — `tilt`; and only a block gives its concept a
+value at each tick. A rule _produces_ its concept in the sense of its signature,
+but a value of _Brightness_ exists only in a block whose formula applies the
+rule. Until `brightness` exists, `dimByTilt` is a function nobody calls, and no
+Brightness is anywhere in the design.
 
 The creation sheet says which shape you are about to make as you change the
 reads: with nothing read, _Reads nothing: a Source…_; with something read,
@@ -53,10 +58,10 @@ the inspector's _Relationship_ section and on the Simulate page, with the fix
 **Add a value that applies dimByTilt** — which creates
 `dimByTiltValue : () -> Brightness = dimByTilt(tilt)` when exactly one value
 produces each concept the rule reads, asks you to choose when several do, and
-says why when none does. On the canvas the rule's output socket is hollow — no
-value comes out of it yet — and, once the rule has a formula, its header reads
-_not applied_ instead of _rule_. It is not an error: nothing is wrong, something
-is still to be written.
+says why when none does. A rule is not on the canvas, so the canvas shows
+nothing for this; the finding lives with the rule in the inspector and on the
+Simulate page. It is not an error: nothing is wrong, something is still to be
+written.
 
 ## The formula
 
@@ -98,9 +103,11 @@ picture of values and of dependency, not a flowchart.
 
 - **Meaning** — name, description and _Role_: _Source_, _Rule_ or _Value_ (or
   the port the relationship backs), with one sentence.
-- **Reads** / **Produces** — the signature, as chips and a pop-up with the
-  concepts' glyphs. Changing either is an edit; the inspector says which
-  relationships will be rechecked.
+- **Reads** / **Produces** — the signature. For a rule, _Reads_ is the parameter
+  editor: chips with the concepts' glyphs, a pop-up to add one; for a block
+  there is nothing to read in the signature, and _Produces_ (titled _Provides_
+  for a Source) is its concept. Changing either is an edit; the inspector says
+  which relationships will be rechecked.
 - **Relationship** — the formula editor: _Add definition_ / _Save definition_ /
   _Revert_ / _Detach definition_, the verdict line, and any findings about the
   formula; then, for a block, _Reads_ (the blocks the formula names — the

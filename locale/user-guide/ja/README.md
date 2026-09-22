@@ -12,13 +12,13 @@ Behavior Designer は、**製品がどう振る舞うか**——何を感知し�
 
 ## 解決する問題
 
-製品の振る舞いはたいていスケッチや表計算で決められ、その後コードの中で再発見されます。そこでは各数値の意味が失われています。Behavior Designer では値に**意味**があり（_明るさ_ は _不透明度_ ではありません。どちらも 0 から 1 の数であっても）、値の間の関係は単位と次元が検査され、タイミングは明示的で、物理出力は 1 つの関係からしか駆動できません。未完成の設計は普通のことです。数式が分かる前に関係に名前を付けられ、ツールは動作を拒むのではなく、何がまだ決まっていないかを教えてくれます。
+A product's behavior is usually decided in sketches and spreadsheets and then rediscovered in code, where the meaning of each number is lost. In Behavior Designer every value is a **block** of a named **concept** — a kind of value with a meaning (a _Brightness_ is not an _Opacity_, even if both are numbers between 0 and 1) — a block's formula is checked for units and dimensions, timing is explicit, and a physical output can only be driven by one block. Unfinished designs are normal: you can name a relationship before you know its formula, and the tool tells you what is still open rather than refusing to work.
 
 ## ここでできること
 
 |  |  |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **設計** | 製品のコンセプトに名前を付け、数式で関係づけ、タイミングを決め、結果を物理出力につなぐ |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **設計** | name the concepts of your product, put blocks of them on the canvas, define them with formulas that apply rules, decide their timing, and drive physical outputs |
 | **シミュレート** | 値を与え、設計をティックごとに進め、すべての値を観察する——言語を定義するのと同じ評価器で |
 | **デプロイ** | ボードを選び、設計の出力をそのピンに配置できるか、できないならなぜかを確認する |
 | **整理と再利用** | 関連する関係を振る舞いにまとめ、振る舞いを再利用可能なコンポーネントとしてパッケージ化し、コンポーネントのインスタンスをより大きなシステムに組み合わせる |
@@ -40,7 +40,7 @@ Behavior Designer は、**製品がどう振る舞うか**——何を感知し�
 
 **コンセプト** — 考え方を 1 ページずつ [コンセプト](../../../docs/user-guide/concepts/concepts.md) · [関係](../../../docs/user-guide/concepts/relationships.md) · [未完成の設計](../../../docs/user-guide/concepts/incomplete-designs.md) · [タイミング](../../../docs/user-guide/concepts/timing.md) · [物理出力](../../../docs/user-guide/concepts/physical-outputs.md) · [振る舞いグループ](../../../docs/user-guide/concepts/behavior-groups.md) · [コンポーネント](../../../docs/user-guide/concepts/components.md) · [振る舞いシステム](../../../docs/user-guide/concepts/behavior-systems.md)
 
-**Studio** — インターフェースをパネルやページごとに [ワークスペース](studio/workspace.md) · [キャンバス](studio/canvas.md) · [ライブラリ](../../../docs/user-guide/studio/library.md) · [インスペクター](studio/inspector.md) · [数式エディタ](studio/formula-editor.md) · [シミュレート](studio/simulate.md) · [デプロイ](studio/deploy.md) · [システムプロジェクト](../../../docs/user-guide/studio/system-projects.md) · [設計・コード・分割](studio/code-view.md)
+**Studio** — インターフェースをパネルやページごとに [ワークスペース](studio/workspace.md) · [キャンバス](studio/canvas.md) · [ライブラリ](../../../docs/user-guide/studio/library.md) · [インスペクター](studio/inspector.md) · [数式エディタ](../../../docs/user-guide/studio/formula-editor.md) · [シミュレート](studio/simulate.md) · [デプロイ](studio/deploy.md) · [システムプロジェクト](../../../docs/user-guide/studio/system-projects.md) · [設計・コード・分割](studio/code-view.md)
 
 **ワークフロー** — 同じランプで目標を 1 つずつ [センサーから出力へ](../../../docs/user-guide/workflows/sensor-to-output.md) · [2 つ目の出力](../../../docs/user-guide/workflows/multi-output-behavior.md) · [振る舞いをグループ化する](../../../docs/user-guide/workflows/grouping-behavior.md) · [振る舞いをコンポーネントとしてパッケージ化する](../../../docs/user-guide/workflows/package-as-component.md) · [コンポーネントを組み合わせる](../../../docs/user-guide/workflows/composing-components.md) · [タイミングドメインをまたいで値を運ぶ](../../../docs/user-guide/workflows/cross-domain-transport.md) · [コンポーネントのバージョン管理](../../../docs/user-guide/workflows/component-versioning.md) · [プロジェクトをテキストで書く](../../../docs/user-guide/workflows/authoring-as-text.md)
 

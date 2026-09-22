@@ -17,21 +17,21 @@ deployment.
 
 A product's behavior is usually decided in sketches and spreadsheets and then
 rediscovered in code, where the meaning of each number is lost. In Behavior
-Designer a value has a **meaning** (a _Brightness_ is not an _Opacity_, even if
-both are numbers between 0 and 1), a relationship between values is checked for
-units and dimensions, timing is explicit, and a physical output can only be
-driven by one relationship. Unfinished designs are normal: you can name a
-relationship before you know its formula, and the tool tells you what is still
-open rather than refusing to work.
+Designer every value is a **block** of a named **concept** — a kind of value
+with a meaning (a _Brightness_ is not an _Opacity_, even if both are numbers
+between 0 and 1) — a block's formula is checked for units and dimensions, timing
+is explicit, and a physical output can only be driven by one block. Unfinished
+designs are normal: you can name a relationship before you know its formula, and
+the tool tells you what is still open rather than refusing to work.
 
 ## What you can do here
 
-|                        |                                                                                                                                                   |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Design**             | name the concepts of your product, relate them with formulas, decide their timing, and connect the results to physical outputs                    |
-| **Simulate**           | feed values in, step the design tick by tick, and watch every value — with the same evaluator that defines the language                           |
-| **Deploy**             | choose a board and see whether the design's outputs can be placed on its pins, and why not if they cannot                                         |
-| **Organize and reuse** | group related relationships into a behavior, package a behavior as a reusable component, and compose instances of components into a larger system |
+|                        |                                                                                                                                                                  |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Design**             | name the concepts of your product, put blocks of them on the canvas, define them with formulas that apply rules, decide their timing, and drive physical outputs |
+| **Simulate**           | feed values in, step the design tick by tick, and watch every value — with the same evaluator that defines the language                                          |
+| **Deploy**             | choose a board and see whether the design's outputs can be placed on its pins, and why not if they cannot                                                        |
+| **Organize and reuse** | group related relationships into a behavior, package a behavior as a reusable component, and compose instances of components into a larger system                |
 
 Not yet in the tool: flashing a board, live values from a running device, and
 importing components from other projects. The guide says so where it matters.

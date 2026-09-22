@@ -1,6 +1,8 @@
 <!-- 由 scripts/docs_l10n.py 从 docs/user-guide/getting-started/what-is-bdl.md 生成；请编辑 locale/user-guide/zh_Hans/user-guide.po，不要编辑本文件。 -->
 
 > 语言: [English](../../../../docs/user-guide/getting-started/what-is-bdl.md) · 简体中文 · [日本語](../../ja/getting-started/what-is-bdl.md)
+>
+> 本页尚未完全翻译；未翻译的段落以英文显示。
 
 # 什么是 BDL？
 
@@ -8,21 +10,23 @@ BDL——行为设计语言（Behavior Design Language）——是一种描述�
 
 本页用五个想法给出心智模型。每一个在 [概念](../../../../docs/user-guide/concepts/concepts.md) 中都有自己的页面；这里只讲到 [第一个教程](first-behavior.md) 之前你需要的程度。
 
-## 1. 概念是有含义的值
+## 1. A concept is a kind of value; a block is one such value
 
-一盏灯有 _倾角_、_亮度_，也许还有 _环境光_。每一个都是一个**概念**：产品感知、决定或显示的、有名字的东西。概念有一种 _值形式_——带单位的量（角度、长度、温度，或纯数）、开/关状态，或计数。
+A lamp has a _Tilt_, a _Brightness_, maybe an _Ambient light_. Each is a **concept**: a named _kind_ of value the product senses, decides or shows — a type, and a template. A concept has a _value form_ — a quantity with a unit (an angle, a length, a temperature, or a plain number), an on/off state, or a count.
 
-值形式相同的两个概念仍然是不同的概念。_亮度_ 和 _不透明度_ 可能都是 0 到 1 之间的数；BDL 不会让你在需要其中一个的地方用另一个，因为它们的含义不同。这是有意为之，也是 BDL 设计不同于表格的第一点。
+The things that actually hold values are **blocks** (_Sem blocks_ in the [terminology](../../../../docs/user-guide/reference/terminology.md)): a block is one instance of a concept in the design — `tilt`, a Tilt; `brightness`, a Brightness — and it has one value at each tick. A product may have as many blocks of one concept as it has such values: two temperature sensors are two blocks of _Temperature_. Concept : block = type : instance.
 
-## 2. 关系说明一个值如何由其他值得出
+Two concepts with the same value form are still different concepts. _Brightness_ and _Opacity_ may both be numbers between 0 and 1; BDL will not let you use a block of one where the other is expected, because they mean different things. This is deliberate, and it is the first thing that makes a BDL design more than a spreadsheet.
 
-`dimByTilt` 读取 _倾角_ 并生成 _亮度_。这就是一个**关系**：从若干概念到一个概念的、有名字的规则。它的公式——`Tilt / 90 deg`——会做单位和量纲检查：角度除以角度得到纯数，而亮度正是纯数。把角度加到时间上会被拒绝，并说明原因。
+## 2. A rule says how one value follows from others; a block's formula applies it
 
-不读取任何东西的关系是一个**值**：要么来自外部（一个传感器读数、一个开关），要么由设计中的其他值计算得出。
+`dimByTilt` reads a _Tilt_ and produces a _Brightness_. That is a **rule**: a named template from some concepts to a concept, with a formula — `Tilt / 90 deg` — that is checked for units and dimensions: dividing an angle by an angle gives a plain number, which is what a brightness is. Adding an angle to a time would be refused, with the reason.
+
+A rule computes nothing by itself. A block gets its value from its own formula — `brightness = dimByTilt(tilt)` — which applies the rule to the blocks it reads; that formula is drawn on the canvas as the block's **mapping block**, joined to the blocks it reads and to the block it defines. Rule : mapping block = template : application. A block with no formula is a **Source**: its value arrives from outside (a sensor reading, a switch). In Studio a rule and a block are both created as a _relationship_ (labelled _Mapping_): one that reads something is a rule; one that reads nothing is a block.
 
 ## 3. 设计可以有意地保持未完成
 
-你可以在知道公式之前就创建 `dimByTilt`。它此时是 _已声明_ 的：它存在，有签名，依赖它的一切都可以围绕它来设计。工具把它标为未完成的工作，而不是错误——就像它把还没有公式的块标为来源，在你另行说明之前由外部提供。尚未选择值形式的概念也是如此。[未完成的设计](../../../../docs/user-guide/concepts/incomplete-designs.md)解释了设计可能处于的各种状态，以及为什么它们都不会妨碍你工作。
+You can create `dimByTilt` before you know its formula. It is then _declared_: it exists, it has a signature, and everything that depends on it can be designed around it. The tool marks it as open work, not as an error — and a block that has no formula yet is a Source, provided from outside until you say otherwise. The same goes for a concept whose value form you have not chosen yet. [Incomplete designs](../../../../docs/user-guide/concepts/incomplete-designs.md) explains the states a design can be in and why none of them stops you working.
 
 ## 4. 时序是显式的
 
@@ -30,7 +34,7 @@ BDL——行为设计语言（Behavior Design Language）——是一种描述�
 
 ## 5. 输出是行为离开设计的地方
 
-**物理输出**——灯、电机、显示器——接受一个概念的值，并且恰好由一个关系驱动。试图驱动同一输出的第二个关系是工具会指出的冲突，而不是它替你裁决的竞争。设计将在哪块板子上运行是另一个问题：**部署**检查输出的设备能否放到所选板子的引脚上，它从不改变设计的含义。
+A **physical output** — the light, the motor, the display — accepts values of one concept and is driven by exactly one block. A second block trying to drive the same output is a conflict the tool names, not a race it resolves. Which board the design will run on is a separate question: **deployment** checks whether the outputs' devices can be placed on a chosen board's pins, and never changes what the design means.
 
 ## 从一盏灯长成一个系统
 

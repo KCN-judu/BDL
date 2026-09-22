@@ -21,16 +21,17 @@ along the bottom.
 
 ## 2. Add the two concepts
 
-A **concept** is a value with a meaning — and a template: the blocks on the
-canvas are made from it. The lamp has two: how far it is tilted, and how bright
-it is.
+A **concept** is a _kind_ of value with a meaning — a type, and the template the
+blocks on the canvas are made from; a **block** of it is one such value in your
+design, one per tick. The lamp has two kinds of value: how far it is tilted, and
+how bright it is.
 
 1. In the sidebar's **Project** tab, click **+** next to _Concepts_.
-2. In the _New concept_ sheet: Name `Tilt`. Under _Value_ choose **Quantity**,
-   and for the unit choose **angle** (the symbol `rad` appears in its own
-   column). Click **Create**.
-3. Again **+** next to _Concepts_: Name `Brightness`, **Quantity**, unit **no
-   unit**. Click **Create**.
+2. In the _New concept_ sheet: under _Value_ choose **Angle** — the _Measured
+   in_ row lists the units an angle is written in (`rad`, `deg`, `turn`); that
+   is a fact, not a choice. Name it `Tilt`. Click **Create Concept**.
+3. Again **+** next to _Concepts_: Value **Level** (a plain number with no
+   unit), Name `Brightness`. **Create Concept**.
 
 The two concepts appear in the sidebar, not on the canvas: a concept is the
 template, a **block** of it is the thing that holds a value. The round shape in

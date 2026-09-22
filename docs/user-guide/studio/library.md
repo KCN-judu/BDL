@@ -55,9 +55,14 @@ velocity_; `温度` finds _Temperature_ in 简体中文 and 日本語.
 Double-click a row, press Return on it, or **drag it onto the canvas**, and the
 **concept sheet** opens — _A value category from the Library, and the name it
 has in this product._ The same categories are on the canvas's right-click **Add
-Concept ▸** menu (_Recent_, the four values, _Quantities ▸_, _More…_ for the
-tab), and the Project tab's **+** opens the sheet with the category left for you
-to choose.
+Block ▸ New Concept ▸** menu (_Recent_, the four values, _Quantities ▸_, _More…_
+for the tab), and the Project tab's **+** opens the sheet with the category left
+for you to choose. A concept is a template and is never itself on the canvas:
+created from the canvas or by a drag onto it, the concept _and a block of it_ —
+one value of the new concept — arrive in one step, the block where you dropped
+or clicked; created from the Project tab, only the concept, and **Add Block ▸ of
+_Name_** (or dragging the concept's Project row onto the canvas) puts a block of
+it there through the block sheet.
 
 ![A sheet titled New concept — A value category from the Library, and the name it has in this product — with an empty Name field, a Value pop-up reading Angle, a Measured in row listing rad, deg and turn, a Meaning field, a preview of the node, the declaration concept … : Angle, the line Creates one concept, as the Code view will write it., and Cancel and Create Concept buttons.](../assets/studio/concept-sheet.png)
 

@@ -1,9 +1,13 @@
 # Concepts
 
-A **concept** is something the product senses, decides or shows, given a name:
-_Tilt_, _Brightness_, _Held_, _Battery level_. A concept is the unit of meaning
-in a BDL design. Relationships read concepts and produce concepts; outputs
-accept a concept; everything else is built from them.
+A **concept** is a _kind_ of value the product senses, decides or shows, given a
+name: _Tilt_, _Brightness_, _Held_, _Battery level_. It is a type, and the
+template the values of a design are made from: a **block** (a _Sem block_) is
+one instance of a concept — `tilt`, a Tilt; `sensorA` and `sensorB`, two
+Temperatures — and holds one value at each tick. Concept : block = type :
+instance. A concept is the unit of meaning in a BDL design: a rule's signature
+reads concepts and produces a concept, an output accepts a concept, and every
+socket on the canvas carries one.
 
 ## A concept is a meaning, not a number
 
@@ -54,19 +58,25 @@ an edit, and the inspector names the relationships that will be checked again.
 
 - **The _New concept_ sheet** (sidebar → _Project_ → **+** by _Concepts_): name,
   value form, unit, meaning. The sheet previews the row as you type.
-- **The Library tab**: ready-made concepts — _Temperature_, _Tilt_, _Button
-  Pressed_, _Motor Speed_, … — grouped by role. Drag one onto the canvas or use
-  the canvas's right-click **Add Concept** menu. The result is an ordinary
-  concept with a suggested name and value form; two insertions of the same item
-  are two concepts. See [Library](../studio/library.md).
+- **The Library tab**: ready-made value categories — _Angle_, _Temperature_, _On
+  / off_, _Level_, … Drag one onto the canvas, or use the canvas's right-click
+  **Add Block ▸ New Concept ▸** menu: the same sheet opens, and when it closes
+  the new concept _and a block of it_ are there, where you dropped or clicked.
+  The result is an ordinary concept with the name you gave it; two creations
+  from the same category are two concepts. See [Library](../studio/library.md).
+
+A concept alone is not on the canvas. To put a value of it there, right-click
+the canvas → **Add Block ▸ of _Name_**, or drag the concept's row from the
+_Project_ sidebar onto the canvas: the block sheet names the block, and a block
+of the concept lands. Do it as often as the product has such values.
 
 ## What the inspector shows
 
 - **Meaning** — the name and a free-text description of what the concept means
   to the product.
 - **Value** — the value form and unit.
-- **Relationships** — _Blocks_ (the blocks of this concept) and _Rules_ (the
-  rules over it), as links.
+- **Blocks** — the blocks of this concept in the design, as links that select
+  them; **Rules** — the rules whose signature reads or produces it.
 - **Delete** — disabled while a relationship uses the concept, with the users
   named.
 

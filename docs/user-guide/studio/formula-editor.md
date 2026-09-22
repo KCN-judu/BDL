@@ -2,7 +2,10 @@
 
 The **Relationship** section of a relationship's inspector is where a formula is
 written. It is not a plain text box: the compiler checks what you type as you
-type it, and nothing reaches the design until you say so.
+type it, and nothing reaches the design until you say so. A block's formula is
+its definition — on the canvas it is the block's **mapping block**, the node
+beside it whose sockets are the blocks the formula reads ([Canvas](canvas.md));
+a rule's formula is the template a block's formula applies.
 
 The editor has two views of the same formula, chosen with the **Formula | Text**
 switch at its top. **Formula** shows the expression as the mathematics it is —

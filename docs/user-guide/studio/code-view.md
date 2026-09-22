@@ -20,11 +20,11 @@ pop-up at the top of the editor names them; a file that does not build yet is
 listed with _— not built_.
 
 The text is the project's files with everything you did on the canvas written
-in: rename a concept on the canvas and the text shows the new name at every
-place it is used, with your comments and blank lines untouched. Add a
-relationship on the canvas and it appears at the end of `src/main.bdl` (or of
-the first file, when there is no `main.bdl`), or at the end of the component
-body it belongs to.
+in: rename a block on the canvas, or a concept in the sidebar, and the text
+shows the new name at every place it is used, with your comments and blank lines
+untouched. Add a block on the canvas and it appears at the end of `src/main.bdl`
+(or of the first file, when there is no `main.bdl`), or at the end of the
+component body it belongs to.
 
 ## What the colours mean
 

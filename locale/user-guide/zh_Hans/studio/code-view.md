@@ -1,6 +1,8 @@
 <!-- 由 scripts/docs_l10n.py 从 docs/user-guide/studio/code-view.md 生成；请编辑 locale/user-guide/zh_Hans/user-guide.po，不要编辑本文件。 -->
 
 > 语言: [English](../../../../docs/user-guide/studio/code-view.md) · 简体中文 · [日本語](../../ja/studio/code-view.md)
+>
+> 本页尚未完全翻译；未翻译的段落以英文显示。
 
 # 设计、代码与分栏
 
@@ -18,7 +20,7 @@
 
 一次显示一个文件的文本。当项目有多个 `.bdl` 文件时，编辑器顶部的弹出菜单列出它们；尚不能构建的文件带有 _— 未构建_ 标记。
 
-文本就是项目的文件，你在画布上做的一切都写在里面：在画布上重命名概念，文本会在它被使用的每个地方显示新名字，你的注释和空行保持不变。在画布上添加关系，它会出现在 `src/main.bdl` 的末尾（没有 `main.bdl` 时是第一个文件的末尾），或者它所属组件主体的末尾。
+The text is the project's files with everything you did on the canvas written in: rename a block on the canvas, or a concept in the sidebar, and the text shows the new name at every place it is used, with your comments and blank lines untouched. Add a block on the canvas and it appears at the end of `src/main.bdl` (or of the first file, when there is no `main.bdl`), or at the end of the component body it belongs to.
 
 ## 颜色的含义
 

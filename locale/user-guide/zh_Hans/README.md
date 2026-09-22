@@ -12,13 +12,13 @@ Behavior Designer 是一款桌面工具，用于设计**产品如何行为**：�
 
 ## 它解决什么问题
 
-产品的行为通常在草图和表格里决定，然后在代码中被重新发明，而每个数字的含义就此丢失。在 Behavior Designer 中，值有**含义**（_亮度_ 不是 _不透明度_，即使两者都是 0 到 1 之间的数），值之间的关系会做单位和量纲检查，时序是显式的，一个物理输出只能由一个关系驱动。未完成的设计是常态：你可以在知道公式之前先给关系起名，工具会告诉你还有什么没定，而不是拒绝工作。
+A product's behavior is usually decided in sketches and spreadsheets and then rediscovered in code, where the meaning of each number is lost. In Behavior Designer every value is a **block** of a named **concept** — a kind of value with a meaning (a _Brightness_ is not an _Opacity_, even if both are numbers between 0 and 1) — a block's formula is checked for units and dimensions, timing is explicit, and a physical output can only be driven by one block. Unfinished designs are normal: you can name a relationship before you know its formula, and the tool tells you what is still open rather than refusing to work.
 
 ## 你可以在这里做什么
 
 |  |  |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **设计** | 为产品的概念命名，用公式把它们关联起来，决定它们的时序，并把结果接到物理输出 |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **设计** | name the concepts of your product, put blocks of them on the canvas, define them with formulas that apply rules, decide their timing, and drive physical outputs |
 | **仿真** | 喂入值，逐拍推进设计，观察每一个值——用的是定义这门语言的同一个求值器 |
 | **部署** | 选择一块板子，看设计的输出能否放到它的引脚上；放不下时看原因 |
 | **组织与复用** | 把相关的关系归为一个行为，把行为打包成可复用的组件，再把组件实例组合成更大的系统 |
@@ -40,7 +40,7 @@ Behavior Designer 是一款桌面工具，用于设计**产品如何行为**：�
 
 **概念** — 每个想法一页 [概念](../../../docs/user-guide/concepts/concepts.md) · [关系](../../../docs/user-guide/concepts/relationships.md) · [未完成的设计](../../../docs/user-guide/concepts/incomplete-designs.md) · [时序](../../../docs/user-guide/concepts/timing.md) · [物理输出](../../../docs/user-guide/concepts/physical-outputs.md) · [行为组](../../../docs/user-guide/concepts/behavior-groups.md) · [组件](../../../docs/user-guide/concepts/components.md) · [行为系统](../../../docs/user-guide/concepts/behavior-systems.md)
 
-**Studio** — 界面，每个面板或页面一页 [工作区](studio/workspace.md) · [画布](studio/canvas.md) · [库](../../../docs/user-guide/studio/library.md) · [检查器](studio/inspector.md) · [公式编辑器](studio/formula-editor.md) · [仿真](studio/simulate.md) · [部署](studio/deploy.md) · [系统项目](../../../docs/user-guide/studio/system-projects.md) · [设计、代码与分栏](studio/code-view.md)
+**Studio** — 界面，每个面板或页面一页 [工作区](studio/workspace.md) · [画布](studio/canvas.md) · [库](../../../docs/user-guide/studio/library.md) · [检查器](studio/inspector.md) · [公式编辑器](../../../docs/user-guide/studio/formula-editor.md) · [仿真](studio/simulate.md) · [部署](studio/deploy.md) · [系统项目](../../../docs/user-guide/studio/system-projects.md) · [设计、代码与分栏](studio/code-view.md)
 
 **工作流** — 每个目标一页，都围绕同一盏灯 [从传感器到输出](../../../docs/user-guide/workflows/sensor-to-output.md) · [第二个输出](../../../docs/user-guide/workflows/multi-output-behavior.md) · [给行为分组](../../../docs/user-guide/workflows/grouping-behavior.md) · [把行为打包成组件](../../../docs/user-guide/workflows/package-as-component.md) · [组合组件](../../../docs/user-guide/workflows/composing-components.md) · [跨时序域传递值](../../../docs/user-guide/workflows/cross-domain-transport.md) · [组件版本管理](../../../docs/user-guide/workflows/component-versioning.md) · [以文本编写项目](../../../docs/user-guide/workflows/authoring-as-text.md)
 

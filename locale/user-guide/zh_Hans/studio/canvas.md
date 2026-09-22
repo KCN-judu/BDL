@@ -29,7 +29,7 @@
 
 _倾斜灯上的节点结构：来源 tilt，带读取插槽和公式的映射块 dimByTilt，它定义的块 brightness（已选中），以及接收器 light。_
 
-画布画的是**块**——[术语表](../../../../docs/user-guide/reference/terminology.md)中的 _Sem 块_：设计中每个值一个。块是一个不读取任何东西的关系——一个概念的一个值，每拍更新一次。它是一个小方框：标题栏写着名字，以及（在适用时）唯一的一个状态词；一行带有右侧的一个输出插槽，用其概念的颜色与形状，标着概念名；块有时序域时，域名在这一行的左侧。有公式的块，其公式作为一个独立节点画在它旁边，即它的**映射块**：标题栏写着公式应用的规则（上图中的 _dimByTilt_），不应用任何规则时写 _Formula_；左侧**公式读取的每个块**各一个输入插槽，标着那个块的名字；右侧一个输出插槽，用一条短连线接到它所定义的块——公式是块唯一的定义，这个接头从不改道；下面一行是公式。映射块出现时放在其块的左侧；此后它就是一个独立的节点——拖哪个，只有哪个动。它的公式行末有一个小箭头：点击它（或菜单里的 **Show Formula**），映射块展开，按[公式编辑器](formula-editor.md)的画法显示公式——分数、分支、单位——下面是第一条发现和 **Edit formula**，后者打开检查器。展开的公式只供阅读：点击它选中该块，不改变任何东西。哪些公式已展开不随项目保存。点击映射块即选中它的块：一个声明、两个节点、一个检查器。
+画布画的是**块**——[术语表](../../../../docs/user-guide/reference/terminology.md)中的 _Sem 块_：设计中每个值一个。块是一个不读取任何东西的关系——一个概念的一个值，每拍更新一次。它是一个小方框：标题栏写着名字，以及（在适用时）唯一的一个状态词；一行带有右侧的一个输出插槽，用其概念的颜色与形状，标着概念名；块有时序域时，域名在这一行的左侧。有公式的块，其公式作为一个独立节点画在它旁边，即它的**映射块**：标题栏写着公式应用的规则（上图中的 _dimByTilt_），不应用任何规则时写 _Formula_；左侧**公式读取的每个块**各一个输入插槽，标着那个块的名字；右侧一个输出插槽，用一条短连线接到它所定义的块——公式是块唯一的定义，这个接头从不改道；下面一行是公式。映射块出现时放在其块的左侧；此后它就是一个独立的节点——拖哪个，只有哪个动。它的公式行末有一个小箭头：点击它（或菜单里的 **Show Formula**），映射块展开，按[公式编辑器](../../../../docs/user-guide/studio/formula-editor.md)的画法显示公式——分数、分支、单位——下面是第一条发现和 **Edit formula**，后者打开检查器。展开的公式只供阅读：点击它选中该块，不改变任何东西。哪些公式已展开不随项目保存。点击映射块即选中它的块：一个声明、两个节点、一个检查器。
 
 ![The mapping block dimByTilt with its read socket tilt, its formula line dimByTilt(tilt) and a downward chevron, extended below by a region showing dimByTilt applied to tilt and the link Edit formula; to its right, joined by a short link, the block brightness with its socket labelled Brightness.](../../../../docs/user-guide/assets/studio/formula-unfolded.png)
 

@@ -46,7 +46,8 @@
 | 双击实例 | 打开它的组件来源 |
 | 双击行为标题 | 重命名 |
 | 右键点击 · Control-点击 | 上下文菜单 |
-| 把库中的一行拖到画布上 | 插入概念 |
+| 把库中的一行拖到画布上 | the concept sheet: a new concept and a block of it |
+| drag a concept's Project-sidebar row onto the canvas | the block sheet: a block of that concept |
 
 ## 公式字段
 

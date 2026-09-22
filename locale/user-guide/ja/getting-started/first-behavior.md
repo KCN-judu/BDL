@@ -1,6 +1,8 @@
 <!-- scripts/docs_l10n.py が docs/user-guide/getting-started/first-behavior.md から生成しました。locale/user-guide/ja/user-guide.po を編集してください。このファイルは編集しないでください。 -->
 
 > 言語: [English](../../../../docs/user-guide/getting-started/first-behavior.md) · [简体中文](../../zh_Hans/getting-started/first-behavior.md) · 日本語
+>
+> このページはまだ完全には翻訳されていません。未翻訳の箇所は英語で表示されます。
 
 # 最初の振る舞い
 
@@ -19,11 +21,11 @@
 
 ## 2. 2 つのコンセプトを追加する
 
-**コンセプト**は意味を持つ値です——そしてテンプレートでもあります。キャンバス上のブロックはそこから作られます。このランプには 2 つあります。どれだけ傾いているか、そしてどれだけ明るいかです。
+A **concept** is a _kind_ of value with a meaning — a type, and the template the blocks on the canvas are made from; a **block** of it is one such value in your design, one per tick. The lamp has two kinds of value: how far it is tilted, and how bright it is.
 
 1. サイドバーの**プロジェクト**タブで、_コンセプト_ の横の **+** をクリックします。
-2. _新規コンセプト_ シートで：名前は `Tilt`。_値_ の下で**量**を選び、単位に**角度**を選びます（記号 `rad` が独自の列に表示されます）。**作成**をクリックします。
-3. もう一度 _コンセプト_ の横の **+**：名前 `Brightness`、**量**、単位は**単位なし**。**作成**をクリックします。
+2. In the _New concept_ sheet: under _Value_ choose **Angle** — the _Measured in_ row lists the units an angle is written in (`rad`, `deg`, `turn`); that is a fact, not a choice. Name it `Tilt`. Click **Create Concept**.
+3. Again **+** next to _Concepts_: Value **Level** (a plain number with no unit), Name `Brightness`. **Create Concept**.
 
 2 つのコンセプトはキャンバスではなくサイドバーに現れます。コンセプトはテンプレートで、その**ブロック**が値を持つものです。シートのプレビューにある丸い形は _物理量_ を意味します。色はそのコンセプト固有のもので、_その_ コンセプトを運ぶすべてのソケットに付きます。Brightness は単位のない物理量、0 から 1 のレベルです。
 

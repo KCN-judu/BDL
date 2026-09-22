@@ -46,7 +46,8 @@
 | インスタンスをダブルクリック | そのコンポーネントのソースを開く |
 | 振る舞いのタイトルをダブルクリック | 名前を変更 |
 | 右クリック · Control-クリック | コンテキストメニュー |
-| ライブラリの行をキャンバスへドラッグ | コンセプトを挿入 |
+| ライブラリの行をキャンバスへドラッグ | the concept sheet: a new concept and a block of it |
+| drag a concept's Project-sidebar row onto the canvas | the block sheet: a block of that concept |
 
 ## 数式フィールド
 
