@@ -3,6 +3,10 @@
 # and compile main.typ. Run from anywhere.
 set -euo pipefail
 cd "$(dirname "$0")"
+# The environments and the post-processor are the shared template under
+# ../template/; each paper carries a copy so that a mirror of this directory
+# builds alone.  The copy is refreshed from the template whenever it exists.
+if [ -d ../template ]; then cp ../template/env.typ ../template/postprocess.py .; fi
 if command -v pandoc >/dev/null 2>&1; then
   pandoc paper.md -f markdown -t typst -o body.typ
   # pandoc emits pre-0.13 symbol names; map them to current Typst names.
@@ -13,6 +17,7 @@ if command -v pandoc >/dev/null 2>&1; then
     -e 's/angle\.r/chevron.r/g' \
     -e 's/gt\.tri/gt.closed/g' \
     body.typ
+  python3 postprocess.py body.typ
 else
   echo "pandoc not found; using existing body.typ" >&2
 fi

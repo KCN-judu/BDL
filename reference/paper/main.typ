@@ -2,6 +2,8 @@
 // Primary editable source: paper.md -> body.typ (generated with Pandoc via build.sh).
 // This file supplies the document chrome and a single-column monograph layout.
 
+#import "env.typ": *
+
 #set page(
   paper: "us-letter",
   margin: (top: 0.9in, bottom: 0.9in, left: 1.0in, right: 1.0in),
