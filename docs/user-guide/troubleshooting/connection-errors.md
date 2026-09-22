@@ -1,39 +1,53 @@
 # Connections
 
-Links on the canvas mean one of three things — _this relationship reads that
-concept_, _this value drives that output_, _this port supplies that port_ — and
-each has rules. Some rules are enforced while you drag (the link will not land);
-others are recorded and then reported, because the tool would rather hold your
-intent and name the problem than refuse.
+Links on the canvas mean one of four things — _this formula reads that block_ (a
+block's output socket into a mapping block's socket), _this formula defines that
+block_ (the short joint from a mapping block into its block), _this block drives
+that output_, _this port supplies that port_ — and each has rules. Some rules
+are enforced while you drag (the link will not land); others are recorded and
+then reported, because the tool would rather hold your intent and name the
+problem than refuse.
 
 ## The link will not land (forbidden cursor, no halo)
 
-**What it means.** The two sockets cannot be joined: they carry different
-concepts, or they are the same side (two inputs), or the same node — or you are
-dragging onto a collapsed behavior's socket, which is a picture, not a port.
+**What it means.** A link starts only at a block's output socket (or a port). It
+lands on an output that accepts the block's concept, on a port or an open
+relationship's socket of the same concept, on a block with no formula, or on a
+hollow `?` socket of a mapping block — the last two are text edits of a formula,
+and any block may go there. It will not land on a socket of another concept, on
+the same side (two outputs), on the same node, on a mapping block's input socket
+that already reads a block (a read link is a name in the formula: disconnect it,
+then drop), on the short joint between a mapping block and its block (that is
+the definition itself), from a mapping block's own output socket (it defines its
+block and nothing else), or onto a collapsed behavior's socket, which is a
+picture, not a port.
 
-**Why.** Socket colour is the concept. A relationship reads a concept; it cannot
-read _Opacity_ through a socket meant for _Brightness_, whatever the numbers.
-For a behavior box, the link resolves to the member the socket stands for; a
-small chooser appears if several qualify.
+**Why.** Socket colour is the concept. An output accepts one concept and a port
+carries one; a block of _Opacity_ cannot drive a light that accepts
+_Brightness_, whatever the numbers. What a formula reads is decided by the
+formula: a block dropped into an open position is checked by the compiler
+afterwards, and a wrong concept is reported under the field — not refused at the
+pointer. For a behavior box, the link resolves to the member the socket stands
+for; a small chooser appears if several qualify.
 
-**What to do.** Drop on a socket of the same colour. If the concepts really
-should be one, that is a design change: make the relationship read the other
-concept, or bind the concept to the one you meant. In a system, a private
-concept of an instance is a different concept from the system's; share it in the
-component if it should be the same.
+**What to do.** Drop on a socket of the same colour, or on the `?` socket of the
+formula that should read the block. If the concepts really should be one, that
+is a design change: make the rule read the other concept, or bind the concept to
+the one you meant. In a system, a private concept of an instance is a different
+concept from the system's; share it in the component if it should be the same.
 
 ## _light expects Brightness, but dimByTilt produces Tilt → Brightness._ (under _Drives_ / _Driver_)
 
 **What it means.** The connected relationship does not produce exactly what the
-output accepts — a rule with inputs was connected, or a value of another
-concept.
+output accepts — a rule (which has inputs and no value) was connected from the
+inspector, or a block of another concept.
 
-**Why.** A connection to an output converts nothing. Only a _value_ — a
-relationship without inputs — can be _the_ brightness at a tick.
+**Why.** A connection to an output converts nothing. Only a _block_ — a
+relationship without inputs, one value per tick — can be _the_ brightness at a
+tick; a rule is a template.
 
-**What to do.** Connect the value that applies the rule
-(`brightness = dimByTilt(tilt)`), or a value of the right concept; disconnect
+**What to do.** Connect the block whose formula applies the rule
+(`brightness = dimByTilt(tilt)`), or a block of the right concept; disconnect
 the wrong one with _disconnect_ in the output's _Driver_ section. Code:
 `output.type_mismatch`.
 

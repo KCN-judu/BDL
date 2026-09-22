@@ -362,7 +362,7 @@ msgstr ""
 #: docs/user-guide/studio/workspace.md:95
 #: docs/user-guide/textual/editor-and-lsp.md:83
 #: docs/user-guide/textual/syntax-basics.md:202
-#: docs/user-guide/troubleshooting/connection-errors.md:136
+#: docs/user-guide/troubleshooting/connection-errors.md:150
 #: docs/user-guide/troubleshooting/deployment-errors.md:189
 #: docs/user-guide/troubleshooting/incomplete-design.md:92
 #: docs/user-guide/troubleshooting/text-project-errors.md:121
@@ -1070,7 +1070,7 @@ msgstr ""
 #: docs/user-guide/reference/status-meanings.md:84
 #: docs/user-guide/reference/terminology.md:19
 #: docs/user-guide/studio/deploy.md:114
-#: docs/user-guide/troubleshooting/connection-errors.md:116
+#: docs/user-guide/troubleshooting/connection-errors.md:130
 msgid "Meaning"
 msgstr "意味"
 
@@ -7891,218 +7891,218 @@ msgid "Connections"
 msgstr ""
 
 #: docs/user-guide/troubleshooting/connection-errors.md:3
-msgid "Links on the canvas mean one of three things — _this relationship reads that concept_, _this value drives that output_, _this port supplies that port_ — and each has rules. Some rules are enforced while you drag (the link will not land); others are recorded and then reported, because the tool would rather hold your intent and name the problem than refuse."
-msgstr ""
-
-#: docs/user-guide/troubleshooting/connection-errors.md:9
-msgid "The link will not land (forbidden cursor, no halo)"
+msgid "Links on the canvas mean one of four things — _this formula reads that block_ (a block's output socket into a mapping block's socket), _this formula defines that block_ (the short joint from a mapping block into its block), _this block drives that output_, _this port supplies that port_ — and each has rules. Some rules are enforced while you drag (the link will not land); others are recorded and then reported, because the tool would rather hold your intent and name the problem than refuse."
 msgstr ""
 
 #: docs/user-guide/troubleshooting/connection-errors.md:11
-msgid "**What it means.** The two sockets cannot be joined: they carry different concepts, or they are the same side (two inputs), or the same node — or you are dragging onto a collapsed behavior's socket, which is a picture, not a port."
+msgid "The link will not land (forbidden cursor, no halo)"
 msgstr ""
 
-#: docs/user-guide/troubleshooting/connection-errors.md:15
-msgid "**Why.** Socket colour is the concept. A relationship reads a concept; it cannot read _Opacity_ through a socket meant for _Brightness_, whatever the numbers. For a behavior box, the link resolves to the member the socket stands for; a small chooser appears if several qualify."
+#: docs/user-guide/troubleshooting/connection-errors.md:13
+msgid "**What it means.** A link starts only at a block's output socket (or a port). It lands on an output that accepts the block's concept, on a port or an open relationship's socket of the same concept, on a block with no formula, or on a hollow `?` socket of a mapping block — the last two are text edits of a formula, and any block may go there. It will not land on a socket of another concept, on the same side (two outputs), on the same node, on a mapping block's input socket that already reads a block (a read link is a name in the formula: disconnect it, then drop), on the short joint between a mapping block and its block (that is the definition itself), from a mapping block's own output socket (it defines its block and nothing else), or onto a collapsed behavior's socket, which is a picture, not a port."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/connection-errors.md:20
-msgid "**What to do.** Drop on a socket of the same colour. If the concepts really should be one, that is a design change: make the relationship read the other concept, or bind the concept to the one you meant. In a system, a private concept of an instance is a different concept from the system's; share it in the component if it should be the same."
+#: docs/user-guide/troubleshooting/connection-errors.md:25
+msgid "**Why.** Socket colour is the concept. An output accepts one concept and a port carries one; a block of _Opacity_ cannot drive a light that accepts _Brightness_, whatever the numbers. What a formula reads is decided by the formula: a block dropped into an open position is checked by the compiler afterwards, and a wrong concept is reported under the field — not refused at the pointer. For a behavior box, the link resolves to the member the socket stands for; a small chooser appears if several qualify."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/connection-errors.md:26
+#: docs/user-guide/troubleshooting/connection-errors.md:33
+msgid "**What to do.** Drop on a socket of the same colour, or on the `?` socket of the formula that should read the block. If the concepts really should be one, that is a design change: make the rule read the other concept, or bind the concept to the one you meant. In a system, a private concept of an instance is a different concept from the system's; share it in the component if it should be the same."
+msgstr ""
+
+#: docs/user-guide/troubleshooting/connection-errors.md:39
 msgid "_light expects Brightness, but dimByTilt produces Tilt → Brightness._ (under _Drives_ / _Driver_)"
 msgstr ""
 
-#: docs/user-guide/troubleshooting/connection-errors.md:28
-msgid "**What it means.** The connected relationship does not produce exactly what the output accepts — a rule with inputs was connected, or a value of another concept."
-msgstr ""
-
-#: docs/user-guide/troubleshooting/connection-errors.md:32
-msgid "**Why.** A connection to an output converts nothing. Only a _value_ — a relationship without inputs — can be _the_ brightness at a tick."
-msgstr ""
-
-#: docs/user-guide/troubleshooting/connection-errors.md:35
-msgid "**What to do.** Connect the value that applies the rule (`brightness = dimByTilt(tilt)`), or a value of the right concept; disconnect the wrong one with _disconnect_ in the output's _Driver_ section. Code: `output.type_mismatch`."
-msgstr ""
-
-#: docs/user-guide/troubleshooting/connection-errors.md:40
-msgid "_light updates in the interaction domain, but its driver shown updates in display._"
-msgstr ""
-
-#: docs/user-guide/troubleshooting/connection-errors.md:42
-msgid "**Why.** A connection transports nothing. The device refreshes at its domain's rhythm and must read a value of that rhythm."
+#: docs/user-guide/troubleshooting/connection-errors.md:41
+msgid "**What it means.** The connected relationship does not produce exactly what the output accepts — a rule (which has inputs and no value) was connected from the inspector, or a block of another concept."
 msgstr ""
 
 #: docs/user-guide/troubleshooting/connection-errors.md:45
-msgid "**What to do.** Bring the value into the output's domain first — a value in _interaction_ that reads the other through `sync` — then connect that. Or set the output's _Updates in_ to the driver's domain, if that is what the product should do. Code: `output.clock_mismatch`."
+msgid "**Why.** A connection to an output converts nothing. Only a _block_ — a relationship without inputs, one value per tick — can be _the_ brightness at a tick; a rule is a template."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/connection-errors.md:50
-msgid "The sink says _contested_; _light already has a final target._; _brightness, indicator all connect to light._"
-msgstr ""
-
-#: docs/user-guide/troubleshooting/connection-errors.md:52
-msgid "**What it means.** Two or more values drive one output."
+#: docs/user-guide/troubleshooting/connection-errors.md:49
+msgid "**What to do.** Connect the block whose formula applies the rule (`brightness = dimByTilt(tilt)`), or a block of the right concept; disconnect the wrong one with _disconnect_ in the output's _Driver_ section. Code: `output.type_mismatch`."
 msgstr ""
 
 #: docs/user-guide/troubleshooting/connection-errors.md:54
+msgid "_light updates in the interaction domain, but its driver shown updates in display._"
+msgstr ""
+
+#: docs/user-guide/troubleshooting/connection-errors.md:56
+msgid "**Why.** A connection transports nothing. The device refreshes at its domain's rhythm and must read a value of that rhythm."
+msgstr ""
+
+#: docs/user-guide/troubleshooting/connection-errors.md:59
+msgid "**What to do.** Bring the value into the output's domain first — a value in _interaction_ that reads the other through `sync` — then connect that. Or set the output's _Updates in_ to the driver's domain, if that is what the product should do. Code: `output.clock_mismatch`."
+msgstr ""
+
+#: docs/user-guide/troubleshooting/connection-errors.md:64
+msgid "The sink says _contested_; _light already has a final target._; _brightness, indicator all connect to light._"
+msgstr ""
+
+#: docs/user-guide/troubleshooting/connection-errors.md:66
+msgid "**What it means.** Two or more values drive one output."
+msgstr ""
+
+#: docs/user-guide/troubleshooting/connection-errors.md:68
 msgid "**Why.** One output, one driver. Two values for one light is a contradiction, and BDL does not resolve it with a priority or a last writer."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/connection-errors.md:57
+#: docs/user-guide/troubleshooting/connection-errors.md:71
 msgid "**What to do.** _Fixes_ offers _Detach … from …_ for each claimant and _Create upstream combination mapping_. Combine the competing values in one relationship — `if held then a else b` — and connect that. Code: `output.multiple_drivers`."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/connection-errors.md:61
+#: docs/user-guide/troubleshooting/connection-errors.md:75
 msgid "_A rule cannot drive an output — connect the value that applies this rule._ (under _Drives_)"
 msgstr ""
 
-#: docs/user-guide/troubleshooting/connection-errors.md:63
+#: docs/user-guide/troubleshooting/connection-errors.md:77
 msgid "**What it means.** Not a finding: the selected relationship reads something, so its _Drives_ section offers no output. The same rule as above, stated at the source before anything is connected."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/connection-errors.md:67
+#: docs/user-guide/troubleshooting/connection-errors.md:81
 msgid "**What to do.** When exactly one value of the design applies the rule, the section names it — _Show_ selects it; connect the output from there. Otherwise write the value (`brightness = dimByTilt(tilt)`) and connect that. An output's _Connect_ pop-up likewise lists only values of the concept it accepts; when there is none, it says so in one sentence."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/connection-errors.md:73
+#: docs/user-guide/troubleshooting/connection-errors.md:87
 msgid "_Replace the connection?_ (a sheet)"
 msgstr ""
 
-#: docs/user-guide/troubleshooting/connection-errors.md:75
+#: docs/user-guide/troubleshooting/connection-errors.md:89
 msgid "**What it means.** You dropped a link on a required port or a bound relationship that already has a source."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/connection-errors.md:78
+#: docs/user-guide/troubleshooting/connection-errors.md:92
 msgid "**What to do.** _Disconnect and Connect_ to swap; _Cancel_ to keep the existing one. Nothing is ever swapped silently."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/connection-errors.md:81
+#: docs/user-guide/troubleshooting/connection-errors.md:95
 msgid "_Carry across timing domains_ (a sheet asking _Starts at_)"
 msgstr ""
 
-#: docs/user-guide/troubleshooting/connection-errors.md:83
+#: docs/user-guide/troubleshooting/connection-errors.md:97
 msgid "**What it means.** The two ends of the binding update in different domains."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/connection-errors.md:85
+#: docs/user-guide/troubleshooting/connection-errors.md:99
 msgid "**What to do.** Enter the value the destination should see before the source has ever produced one, in the destination's units, and confirm — the binding carries the value across. Or cancel and give the destination the source's domain. See [Carrying a value across timing domains](../workflows/cross-domain-transport.md). Code when reported instead of asked: `system.binding_needs_transport`."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/connection-errors.md:91
+#: docs/user-guide/troubleshooting/connection-errors.md:105
 msgid "_second.tiltValue expects Tilt, but lampA.brightness provides Brightness._"
 msgstr ""
 
-#: docs/user-guide/troubleshooting/connection-errors.md:93
+#: docs/user-guide/troubleshooting/connection-errors.md:107
 msgid "**Why.** A binding converts nothing: the provided port must promise exactly what the required port expects — same concept, input for input."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/connection-errors.md:96
+#: docs/user-guide/troubleshooting/connection-errors.md:110
 msgid "**What to do.** Bind a port or value of the right concept. Code: `system.binding_type_mismatch`."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/connection-errors.md:99
+#: docs/user-guide/troubleshooting/connection-errors.md:113
 msgid "_Takes its value from adaptiveLamp.brightness_ and the formula field is gone"
 msgstr ""
 
-#: docs/user-guide/troubleshooting/connection-errors.md:101
+#: docs/user-guide/troubleshooting/connection-errors.md:115
 msgid "**What it means.** The relationship is bound to a port; the binding _is_ its definition."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/connection-errors.md:104
+#: docs/user-guide/troubleshooting/connection-errors.md:118
 msgid "**What to do.** If you want to write its formula yourself, _Disconnect_ the binding first (the inspector says so)."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/connection-errors.md:107
+#: docs/user-guide/troubleshooting/connection-errors.md:121
 msgid "A banner: _concept Tilt is still used by 2 mapping(s)_ / _timing domain … is still used …_ / _output … is still driven by …_"
 msgstr ""
 
-#: docs/user-guide/troubleshooting/connection-errors.md:109
+#: docs/user-guide/troubleshooting/connection-errors.md:123
 msgid "**What it means.** You tried to delete something other objects depend on."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/connection-errors.md:111
+#: docs/user-guide/troubleshooting/connection-errors.md:125
 msgid "**What to do.** Disconnect or delete the users first; the inspector names them under the delete button."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/connection-errors.md:114
+#: docs/user-guide/troubleshooting/connection-errors.md:128
 msgid "A banner about a port in use, an instance in use, or a component that cannot stand in"
 msgstr ""
 
-#: docs/user-guide/troubleshooting/connection-errors.md:116
+#: docs/user-guide/troubleshooting/connection-errors.md:130
 msgid "Banner code"
 msgstr ""
 
-#: docs/user-guide/troubleshooting/connection-errors.md:116
+#: docs/user-guide/troubleshooting/connection-errors.md:130
 msgid "What to do"
 msgstr ""
 
-#: docs/user-guide/troubleshooting/connection-errors.md:118
+#: docs/user-guide/troubleshooting/connection-errors.md:132
 msgid "`system_edit.port_in_use`"
 msgstr ""
 
-#: docs/user-guide/troubleshooting/connection-errors.md:118
+#: docs/user-guide/troubleshooting/connection-errors.md:132
 msgid "the port you tried to retire is bound on an instance"
 msgstr ""
 
-#: docs/user-guide/troubleshooting/connection-errors.md:118
+#: docs/user-guide/troubleshooting/connection-errors.md:132
 msgid "disconnect those bindings first"
 msgstr ""
 
-#: docs/user-guide/troubleshooting/connection-errors.md:119
+#: docs/user-guide/troubleshooting/connection-errors.md:133
 msgid "`system_edit.instance_in_use`"
 msgstr ""
 
-#: docs/user-guide/troubleshooting/connection-errors.md:119
+#: docs/user-guide/troubleshooting/connection-errors.md:133
 msgid "the instance you tried to delete has bound ports"
 msgstr ""
 
-#: docs/user-guide/troubleshooting/connection-errors.md:119
+#: docs/user-guide/troubleshooting/connection-errors.md:133
 msgid "_Disconnect its ports first; the component stays._"
 msgstr ""
 
-#: docs/user-guide/troubleshooting/connection-errors.md:120
+#: docs/user-guide/troubleshooting/connection-errors.md:134
 msgid "`system_edit.not_substitutable`"
 msgstr ""
 
-#: docs/user-guide/troubleshooting/connection-errors.md:120
+#: docs/user-guide/troubleshooting/connection-errors.md:134
 msgid "_Replace with_ — the instance uses a port the other component lacks or promises differently"
 msgstr ""
 
-#: docs/user-guide/troubleshooting/connection-errors.md:120
+#: docs/user-guide/troubleshooting/connection-errors.md:134
 msgid "compare the two components' _Ports_; restore the port or choose another component"
 msgstr ""
 
-#: docs/user-guide/troubleshooting/connection-errors.md:121
+#: docs/user-guide/troubleshooting/connection-errors.md:135
 msgid "`group_edit.already_grouped`"
 msgstr ""
 
-#: docs/user-guide/troubleshooting/connection-errors.md:121
+#: docs/user-guide/troubleshooting/connection-errors.md:135
 msgid "the relationship is already in another behavior"
 msgstr ""
 
-#: docs/user-guide/troubleshooting/connection-errors.md:121
+#: docs/user-guide/troubleshooting/connection-errors.md:135
 msgid "remove it there first"
 msgstr ""
 
-#: docs/user-guide/troubleshooting/connection-errors.md:123
+#: docs/user-guide/troubleshooting/connection-errors.md:137
 msgid "The component's name on an instance carries a red mark; _AdaptiveLamp's port brightness promises to update in main, but brightness updates in aux._"
 msgstr ""
 
-#: docs/user-guide/troubleshooting/connection-errors.md:125
+#: docs/user-guide/troubleshooting/connection-errors.md:139
 msgid "**What it means.** The component's source no longer keeps its promise: a port's relationship has a different domain, is missing, or a required port has been given a definition."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/connection-errors.md:129
+#: docs/user-guide/troubleshooting/connection-errors.md:143
 msgid "**Why.** A consumer bound to the port relies on what the port advertises."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/connection-errors.md:131
+#: docs/user-guide/troubleshooting/connection-errors.md:145
 msgid "**What to do.** Fix the source (open it with _Edit Source_), or change the port's contract to match. Codes: `component.port_clock_mismatch`, `component.port_declaration_missing`, `component.required_port_realized`, `component.port_signature_mismatch`."
 msgstr ""
 
-#: docs/user-guide/troubleshooting/connection-errors.md:138
+#: docs/user-guide/troubleshooting/connection-errors.md:152
 msgid "[Physical outputs](../concepts/physical-outputs.md) · [Behavior systems](../concepts/behavior-systems.md) · [System projects](../studio/system-projects.md)"
 msgstr ""
 
