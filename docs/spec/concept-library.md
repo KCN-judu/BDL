@@ -344,34 +344,47 @@ with energy — a consequence of the kernel's `Dim`, not of the library.
 
 ## Studio
 
-**Right-click on the canvas** — compact quick insertion, at the pointer:
+**Right-click on the canvas** — compact quick insertion, at the pointer
+(ADR-0044: a concept is a template, so what lands is a Sem block of it):
 
 ```text
-Rename · Delete                 (when over a node)
-Add Concept ▸
-    Recent ▸                    (up to 6, most recent first — a preference, not project state)
-    On / off · Count · Level · Decide later
-    Quantities ▸                (Angle · Length · … · Illuminance)
-    <a third-party library's groups> ▸
-    More…                       (opens the Library tab)
+Add Block ▸
+    of <C>                      (one entry per concept of the design: the block sheet,
+                                 the concept fixed, the block named — a Sem block lands)
+    New Concept ▸
+        Recent ▸                (up to 6, most recent first — a preference, not project state)
+        On / off · Count · Level · Decide later
+        Quantities ▸            (Angle · Length · … · Illuminance)
+        <a third-party library's groups> ▸
+        More…                   (opens the Library tab)
 Add Source ▸
     New Source…                 (choose or create the concept)
     <a third-party library's Source presets>   (the same sheet, prefilled)
 ```
 
 **The concept sheet** (`ui/concept_sheet.dart`, § Creating a concept): every
-Concept entry point — a menu item, a Library row's double-click or Return, a
-drag of a row onto the canvas, the Project tab's `+` — dispatches
+Concept entry point — a _New Concept ▸_ item, a Library row's double-click or
+Return, a drag of a row onto the canvas, the Project tab's `+` — dispatches
 `NewConceptRequested(presetId?, position?)` and the sheet opens over the design
 with the category preset (none when asked for from the Project tab: the category
-pop-up says _choose a category_). _Create_ dispatches
+pop-up says _choose a category_). _Create Concept_ dispatches
 `CreateConceptRequested(name, description, representation, presetId, position)`
-— one `CreateConcept` edit; when the projection with the new concept arrives it
-lands where the pointer was, selected, named as typed — nothing opens for
-renaming. Cancel dispatches `ConceptSheetDismissed`. The old create-then-rename
+— one `CreateConcept` edit, and, when a position was asked for (the canvas menu,
+a drop), a Sem block of the new concept in the same daemon transaction: the
+block lands where the pointer was, selected, named after the concept (a fresh
+name), never opened for renaming; from the Project tab only the concept is
+created and nothing lands, since a concept is not a node. Cancel dispatches
+`ConceptSheetDismissed`. The old create-then-rename
 (`InsertLibraryItemRequested` → `InstantiateLibraryItem`) remains in the code
 for a third-party item a client chooses to insert without a name, and no
 standard entry point takes it.
+
+**The block sheet** (`ui/source_sheet.dart` over a fixed concept): _Add Block ▸
+of C_ and a concept's Project-sidebar row dragged onto the canvas dispatch
+`AddBlockRequested(conceptId, position)`; the sheet asks the block's name only
+and _Create_ takes the Source path — one `CreateSource` over the existing
+concept — so the Sem block lands where asked, selected, a Source until it is
+given a formula.
 
 **The Source sheet** (`ui/source_sheet.dart`): every Source entry point — _New
 Source…_, a third-party preset in the menu, the Library's _Sources_ row's
@@ -385,10 +398,9 @@ concept sheet's form: name, category, the units as a fact, meaning) — then the
 be committed (`concept RoomTemperature : Temperature` /
 `mapping roomTemperatureInput : () -> RoomTemperature`). _Create Source_ is
 enabled once the choice is complete and dispatches `CreateSourceRequested`;
-cancel dispatches nothing but `SourceSheetDismissed`. When the answer arrives, a
-new concept lands where the pointer was and is selected, with its Source a node
-width to the left; a Source over an existing concept lands where the pointer was
-and is selected.
+cancel dispatches nothing but `SourceSheetDismissed`. When the answer arrives
+the Source — a Sem block — lands where the pointer was and is selected; a new
+concept made with it is a template and lands nowhere (ADR-0044).
 
 **Library tab** (left sidebar, beside _Project_) — browsing and discovery: a
 search field (above), then _Recent_, **Values** (the four forms), **Quantities**

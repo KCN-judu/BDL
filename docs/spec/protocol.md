@@ -494,8 +494,9 @@ declared relationship, a Source, a definition that does not elaborate, and in a
 `DefinitionDraftAnalysis` (a draft is not committed); and — since 0.20 —
 `applied_by`: the inverse over the whole design, the direct reverse edges only
 (a rule applied by another rule is applied; nothing transitive). Studio draws
-`references` as the canvas's reference edges, reads `applied_by` for who applies
-a rule, and never derives either from the formula text (ADR-0034).
+`references` as the canvas's read edges — from each Sem block a definition names
+into its mapping block's socket for it (ADR-0044) — reads `applied_by` for who
+applies a rule, and never derives either from the formula text.
 
 ## Values
 

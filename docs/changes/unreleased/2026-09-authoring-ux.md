@@ -9,6 +9,13 @@
 
 ## What changed
 
+_Superseded in part on 2026-09-21 by
+[2026-09 formula typing](2026-09-formula-typing.md) (ADR-0045, superseding
+ADR-0042's key model): a key acts on the text and caret the composer holds, and
+a structural key typed before the compiler's reading waits its turn instead of
+being refused. The concept sheet, the value categories, the rendering and the
+unfolded formula stand. Kept as written._
+
 - **The Standard Library is 22 value categories** (`library/std/concepts.toml`
   0.3): four value forms — _On / off_, _Count_, _Level_, _Decide later_ — and
   one item per named quantity of the vocabulary (_Angle_ … _Illuminance_). The

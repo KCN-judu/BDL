@@ -30,7 +30,7 @@ header that `just docs-check` verifies against its folder.
 | I want…                                                          | Read                                                                                                                                                                                                                                                                                               |
 | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **current language truth**                                       | [spec/kernel.md](spec/kernel.md) · [spec/textual-syntax.md](spec/textual-syntax.md) · [spec/runtime-semantics.md](spec/runtime-semantics.md) · [spec/equation-library.md](spec/equation-library.md)                                                                                                |
-| **current file and wire formats**                                | [spec/project-format.md](spec/project-format.md) · [spec/protocol.md](spec/protocol.md) (0.24) · [spec/hardware-model.md](spec/hardware-model.md) · [spec/deployment-capacity.md](spec/deployment-capacity.md) · [spec/concept-library.md](spec/concept-library.md) (the Standard Library)         |
+| **current file and wire formats**                                | [spec/project-format.md](spec/project-format.md) · [spec/protocol.md](spec/protocol.md) (0.30) · [spec/hardware-model.md](spec/hardware-model.md) · [spec/deployment-capacity.md](spec/deployment-capacity.md) · [spec/concept-library.md](spec/concept-library.md) (the Standard Library)         |
 | **current architecture**                                         | [architecture/overview.md](architecture/overview.md), then the page for the area                                                                                                                                                                                                                   |
 | **why a decision exists**                                        | [decisions/README.md](decisions/README.md)                                                                                                                                                                                                                                                         |
 | **whether a change is proposed or decided**                      | [proposals/README.md](proposals/README.md); anything not there and not an ADR is not decided                                                                                                                                                                                                       |
@@ -56,7 +56,7 @@ header that `just docs-check` verifies against its folder.
 | [textual-syntax.md](spec/textual-syntax.md)           | textual     | the `.bdl` grammar: v0.1 core, v0.2 project items, the support matrix                                                              |
 | [runtime-semantics.md](spec/runtime-semantics.md)     | runtime     | ticks, domains, `delay`/`sync`, numeric policy, what generated code must preserve                                                  |
 | [project-format.md](spec/project-format.md)           | persistence | `bdl.toml`, flat / system / text projects, sidecars, migration rules                                                               |
-| [protocol.md](spec/protocol.md)                       | protocol    | the Studio ↔ bdld messages, current version 0.24, compatibility rule                                                               |
+| [protocol.md](spec/protocol.md)                       | protocol    | the Studio ↔ bdld messages, current version 0.30, compatibility rule                                                               |
 | [hardware-model.md](spec/hardware-model.md)           | deployment  | capabilities, requirements, board description files                                                                                |
 | [concept-library.md](spec/concept-library.md)         | language    | the Standard Library: Concept items, Source presets, the catalogue file (schema 2), Source creation, one-transaction instantiation |
 | [equation-library.md](spec/equation-library.md)       | language    | the data core (collections, grouped and optional values), the equations, equality and order, diagnostics                           |
@@ -123,7 +123,7 @@ became issues. The pre-implementation checklist was removed on 2026-09-17; where
 each of its questions was answered is in the
 [migration report](project/migration-report.md#the-pre-implementation-checklist).
 
-## Current snapshot — 2026-09-20
+## Current snapshot — 2026-09-22 (`5e11027`, protocol 0.30)
 
 - **Architecture:** a Rust semantic core (`bdl-model` → `bdl-ir` → elaboration,
   checking, reactive evaluation, outputs, hardware) with a compiler façade, an
@@ -143,13 +143,19 @@ each of its questions was answered is in the
   a plain value is observed; collections are bounded by the design and validated
   at deployment), 0032 (a Source is a derived presentation role, never a kernel
   type), 0033 (a value is rendered once, by the evaluator, in product words; fed
-  inputs echoed in the trace), 0034 (canvas edges are signature edges and
-  reference edges; _produces_ is the signature, _carried by_ a value per tick),
-  0035 (highlighting is the IDE service's semantic tokens; Studio classifies
-  nothing), 0031 (locale is presentation only), 0039 (the daemon owns the build
-  and the flash; an artifact's identity is the content it was built from),
-  0041/0042 (the Library offers value categories and a concept is named at
-  creation; the Formula view is typed structure over the compiler's tree).
+  inputs echoed in the trace), 0035 (highlighting is the IDE service's semantic
+  tokens; Studio classifies nothing), 0031 (locale is presentation only), 0039
+  (the daemon owns the build and the flash; an artifact's identity is the
+  content it was built from), 0041 (the Library offers value categories and a
+  concept is named at creation), 0043 (the concept ladder — a concept is a type
+  named by `ConceptId`, a Sem block its instance with one value per tick; a rule
+  a template, a mapping block its application), 0044 (the canvas is the value
+  graph: Sem blocks and mapping blocks with read, produce and drive edges; no
+  concept node, no rule node; every gesture a text edit or the drive —
+  superseding 0034's signature and reference edges), 0045 (the Formula view
+  types at its own caret; a key that needs the compiler's tree waits its turn;
+  the formula sheet — superseding 0042's key model, whose rendering and canvas
+  unfolding stand).
 - **Unresolved:** fifteen design issues — occurrence windows, candidate
   definitions, the evidence model, affine units, user enums, `f32` on device,
   nested packaging, a structural output entity, projection deltas, temporal
@@ -170,13 +176,20 @@ each of its questions was answered is in the
   [evidence/pico-smoke-test.md](evidence/pico-smoke-test.md)), is priority 1;
   the platform adapter beyond one line and one duty (ISS-0018, ISS-0017) is
   second; nothing else is in progress in this repository.
-- **Recently changed:** the Sem-block canvas (ADR-0044, protocol 0.30 — the
-  canvas draws Sem blocks and, beside each, its mapping block, a concept is the
-  template Sem blocks are created from and a rule the template mapping blocks
-  apply; read edges from the analysis into a mapping block's sockets, a produce
-  edge into its block, every gesture a text edit or the drive, no concept node;
-  `MappingAnalysis.slots`, `Layout.definitions`, `ComposeAction.unreference` /
-  `read`; parameters named where a concept repeats; ISS-0020 resolved —
+- **Recently changed** (the protocol version named with a slice is the one that
+  introduced it; the current version is **0.30**): the Formula view typing at
+  its own caret and the formula sheet (ADR-0045 — every key acts on the text and
+  caret Studio holds, a structural key waits its turn and is never dropped, text
+  the compiler cannot read is mended in place; _Edit…_ / ⌘E opens the definition
+  as an equation with room —
+  `docs/changes/unreleased/2026-09-formula-typing.md`); the Sem-block canvas
+  (ADR-0044, protocol 0.30 — the canvas draws Sem blocks and, beside each, its
+  mapping block, a concept is the template Sem blocks are created from and a
+  rule the template mapping blocks apply; read edges from the analysis into a
+  mapping block's sockets, a produce edge into its block, every gesture a text
+  edit or the drive, no concept node; `MappingAnalysis.slots`,
+  `Layout.definitions`, `ComposeAction.unreference` / `read`; parameters named
+  where a concept repeats; ISS-0020 resolved —
   `docs/changes/unreleased/2026-09-sem-blocks.md`); the concept ladder's
   vocabulary (ADR-0043 — a concept is a type named by `ConceptId`, a Sem block
   its instance; `SemanticId` is gone, the `concept.*` diagnostic codes with an

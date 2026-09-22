@@ -7,6 +7,13 @@
 
 ## What changed
 
+_Superseded on 2026-09-21 by [2026-09 Sem blocks](2026-09-sem-blocks.md)
+(ADR-0044, superseding ADR-0034): the canvas draws Sem blocks and mapping
+blocks; the signature edges, the concept node and the reference edges into a
+formula line are gone — a mapping block's read edges end at its sockets and
+`MappingAnalysis.references` still supplies them. The word "rule", the Role row
+and the one meaning of "produces" stand. Kept as written._
+
 - **The canvas draws what a formula references.** Beside the signature edges
   (socket to socket, in the concept's hue — what dragging edits) a _reference
   edge_ runs from the output socket of every relationship a definition names

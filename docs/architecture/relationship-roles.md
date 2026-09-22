@@ -22,6 +22,14 @@ role(x) = Rule    if x reads something          (its canonical type is an arrow)
         = Source  if x reads nothing and has none
 ```
 
+In the concept ladder's words (ADR-0043, ADR-0044; FVD-0163, FVD-0164): a
+relationship that reads nothing is a **Sem block** — an instance of its concept
+holding one value per tick — a _Source_ while nothing defines it and a _Value_
+once its **mapping block** (its definition, drawn as a node of its own) does; a
+**Rule** is arrow-typed and is a _template_ mapping blocks apply — it has no
+value per tick and is not a node of the value graph. The role is derived from
+the same two facts either way.
+
 - _reads something_: the signature has inputs; the canonical type is
   `A₁ -> … -> B` (ADR-0029; `Ty::Arr`).
 - _has a realization_: a definition is attached — a formula (checked or not), a
@@ -72,19 +80,19 @@ provisions gains a realization and is a Value by the same rule (§ Phase 13).
 
 ## Roles and states
 
-| Fact                     | Role it can occur in | Where it is stated                                                               |
-| ------------------------ | -------------------- | -------------------------------------------------------------------------------- |
-| declared (no definition) | Rule                 | `MappingView.definition` absent; the canvas dashes it, the status line counts it |
-| invalid / open / valid   | Rule, Value          | `MappingAnalysis.status`                                                         |
-| applied by nothing       | Rule                 | `reactive.rule_unapplied` (info); the hollow output socket, _not applied_        |
-| applied by …             | Rule (and any)       | `MappingAnalysis.applied_by`                                                     |
-| references …             | Rule, Value          | `MappingAnalysis.references`                                                     |
-| driven / drives          | Source, Value        | `MappingView.drives_output_id`, `OutputAnalysis`                                 |
-| bound to …               | Value                | a binding whose destination is the relationship (`SystemView.bindings`)          |
-| backs a port             | Source, Value        | `ComponentView.ports[].decl`; `bdl-ide::port_backed`                             |
-| clocked                  | any                  | `MappingView.clock_id`                                                           |
-| no value yet             | Source               | Studio's simulation inputs (never a project fact)                                |
-| draft differs            | any                  | Studio's drafts; the role is the committed one                                   |
+| Fact                     | Role it can occur in | Where it is stated                                                                                                                |
+| ------------------------ | -------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| declared (no definition) | Rule                 | `MappingView.definition` absent; the inspector's header word and the status line count it (a rule is not a canvas node, ADR-0044) |
+| invalid / open / valid   | Rule, Value          | `MappingAnalysis.status`                                                                                                          |
+| applied by nothing       | Rule                 | `reactive.rule_unapplied` (info); the finding in the rule's inspector and on the Simulate page with the fix `rule.apply`          |
+| applied by …             | Rule (and any)       | `MappingAnalysis.applied_by`                                                                                                      |
+| references …             | Rule, Value          | `MappingAnalysis.references`                                                                                                      |
+| driven / drives          | Source, Value        | `MappingView.drives_output_id`, `OutputAnalysis`                                                                                  |
+| bound to …               | Value                | a binding whose destination is the relationship (`SystemView.bindings`)                                                           |
+| backs a port             | Source, Value        | `ComponentView.ports[].decl`; `bdl-ide::port_backed`                                                                              |
+| clocked                  | any                  | `MappingView.clock_id`                                                                                                            |
+| no value yet             | Source               | Studio's simulation inputs (never a project fact)                                                                                 |
+| draft differs            | any                  | Studio's drafts; the role is the committed one                                                                                    |
 
 The compiler's `MappingStatus::Declared` means "no realization" for any role (a
 Source is `Declared` there); the product word _declared_ is the state of a Rule
@@ -127,8 +135,10 @@ inverse: the **direct** reverse edges, never transitive. A Rule referenced by
 another Rule is applied; the note walks up to the outermost rule nothing
 applies, and one value applying that one settles the chain. Studio consumes both
 fields and never inverts, scans a formula or parses displayed text; the canvas's
-reference edges are presentation, identity-based, not editable and not drop
-targets (ADR-0034).
+read edges — from each Sem block a definition names into its mapping block's
+read socket — are presentation of `references`, identity-based, and edited only
+through the compiler's own text edits (`ComposeAction.unreference` / `read`,
+ADR-0044).
 
 ## Phase 13
 
