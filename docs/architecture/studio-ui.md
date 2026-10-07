@@ -217,8 +217,9 @@ node either: both live in the sidebar with their own inspectors.
   service beside the block (`Layout.definitions`; unplaced, the canvas draws it
   attached directly to the left, `attachedBlockPosition`). Its header names the
   rules the definition applies (`NodeShape.applies`, from the references that
-  are rules; the quiet word _Formula_ when it applies none); one **read socket**
-  per Sem block the definition names (`SocketRole.read`, `readsOf` from
+  are rules; the quiet word _Formula_ when it applies none — secondary ink, the
+  title weight like every header); one **read socket** per Sem block the
+  definition names (`SocketRole.read`, `readsOf` from
   `MappingAnalysis.references` filtered to unit-domain declarations; index = the
   read block's id; in the read block's hue, labelled with its name), one hollow
   **slot socket** per open position of the definition (`SocketRole.slot`, from

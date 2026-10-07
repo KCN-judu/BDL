@@ -2759,13 +2759,14 @@ class NodePainter {
     }
 
     // A mapping block's header names the rules it applies; one applying
-    // none is a formula of its own and says so, quietly.
+    // none is a formula of its own and says so, quietly — in the secondary
+    // ink only: it is still a header title, so it keeps the title weight.
     final plainFormula = n.ref.kind == NodeKind.definition && n.title.isEmpty;
     _text(
       canvas,
       plainFormula ? l10n.formula : n.title,
       n.header.topLeft + Offset(n.source ? 26 : 12, 6),
-      plainFormula ? FontWeight.w400 : FontWeight.w600,
+      FontWeight.w600,
       12.5,
       plainFormula ? tokens.textSecondary : tokens.textPrimary,
       maxWidth: n.rect.width - (n.source ? 78 : 24) - (n.source ? 14 : 0),
