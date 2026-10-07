@@ -1613,16 +1613,16 @@ Transition projectReceived(
     system: system,
     clearSystem: system == null,
   );
-  final selection = created != null
-      ? MappingSelected(created.id) as Selection
-      : fromRequest &&
-            sameProject &&
-            insert != null &&
-            outcome != null &&
-            outcome.hasCreatedConcept()
+  // Another project's ids name nothing here (and may name something else).
+  final selection = !sameProject
+      ? const NoSelection() as Selection
+      : created != null
+      ? MappingSelected(created.id)
+      : fromRequest && insert != null && outcome != null && outcome.hasCreatedConcept()
       ? ConceptSelected(outcome.createdConcept.toInt())
       // A system project's view is empty until its system arrives: the
-      // selection is judged then (`systemReceived`), not against nothing.
+      // selection is judged then (`systemReceived`), not against nothing
+      // (meanwhile the inspector shows no selection).
       : needsSystem
       ? s.editor.selection
       : surviving(next, s.editor.selection);

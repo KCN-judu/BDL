@@ -12,6 +12,7 @@ import '../app/actions.dart';
 import '../app/composer.dart' show composerProjection;
 import '../app/simulation.dart' show kApplyRuleActionKind, kRuleUnappliedCode;
 import '../app/state.dart';
+import '../app/system.dart' show selectionStillValid;
 import '../protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import 'canvas/canvas_geometry.dart' show dimLabel, socketKind, statusWord, SocketKind;
 import 'canvas/concept_glyphs.dart';
@@ -33,7 +34,11 @@ class Inspector extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = MacTokens.of(context);
     final project = state.project;
-    final sel = state.editor.selection;
+    // A selection is judged against each new projection by the reducer,
+    // except while a system project waits for its system (its view is
+    // empty then): what names nothing in view shows as no selection.
+    final held = state.editor.selection;
+    final sel = selectionStillValid(state, held) ? held : const NoSelection();
 
     Widget body;
     if (project == null) {

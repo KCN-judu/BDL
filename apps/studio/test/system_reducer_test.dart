@@ -3,8 +3,6 @@
 /// transporting, packaging's layout hand-over, and the wire layout.
 library;
 
-import 'dart:ui';
-
 import 'package:bdl_studio/app/actions.dart';
 import 'package:bdl_studio/app/effects.dart';
 import 'package:bdl_studio/app/reducer.dart';
@@ -12,7 +10,10 @@ import 'package:bdl_studio/app/state.dart';
 import 'package:bdl_studio/app/system.dart';
 import 'package:bdl_studio/protocol/gen/bdl/v1/bdl.pb.dart' as pb;
 import 'package:bdl_studio/ui/canvas/canvas_geometry.dart';
+import 'package:bdl_studio/ui/inspector.dart';
+import 'package:bdl_studio/ui/mac/theme.dart';
 import 'package:fixnum/fixnum.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'support/roles.dart';
@@ -183,6 +184,41 @@ void main() {
       expect(t.state.system, isNull);
       expect(t.state.project!.mappings, isEmpty);
       expect(t.effects.whereType<GetSystem>(), hasLength(1));
+    });
+
+    test('a selection waits out the system\'s fetch; another project drops it', () {
+      var s = reduce(opened(), const SelectionChanged(ConceptSelected(level))).state;
+      // the same project moved on: the view is empty until the system
+      // arrives, and the selection is judged then
+      s = reduce(s, ProjectReceived(flat(revision: 4), fromRequest: false)).state;
+      expect(s.project!.concepts, isEmpty);
+      expect(s.editor.selection, const ConceptSelected(level));
+      s = reduce(s, SystemReceived(system(revision: 4), fromRequest: false)).state;
+      expect(s.editor.selection, const ConceptSelected(level));
+      // a New Project: the same ids would name other things there
+      final other = flat(revision: 1)..rootPath = '/tmp/other';
+      s = reduce(s, ProjectReceived(other)).state;
+      expect(s.editor.selection, const NoSelection());
+      s = reduce(s, SystemReceived(system(revision: 1))).state;
+      expect(s.project!.concepts.any((c) => c.id.toInt() == level), isTrue);
+      expect(s.editor.selection, const NoSelection(), reason: 'not revived by a coinciding id');
+    });
+
+    testWidgets('the inspector shows no selection while the selected object is not in view', (
+      t,
+    ) async {
+      var s = reduce(opened(), const SelectionChanged(ConceptSelected(level))).state;
+      s = reduce(s, ProjectReceived(flat(revision: 4), fromRequest: false)).state;
+      await t.pumpWidget(
+        MaterialApp(
+          theme: macTheme(Brightness.light),
+          home: Scaffold(
+            body: Inspector(state: s, dispatch: (_) {}),
+          ),
+        ),
+      );
+      expect(t.takeException(), isNull);
+      expect(find.textContaining('Select a concept'), findsOneWidget);
     });
 
     test('the component context shows the body, in its own ids, and scopes drafts', () {
