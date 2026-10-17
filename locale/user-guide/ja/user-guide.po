@@ -2581,7 +2581,7 @@ msgid "`bdld init <dir> [--name N] [--template ID]` · `bdld templates`"
 msgstr ""
 
 #: docs/user-guide/reference/cli.md:16
-msgid "creates a project, empty or from a template — `button-lamp` (the Button → Lamp design for the Raspberry Pi Pico) and `button-lamp-configured` (the same with its devices and pins), as `templates` lists them"
+msgid "creates a project, empty or from a template — `button-lamp` (the Button → Lamp design for the Raspberry Pi Pico), `button-lamp-configured` (the same with its devices and pins), and the two Arduino Nano demos, already wired — `sensor-station` (a thermistor, a photoresistor and a trim pot in; a night light, a fan and an overheat lamp out) and `breathing-beacon` (analog dynamics, no sensor) — as `templates` lists them"
 msgstr ""
 
 #: docs/user-guide/reference/cli.md:16

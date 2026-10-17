@@ -1,6 +1,7 @@
 //! The designs a new project can start from: one canonical hardware demo
-//! in two variants, written in textual BDL and loaded through the same
-//! path as any hand-written project (`bdl_text::init_project_with_source`).
+//! in two variants, and the checked-in examples that run on an Arduino
+//! Nano, all written in textual BDL and loaded through the same path as
+//! any hand-written project (`bdl_text::init_project_with_source`).
 //!
 //! `button-lamp` is the Button → rule → Lamp product of
 //! `docs/user-guide/getting-started/pico-demo.md`: a Source the
@@ -10,6 +11,12 @@
 //! lamp, on which pads) is the designer's task; the *configured* variant
 //! ships it complete for the Raspberry Pi Pico: the button on GP2 against
 //! ground, the lamp on the on-board LED (GP25).
+
+/// The Nano examples are the checked-in projects themselves
+/// (`examples/`, kept faithful by `crates/bdl-compiler/tests/example_*.rs`),
+/// never a copy: their devices and pins are part of the source.
+const SENSOR_STATION: &str = include_str!("../../../examples/sensor_station/src/main.bdl");
+const BREATHING_BEACON: &str = include_str!("../../../examples/breathing_beacon/src/main.bdl");
 
 /// One template as `ListTemplates` reports it.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -75,6 +82,22 @@ pub fn templates() -> Vec<Template> {
             configured: true,
             source: format!("{DESIGN}{DEPLOYMENT}"),
         },
+        Template {
+            id: "sensor-station",
+            display_name: "Sensor Station, wired",
+            description: "For the Arduino Nano: a thermistor, a photoresistor and a trim pot read through their curves; a night light with a gamma curve, a fan with inertia and an overheat lamp with hysteresis. Wired on A0–A2, D9, D10, D13 — open the Deploy page, Build.",
+            target_id: "arduino_nano",
+            configured: true,
+            source: SENSOR_STATION.to_owned(),
+        },
+        Template {
+            id: "breathing-beacon",
+            display_name: "Breathing Beacon, wired",
+            description: "For the Arduino Nano: no sensor, only dynamics — a triangle-wave breath, a gamma curve, a first-order lag and a Schmitt trigger driving two PWM pins and the on-board LED (D9, D10, D13).",
+            target_id: "arduino_nano",
+            configured: true,
+            source: BREATHING_BEACON.to_owned(),
+        },
     ]
 }
 
@@ -93,6 +116,22 @@ mod tests {
         assert_eq!(guided.source, DESIGN);
         assert_eq!(configured.source, format!("{DESIGN}{DEPLOYMENT}"));
         assert!(!guided.configured && configured.configured);
+    }
+
+    #[test]
+    fn the_nano_demos_are_the_checked_in_examples_and_arrive_wired() {
+        for (id, example) in [
+            ("sensor-station", "sensor_station"),
+            ("breathing-beacon", "breathing_beacon"),
+        ] {
+            let t = template(id).unwrap();
+            let path = format!(
+                "{}/../../examples/{example}/src/main.bdl",
+                env!("CARGO_MANIFEST_DIR")
+            );
+            assert_eq!(t.source, std::fs::read_to_string(path).unwrap());
+            assert!(t.configured && t.target_id == "arduino_nano");
+        }
     }
 
     #[test]

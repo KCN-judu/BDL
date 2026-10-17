@@ -111,6 +111,8 @@ void main() {
         expect(s.editor.deploy.templates.map((t) => t.id), [
           'button-lamp',
           'button-lamp-configured',
+          'sensor-station',
+          'breathing-beacon',
         ]);
 
         // The demo is a new project from a template.

@@ -265,9 +265,18 @@ fn the_templates_are_listed_and_a_project_starts_from_one() {
         other => panic!("{other:?}"),
     };
     let ids: Vec<&str> = templates.iter().map(|t| t.id.as_str()).collect();
-    assert_eq!(ids, ["button-lamp", "button-lamp-configured"]);
-    assert!(templates.iter().all(|t| t.target_id == PICO));
-    assert!(!templates[0].configured && templates[1].configured);
+    assert_eq!(
+        ids,
+        [
+            "button-lamp",
+            "button-lamp-configured",
+            "sensor-station",
+            "breathing-beacon"
+        ]
+    );
+    assert!(templates[..2].iter().all(|t| t.target_id == PICO));
+    assert!(templates[2..].iter().all(|t| t.target_id == "arduino_nano"));
+    assert!(!templates[0].configured && templates[1..].iter().all(|t| t.configured));
 
     let p = c.init(&dir.path().join("guided"), Some("button-lamp"));
     assert_eq!(p.concepts.len(), 2);

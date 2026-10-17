@@ -352,6 +352,32 @@ fn compile_for_a_board_writes_the_adapter_from_the_placement() {
 }
 
 #[test]
+fn the_nano_demos_open_from_their_templates_complete_and_wired() {
+    let dir = tempfile::tempdir().expect("tempdir");
+    for id in ["sensor-station", "breathing-beacon"] {
+        let root = dir.path().join(id);
+        let r = root.to_string_lossy().into_owned();
+        let (code, out, _) = bdld(&["templates"]);
+        assert_eq!(code, 0);
+        assert!(out.contains(&format!("{id}\t")), "{out}");
+        let (code, out, _) = bdld(&["init", &r, "--template", id]);
+        assert_eq!(code, 0, "{out}");
+        let (code, out, _) = bdld(&["check", &r]);
+        assert_eq!(code, 0, "{out}");
+        assert!(out.contains("outputs complete"), "{out}");
+        let (code, out, err) = bdld(&[
+            "compile",
+            &r,
+            "--target",
+            "arduino_nano",
+            "--out",
+            &dir.path().join(format!("{id}-out")).to_string_lossy(),
+        ]);
+        assert_eq!(code, 0, "{out}{err}");
+    }
+}
+
+#[test]
 fn init_from_a_template_then_build_and_flash_report_their_stages_and_refusals() {
     let dir = tempfile::tempdir().expect("tempdir");
     let root = dir.path().join("demo");
