@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "keys": {
+    "clock:main": {
+      "id": 0,
+      "file": "src/main.bdl"
+    },
+    "concept:Flag": {
+      "id": 1,
+      "file": "src/main.bdl"
+    },
+    "concept:Level": {
+      "id": 0,
+      "file": "src/main.bdl"
+    },
+    "device:alertPin": {
+      "id": 2,
+      "file": "src/main.bdl"
+    },
+    "device:glowPwm": {
+      "id": 1,
+      "file": "src/main.bdl"
+    },
+    "device:ringPwm": {
+      "id": 0,
+      "file": "src/main.bdl"
+    },
+    "mapping:afterglow": {
+      "id": 3,
+      "file": "src/main.bdl",
+      "shape": "0"
+    },
+    "mapping:alert": {
+      "id": 4,
+      "file": "src/main.bdl",
+      "shape": "0"
+    },
+    "mapping:breath": {
+      "id": 1,
+      "file": "src/main.bdl",
+      "shape": "0"
+    },
+    "mapping:filling": {
+      "id": 0,
+      "file": "src/main.bdl",
+      "shape": "0"
+    },
+    "mapping:ring": {
+      "id": 2,
+      "file": "src/main.bdl",
+      "shape": "0"
+    },
+    "output:alertLed": {
+      "id": 2,
+      "file": "src/main.bdl"
+    },
+    "output:glowLed": {
+      "id": 1,
+      "file": "src/main.bdl"
+    },
+    "output:ringLed": {
+      "id": 0,
+      "file": "src/main.bdl"
+    }
+  },
+  "base_ids": {
+    "next_semantic": 2,
+    "next_decl": 5,
+    "next_clock": 1,
+    "next_output": 3,
+    "next_device": 3
+  },
+  "system_ids": {
+    "next_component": 0,
+    "next_instance": 0,
+    "next_port": 0,
+    "next_binding": 0,
+    "next_export": 0,
+    "next_group": 0
+  },
+  "flat_ids": {}
+}

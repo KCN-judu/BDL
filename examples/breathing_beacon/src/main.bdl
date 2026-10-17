@@ -1,0 +1,51 @@
+/// A level in percent: 0 is dark, 100 is full.
+concept Level : Scalar
+
+/// Whether something is on.
+concept Flag : Bool
+
+clock main
+
+/// Whether the breath is still filling; it turns at the top and at the bottom.
+mapping filling : Flag @main
+filling() =
+  delay(true, if filling then breath < 100 else breath <= 0)
+
+/// The breath: a triangle wave, half a percent per tick, up and down.
+mapping breath : Level @main
+breath() =
+  delay(0, if filling then min(100, breath + 0.5) else max(0, breath - 0.5))
+
+/// The eye is not linear: squaring the breath makes the fade look even.
+mapping ring : Level @main
+ring() =
+  breath * breath / 100
+
+/// A first-order lag behind the ring, like a phosphor still glowing.
+mapping afterglow : Level @main
+afterglow() =
+  delay(0, afterglow + (ring - afterglow) * 0.05)
+
+/// A Schmitt trigger on the glow: on above 60, off again only below 20.
+mapping alert : Flag @main
+alert() =
+  delay(false, if alert then afterglow > 20 else afterglow > 60)
+
+/// The bright ring.
+output ringLed : Level @main
+
+/// The glowing tail.
+output glowLed : Level @main
+
+/// The warning light.
+output alertLed : Flag @main
+
+drive ringLed by ring
+
+drive glowLed by afterglow
+
+drive alertLed by alert
+
+device ringPwm : pwm_channel for ringLed { realization pwm_duty8, pin 0 = D9 }
+device glowPwm : pwm_channel for glowLed { realization pwm_duty8, pin 0 = D10 }
+device alertPin : digital_output for alertLed { realization gpio_level, pin 0 = D13 }
