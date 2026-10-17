@@ -1,0 +1,74 @@
+/// Air temperature at the board.
+ordered concept Temp : Temperature
+
+/// Illuminance of the room.
+concept Lux : Illuminance
+
+/// A level in percent: 0 is off, 100 is full.
+concept Level : Scalar
+
+/// Whether something is on.
+concept Flag : Bool
+
+clock main
+
+/// The thermistor on the board: a temperature per activation.
+mapping roomTemp : () -> Temp @main
+
+/// The photoresistor: an illuminance per activation.
+mapping roomLight : () -> Lux @main
+
+/// The trim potentiometer, as a percentage of its travel.
+mapping knob : () -> Level @main
+
+/// The temperature the fan starts at: 20 °C at the knob's left stop, 50 °C at its right.
+mapping setpoint : () -> Temp @main
+setpoint() =
+  293.15 K + knob * 0.3 K
+
+/// How hard the fan should run: nothing at the setpoint, full ten kelvin above it.
+mapping fanTarget : () -> Level @main
+fanTarget() =
+  if roomTemp <= setpoint then 0 else if roomTemp >= setpoint + 10 K then 100 else (roomTemp - setpoint) / 10 K * 100
+
+/// The fan has inertia: a fifth of the way to the target each tick.
+mapping fan : () -> Level @main
+fan() =
+  delay(0, fan + (fanTarget - fan) * 0.2)
+
+/// How bright the night light should be: off in daylight (300 lx), full in the dark (5 lx).
+mapping lightTarget : () -> Level @main
+lightTarget() =
+  if roomLight >= 300 lx then 0 else if roomLight <= 5 lx then 100 else (300 lx - roomLight) / 295 lx * 100
+
+/// The light fades, a twentieth of the way each tick, so a passing shadow is not a flicker.
+mapping glow : () -> Level @main
+glow() =
+  delay(0, glow + (lightTarget - glow) * 0.05)
+
+/// Overheat: on twelve kelvin over the setpoint, off again only below eight.
+mapping hot : () -> Flag @main
+hot() =
+  delay(false, if hot then roomTemp > setpoint + 8 K else roomTemp > setpoint + 12 K)
+
+/// The night light.
+output nightLight : Level @main
+
+/// The fan.
+output fanDrive : Level @main
+
+/// The overheat lamp.
+output alarm : Flag @main
+
+drive nightLight by glow
+
+drive fanDrive by fan
+
+drive alarm by hot
+
+device tempSensor : analog_input for roomTemp { provider adc_ntc10k_b3950, pin 0 = A1 }
+device lightSensor : analog_input for roomLight { provider adc_ldr_gl5528, pin 0 = A0 }
+device trimmer : analog_input for knob { provider adc_percent, pin 0 = A2 }
+device lightPwm : pwm_channel for nightLight { realization pwm_gamma8, pin 0 = D9 }
+device fanPwm : pwm_channel for fanDrive { realization pwm_duty8, pin 0 = D10 }
+device alarmPin : digital_output for alarm { realization gpio_level, pin 0 = D13 }

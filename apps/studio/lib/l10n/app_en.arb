@@ -1379,6 +1379,10 @@
   "@digitalInput": {
     "description": "Studio UI text (deploy_page.dart): the device kind of one digital input line."
   },
+  "analogInput": "Analog input",
+  "@analogInput": {
+    "description": "Studio UI text (deploy_page.dart): the device kind of one analog (ADC) input pin."
+  },
   "hBridgeChannel": "H-bridge channel",
   "@hBridgeChannel": {
     "description": "Studio UI text (deploy_page.dart)."

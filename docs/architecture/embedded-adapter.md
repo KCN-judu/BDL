@@ -119,7 +119,17 @@ GPIO pad ─▶ Sense (pull) ─▶ LevelSource::level() ─▶ adapter::read(sr
   line as a truth value: `gpio_level_in` (high is `true`, the pad pulled down)
   and `gpio_level_in_low` (low is `true`, pulled up; the transducer is `not`).
   The pull is peripheral configuration, never a value; the polarity is the
-  transducer's, never the reader's.
+  transducer's, never the reader's. Four more read an **analog pin**
+  (`DeviceKind::AnalogInput` ⇒ `analog_in`; raw reading: the 10-bit count
+  `0 … 1023`, a dimensionless quantity): `adc_percent` (count · 100 / 1023), and
+  the curves of three named parts — `adc_ntc10k_b3950` (kelvin),
+  `adc_ldr_gl5528` (lux), `adc_sharp_gp2y0a21` (metres). The kernel has no `ln`
+  or `pow`, so a curve is a table (`bdl-catalogue::curves`): piecewise-linear,
+  lowered to nested `if … then … else`, holding its end values outside the
+  sampled range, so a floating or shorted pin saturates and never faults the
+  core. Only the Arduino family reads them (`Entry::reads`): `main` builds one
+  `arduino_hal::Adc`, turns each assigned `A0 … A5` into a channel, and
+  `provide`s the converted counts at the top of every tick.
 - **The provision.** `bdl-output::provision` judges a device bound to a Source
   the way `realization` judges one bound to an output: `well_formed` (typed pure
   `raw → rep`), `fits` (the Source's concept carries `rep`) — the semantic

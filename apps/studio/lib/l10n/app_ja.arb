@@ -338,6 +338,7 @@
   "pwmChannel": "PWM チャネル",
   "digitalOutput": "デジタル出力",
   "digitalInput": "デジタル入力",
+  "analogInput": "アナログ入力",
   "hBridgeChannel": "H ブリッジチャネル",
   "iCSensor": "I²C センサー",
   "quadratureEncoder": "直交エンコーダー",

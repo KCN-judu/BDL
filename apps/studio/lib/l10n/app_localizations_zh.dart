@@ -1038,6 +1038,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get digitalInput => '数字输入';
 
   @override
+  String get analogInput => '模拟输入';
+
+  @override
   String get hBridgeChannel => 'H 桥通道';
 
   @override

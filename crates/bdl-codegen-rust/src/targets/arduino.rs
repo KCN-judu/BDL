@@ -11,7 +11,7 @@
 //! each step (`bdl_runtime_arduino::tick_wait`).  The behavior semantics
 //! are the same one global `step` (ADR-0004); only the timer is coarser.
 
-use crate::adapter::{AdapterPlan, SinkBinding, SinkKind};
+use crate::adapter::{AdapterPlan, ProviderBinding, SinkBinding, SinkKind, SourceKind};
 use crate::ast::*;
 use crate::emit::EmitError;
 use crate::names;
@@ -130,6 +130,45 @@ fn pin_field(board: &Board, resource: &str) -> Result<String, EmitError> {
             board.analog_digital_pins - 1
         ))
     })
+}
+
+/// The peripheral for one provider: the pin as an analog input of the
+/// shared converter (`adc`, constructed in `main`), erased to a channel so
+/// every provider's reading is taken the same way.
+pub fn source_peripheral(board: &Board, b: &ProviderBinding) -> Result<Peripheral, EmitError> {
+    match b.kind {
+        SourceKind::Adc10 => {
+            let field = pin_field(board, &b.resource)?;
+            if !field.starts_with('a') {
+                return Err(EmitError(format!(
+                    "{}: `{}` is not an analog pin (expected `A0` … `A{}`)",
+                    board.id,
+                    b.resource,
+                    board.analog_digital_pins - 1
+                )));
+            }
+            Ok(Peripheral {
+                // pins.a0.into_analog_input(&mut adc).into_channel()
+                construct: Expr::method(
+                    Expr::method(
+                        Expr::field(Expr::path("pins"), field.clone()),
+                        "into_analog_input",
+                        [Expr::Ref {
+                            mutable: true,
+                            e: Box::new(Expr::path("adc")),
+                        }],
+                    ),
+                    "into_channel",
+                    [],
+                ),
+                describe: format!("pins.{field} as an ADC channel (10 bit, AVcc reference)"),
+            })
+        }
+        SourceKind::LevelPullDown | SourceKind::LevelPullUp => Err(EmitError(format!(
+            "{}: no reader for `{}` on {} yet",
+            FAMILY, b.profile, board.id
+        ))),
+    }
 }
 
 /// The peripheral for one binding: the pin's PWM channel on its timer, or
@@ -303,6 +342,39 @@ pub fn firmware_module(
             ),
         });
     }
+    if !plan.providers.is_empty() {
+        stmts.push(Stmt::Comment(
+            "the converter: 10 bit, the supply (AVcc) as the reference, shared by every analog source".into(),
+        ));
+        stmts.push(Stmt::Let {
+            name: "adc".into(),
+            mutable: true,
+            ty: None,
+            value: Expr::call(
+                "arduino_hal::Adc::new",
+                [
+                    Expr::field(Expr::path("dp"), "ADC"),
+                    Expr::call("Default::default", []),
+                ],
+            ),
+        });
+        for b in &plan.providers {
+            let per = source_peripheral(board, b)?;
+            stmts.push(Stmt::Comment(format!(
+                "{} reads {} as `{}`: {}",
+                b.device.raw(),
+                b.resource,
+                b.profile,
+                per.describe
+            )));
+            stmts.push(Stmt::Let {
+                name: names::reading(b.device),
+                mutable: false,
+                ty: None,
+                value: per.construct,
+            });
+        }
+    }
     stmts.push(Stmt::Comment(
         "the sinks, on the lines the placement assigned; every line starts low".into(),
     ));
@@ -351,81 +423,111 @@ pub fn firmware_module(
         ty: None,
         value: Expr::call("design::init", []),
     });
-    stmts.push(Stmt::Comment(
-        "this family has no reader yet: a design with a Source is refused for it (`adapter.provider_unsupported`)".into(),
-    ));
-    stmts.push(Stmt::Let {
-        name: "inputs".into(),
-        mutable: false,
-        ty: None,
-        value: Expr::call("design::Inputs::default", []),
-    });
+    if plan.providers.is_empty() {
+        stmts.push(Stmt::Comment(
+            "no Source: the design is closed, its inputs are all absent".into(),
+        ));
+        stmts.push(Stmt::Let {
+            name: "inputs".into(),
+            mutable: false,
+            ty: None,
+            value: Expr::call("design::Inputs::default", []),
+        });
+    }
     stmts.push(Stmt::Let {
         name: "tick".into(),
         mutable: true,
         ty: Some(Type::path("u64")),
         value: Expr::u64(0),
     });
-    let loop_body = Block::new(
-        vec![
-            Stmt::Let {
-                name: "active".into(),
-                mutable: false,
-                ty: None,
-                value: Expr::call(
-                    "schedule::active",
-                    [
-                        Expr::path("tick"),
-                        Expr::Ref {
-                            mutable: false,
-                            e: Box::new(Expr::path("PERIODS")),
-                        },
-                    ],
-                ),
-            },
-            Stmt::Comment(
-                "step, then apply the commands in sink order; a failed tick latches the fault"
-                    .into(),
-            ),
-            Stmt::Expr(Expr::Match {
-                scrutinee: Box::new(Expr::call(
-                    "design::step",
-                    [
-                        Expr::Ref {
-                            mutable: true,
-                            e: Box::new(Expr::path("state")),
-                        },
-                        Expr::path("active"),
-                        Expr::Ref {
-                            mutable: false,
-                            e: Box::new(Expr::path("inputs")),
-                        },
-                    ],
-                )),
+    let mut loop_stmts = Vec::new();
+    if !plan.providers.is_empty() {
+        loop_stmts.push(Stmt::Comment(
+            "observe every source once, in input-slot order, before the core steps".into(),
+        ));
+        let readings = plan.providers.iter().map(|b| {
+            Expr::some(Expr::call(
+                "f64::from",
+                [Expr::method(
+                    Expr::path("adc"),
+                    "read_blocking",
+                    [Expr::Ref {
+                        mutable: false,
+                        e: Box::new(Expr::path(names::reading(b.device))),
+                    }],
+                )],
+            ))
+        });
+        loop_stmts.push(Stmt::Let {
+            name: "inputs".into(),
+            mutable: false,
+            ty: None,
+            value: Expr::Match {
+                scrutinee: Box::new(Expr::call("design::adapter::provide", readings)),
                 arms: vec![
-                    (
-                        "Ok(t)".into(),
-                        Expr::Block(Block::new(
-                            vec![Stmt::Let {
-                                name: "_".into(),
-                                mutable: false,
-                                ty: None,
-                                value: Expr::call("design::adapter::apply", apply_args),
-                            }],
-                            None,
-                        )),
-                    ),
+                    ("Ok(i)".into(), Expr::path("i")),
                     ("Err(_)".into(), Expr::call("halt", [])),
                 ],
-            }),
-            Stmt::Expr(Expr::assign(
-                Expr::path("tick"),
-                Expr::method(Expr::path("tick"), "wrapping_add", [Expr::u64(1)]),
+            },
+        });
+    }
+    loop_stmts.extend(vec![
+        Stmt::Let {
+            name: "active".into(),
+            mutable: false,
+            ty: None,
+            value: Expr::call(
+                "schedule::active",
+                [
+                    Expr::path("tick"),
+                    Expr::Ref {
+                        mutable: false,
+                        e: Box::new(Expr::path("PERIODS")),
+                    },
+                ],
+            ),
+        },
+        Stmt::Comment(
+            "step, then apply the commands in sink order; a failed tick latches the fault".into(),
+        ),
+        Stmt::Expr(Expr::Match {
+            scrutinee: Box::new(Expr::call(
+                "design::step",
+                [
+                    Expr::Ref {
+                        mutable: true,
+                        e: Box::new(Expr::path("state")),
+                    },
+                    Expr::path("active"),
+                    Expr::Ref {
+                        mutable: false,
+                        e: Box::new(Expr::path("inputs")),
+                    },
+                ],
             )),
-            Stmt::Expr(Expr::call("tick_wait", [Expr::path("TICK_MICROS")])),
-        ],
-        None,
-    );
+            arms: vec![
+                (
+                    "Ok(t)".into(),
+                    Expr::Block(Block::new(
+                        vec![Stmt::Let {
+                            name: "_".into(),
+                            mutable: false,
+                            ty: None,
+                            value: Expr::call("design::adapter::apply", apply_args),
+                        }],
+                        None,
+                    )),
+                ),
+                ("Err(_)".into(), Expr::call("halt", [])),
+            ],
+        }),
+        Stmt::Expr(Expr::assign(
+            Expr::path("tick"),
+            Expr::method(Expr::path("tick"), "wrapping_add", [Expr::u64(1)]),
+        )),
+        Stmt::Expr(Expr::call("tick_wait", [Expr::path("TICK_MICROS")])),
+    ]);
+    let loop_body = Block::new(loop_stmts, None);
     stmts.push(Stmt::Expr(Expr::Loop(loop_body)));
     items.push(Item::Fn(Function {
         doc: vec![],
@@ -444,7 +546,7 @@ pub fn firmware_module(
                 ir.name, plan.board
             ),
             String::new(),
-            "The Arduino firmware: a blocking loop steps the core, applies each tick's raw commands to".into(),
+            "The Arduino firmware: a blocking loop reads every analog source, steps the core, applies each tick's raw commands to".into(),
             "the lines the placement assigned, and waits `TICK_MICROS`; the clock domains the compiled".into(),
             "schedule says are due are activated by tick number.  Nothing here interprets the design".into(),
             "(docs/architecture/embedded-adapter.md § Arduino).".into(),

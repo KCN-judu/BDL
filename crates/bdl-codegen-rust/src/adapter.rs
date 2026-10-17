@@ -60,18 +60,23 @@ pub enum SourceKind {
     LevelPullDown,
     /// A `bool` raw reading from a line pulled up, a `LevelSource`.
     LevelPullUp,
+    /// A count `0 ..= 1023` from a 10-bit ADC pin, an `AdcSource`; the raw
+    /// reading is a dimensionless quantity.
+    Adc10,
 }
 
 impl SourceKind {
     pub fn trait_name(self) -> &'static str {
         match self {
             SourceKind::LevelPullDown | SourceKind::LevelPullUp => "LevelSource",
+            SourceKind::Adc10 => "AdcSource",
         }
     }
     /// The board capability the resource must carry.
     pub fn capability(self) -> &'static str {
         match self {
             SourceKind::LevelPullDown | SourceKind::LevelPullUp => "digital_in",
+            SourceKind::Adc10 => "analog_in",
         }
     }
 }
@@ -129,7 +134,9 @@ pub fn adapter_module(
     let mut items = vec![
         Item::Use("bdl_runtime_adapter::apply_duty8".into()),
         Item::Use("bdl_runtime_adapter::apply_level".into()),
+        Item::Use("bdl_runtime_adapter::read_adc".into()),
         Item::Use("bdl_runtime_adapter::read_level".into()),
+        Item::Use("bdl_runtime_adapter::AdcSource".into()),
         Item::Use("bdl_runtime_adapter::CommandFault".into()),
         Item::Use("bdl_runtime_adapter::Level".into()),
         Item::Use("bdl_runtime_adapter::LevelSource".into()),
@@ -380,6 +387,7 @@ fn read_fn(plan: &AdapterPlan) -> Function {
         ));
         let read = match b.kind {
             SourceKind::LevelPullDown | SourceKind::LevelPullUp => "read_level",
+            SourceKind::Adc10 => "read_adc",
         };
         args.push(Expr::some(Expr::call(read, [Expr::path(sym)])));
     }

@@ -25,6 +25,8 @@
 
 #![forbid(unsafe_code)]
 
+pub mod curves;
+
 use bdl_ir::{Expr, Prim, Scalar, Ty};
 use bdl_model::surface::DeviceKind;
 use bdl_model::{Dim, InputProfileId, OutputProfileId};
@@ -200,6 +202,21 @@ pub fn builtin_outputs() -> Vec<OutputProfile> {
             kind: DeviceKind::PwmChannel,
         },
         OutputProfile {
+            id: OutputProfileId("pwm_gamma8".into()),
+            display_name: "PWM, 8-bit duty, gamma 2.2".into(),
+            description: "A level 0–100 becomes a duty 0–255 along a gamma 2.2 curve, so equal steps of level look like equal steps of brightness on an LED.".into(),
+            encoder: Encoder {
+                rep: level.clone(),
+                raw: level.clone(),
+                encode: lam_level(curves::piecewise(
+                    var0(),
+                    curves::GAMMA22,
+                    curves::Tails::Slope(1.0),
+                )),
+            },
+            kind: DeviceKind::PwmChannel,
+        },
+        OutputProfile {
             id: OutputProfileId("i2c_level8".into()),
             display_name: "I2C register, 8-bit".into(),
             description: "A level 0–100 becomes the pair (register 42, value 0–255) written over I2C.".into(),
@@ -309,6 +326,70 @@ pub fn builtin_inputs() -> Vec<InputProfile> {
             },
             kind: DeviceKind::DigitalInput,
         },
+    ]
+    .into_iter()
+    .chain(analog_inputs())
+    .collect()
+}
+
+/// The analog providers: an ADC reading (counts 0–1023 of a 10-bit
+/// converter on a 5 V reference) turned into the quantity the Source's
+/// concept carries, through a curve of the named part.
+fn analog_inputs() -> Vec<InputProfile> {
+    let counts = Ty::q(Dim::ZERO);
+    let curve =
+        |id: &str, name: &str, description: &str, dim: Dim, points: &[(f64, f64)]| InputProfile {
+            id: InputProfileId(id.into()),
+            display_name: name.into(),
+            description: description.into(),
+            transducer: Transducer {
+                raw: counts.clone(),
+                rep: Ty::q(dim),
+                transduce: lam_level(curves::as_quantity(
+                    curves::piecewise(var0(), points, curves::Tails::Hold),
+                    dim,
+                )),
+            },
+            kind: DeviceKind::AnalogInput,
+        };
+    vec![
+        InputProfile {
+            id: InputProfileId("adc_percent".into()),
+            display_name: "ADC, percent of full scale".into(),
+            description: "An analog pin read as a level 0–100: the 10-bit reading over 1023 (a potentiometer between 5 V and ground).".into(),
+            transducer: Transducer {
+                raw: counts.clone(),
+                rep: Ty::q(Dim::ZERO),
+                transduce: lam_level(scale(var0(), 100.0, 1023.0)),
+            },
+            kind: DeviceKind::AnalogInput,
+        },
+        curve(
+            "adc_ntc10k_b3950",
+            "NTC 10 kΩ thermistor (β 3950)",
+            "A 10 kΩ NTC from the pin to ground and 10 kΩ to 5 V, read as a temperature in kelvin along the β = 3950 curve (−10 … 110 °C).",
+            Dim::TEMPERATURE,
+            curves::NTC_10K_B3950,
+        ),
+        curve(
+            "adc_ldr_gl5528",
+            "GL5528 photoresistor",
+            "A photoresistor from 5 V to the pin and 10 kΩ to ground, read as an illuminance (1 … 2000 lx) along the part's log-log curve.",
+            Dim {
+                luminous: 1,
+                angle: 2,
+                length: -2,
+                ..Dim::ZERO
+            },
+            curves::LDR_GL5528,
+        ),
+        curve(
+            "adc_sharp_gp2y0a21",
+            "Sharp GP2Y0A21 ranger",
+            "The infrared ranger's analog output, read as a distance in metres (0.1 … 0.8 m) along the datasheet's curve.",
+            Dim::LENGTH,
+            curves::SHARP_GP2Y0A21,
+        ),
     ]
 }
 

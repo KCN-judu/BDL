@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "keys": {
+    "clock:main": {
+      "id": 0,
+      "file": "src/main.bdl"
+    },
+    "concept:Flag": {
+      "id": 3,
+      "file": "src/main.bdl"
+    },
+    "concept:Level": {
+      "id": 2,
+      "file": "src/main.bdl"
+    },
+    "concept:Lux": {
+      "id": 1,
+      "file": "src/main.bdl"
+    },
+    "concept:Temp": {
+      "id": 0,
+      "file": "src/main.bdl"
+    },
+    "device:alarmPin": {
+      "id": 5,
+      "file": "src/main.bdl"
+    },
+    "device:fanPwm": {
+      "id": 4,
+      "file": "src/main.bdl"
+    },
+    "device:lightPwm": {
+      "id": 3,
+      "file": "src/main.bdl"
+    },
+    "device:lightSensor": {
+      "id": 1,
+      "file": "src/main.bdl"
+    },
+    "device:tempSensor": {
+      "id": 0,
+      "file": "src/main.bdl"
+    },
+    "device:trimmer": {
+      "id": 2,
+      "file": "src/main.bdl"
+    },
+    "mapping:fan": {
+      "id": 5,
+      "file": "src/main.bdl",
+      "shape": "0"
+    },
+    "mapping:fanTarget": {
+      "id": 4,
+      "file": "src/main.bdl",
+      "shape": "0"
+    },
+    "mapping:glow": {
+      "id": 7,
+      "file": "src/main.bdl",
+      "shape": "0"
+    },
+    "mapping:hot": {
+      "id": 8,
+      "file": "src/main.bdl",
+      "shape": "0"
+    },
+    "mapping:knob": {
+      "id": 2,
+      "file": "src/main.bdl",
+      "shape": "0"
+    },
+    "mapping:lightTarget": {
+      "id": 6,
+      "file": "src/main.bdl",
+      "shape": "0"
+    },
+    "mapping:roomLight": {
+      "id": 1,
+      "file": "src/main.bdl",
+      "shape": "0"
+    },
+    "mapping:roomTemp": {
+      "id": 0,
+      "file": "src/main.bdl",
+      "shape": "0"
+    },
+    "mapping:setpoint": {
+      "id": 3,
+      "file": "src/main.bdl",
+      "shape": "0"
+    },
+    "output:alarm": {
+      "id": 2,
+      "file": "src/main.bdl"
+    },
+    "output:fanDrive": {
+      "id": 1,
+      "file": "src/main.bdl"
+    },
+    "output:nightLight": {
+      "id": 0,
+      "file": "src/main.bdl"
+    }
+  },
+  "base_ids": {
+    "next_semantic": 4,
+    "next_decl": 9,
+    "next_clock": 1,
+    "next_output": 3,
+    "next_device": 6
+  },
+  "system_ids": {
+    "next_component": 0,
+    "next_instance": 0,
+    "next_port": 0,
+    "next_binding": 0,
+    "next_export": 0,
+    "next_group": 0
+  },
+  "flat_ids": {}
+}

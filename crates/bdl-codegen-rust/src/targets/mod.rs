@@ -103,7 +103,9 @@ impl Entry {
     pub fn reads(&self, kind: SourceKind) -> bool {
         match (self, kind) {
             (Entry::Rp2040, SourceKind::LevelPullDown | SourceKind::LevelPullUp) => true,
-            (Entry::Arduino(_), _) => false,
+            (Entry::Rp2040, SourceKind::Adc10) => false,
+            (Entry::Arduino(_), SourceKind::Adc10) => true,
+            (Entry::Arduino(_), SourceKind::LevelPullDown | SourceKind::LevelPullUp) => false,
         }
     }
 
@@ -114,12 +116,7 @@ impl Entry {
                 construct: p.construct(),
                 describe: p.describe(),
             }),
-            Entry::Arduino(board) => Err(EmitError(format!(
-                "{}: no reader for `{}` on {} yet",
-                arduino::FAMILY,
-                b.profile,
-                board.id
-            ))),
+            Entry::Arduino(board) => arduino::source_peripheral(board, b),
         }
     }
 

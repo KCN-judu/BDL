@@ -2127,6 +2127,12 @@ abstract class AppLocalizations {
   /// **'Digital input'**
   String get digitalInput;
 
+  /// Studio UI text (deploy_page.dart): the device kind of one analog (ADC) input pin.
+  ///
+  /// In en, this message translates to:
+  /// **'Analog input'**
+  String get analogInput;
+
   /// Studio UI text (deploy_page.dart).
   ///
   /// In en, this message translates to:

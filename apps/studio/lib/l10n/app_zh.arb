@@ -338,6 +338,7 @@
   "pwmChannel": "PWM 通道",
   "digitalOutput": "数字输出",
   "digitalInput": "数字输入",
+  "analogInput": "模拟输入",
   "hBridgeChannel": "H 桥通道",
   "iCSensor": "I²C 传感器",
   "quadratureEncoder": "正交编码器",

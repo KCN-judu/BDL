@@ -291,6 +291,7 @@ pub fn manifest(
                     kind: match b.kind {
                         crate::adapter::SourceKind::LevelPullDown
                         | crate::adapter::SourceKind::LevelPullUp => "level".into(),
+                        crate::adapter::SourceKind::Adc10 => "adc".into(),
                     },
                     resource: b.resource.clone(),
                     capability: b.kind.capability().into(),

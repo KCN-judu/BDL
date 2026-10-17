@@ -471,6 +471,8 @@ enum DeviceKind {
   DEVICE_KIND_UART = 6;
   // One digital input line (0.25).
   DEVICE_KIND_DIGITAL_INPUT = 7;
+  // One analog input pin read by the ADC (0.31).
+  DEVICE_KIND_ANALOG_INPUT = 8;
 }
 
 enum EditKind {

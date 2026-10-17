@@ -1044,6 +1044,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get digitalInput => 'デジタル入力';
 
   @override
+  String get analogInput => 'アナログ入力';
+
+  @override
   String get hBridgeChannel => 'H ブリッジチャネル';
 
   @override

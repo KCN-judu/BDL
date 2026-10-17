@@ -144,6 +144,8 @@ pub enum DeviceKind {
     DigitalOutput,
     /// One digital input line (a button, a limit switch).
     DigitalInput,
+    /// One analog input pin read by the ADC (a thermistor divider, a photoresistor, a ranger).
+    AnalogInput,
     /// An H-bridge motor channel: one PWM line and one direction line.
     HBridgeChannel,
     /// A sensor on the I2C bus: SDA and SCL on the same peripheral unit.

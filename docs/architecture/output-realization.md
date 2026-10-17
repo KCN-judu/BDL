@@ -108,13 +108,14 @@ in the assignment.
 `bdl-catalogue::builtin_outputs()` (re-exported as
 `bdl-output::realization::profiles()`) — ids are stable and persisted:
 
-| Profile          | Kind               | `rep`  | `raw`         | Encoder                                                     |
-| ---------------- | ------------------ | ------ | ------------- | ----------------------------------------------------------- |
-| `pwm_duty8`      | `pwm_channel`      | `q[1]` | `q[1]`        | `n · 255 / 100` (50 → 127.5; exact, many-to-one is allowed) |
-| `pwm_duty4`      | `pwm_channel`      | `q[1]` | `q[1]`        | four duties by thresholds 25/50/75 → 0, 85, 170, 255        |
-| `i2c_level8`     | `i2c_sensor`       | `q[1]` | `q[1] × q[1]` | `(42, n · 255 / 100)` — register and value                  |
-| `gpio_level`     | `digital_output`   | `bool` | `bool`        | identity                                                    |
-| `hbridge_signed` | `h_bridge_channel` | `q[1]` | `bool × q[1]` | `(¬(n < 0), abs(n) · 255 / 100)` — direction and duty       |
+| Profile          | Kind               | `rep`  | `raw`         | Encoder                                                                                             |
+| ---------------- | ------------------ | ------ | ------------- | --------------------------------------------------------------------------------------------------- |
+| `pwm_duty8`      | `pwm_channel`      | `q[1]` | `q[1]`        | `n · 255 / 100` (50 → 127.5; exact, many-to-one is allowed)                                         |
+| `pwm_duty4`      | `pwm_channel`      | `q[1]` | `q[1]`        | four duties by thresholds 25/50/75 → 0, 85, 170, 255                                                |
+| `pwm_gamma8`     | `pwm_channel`      | `q[1]` | `q[1]`        | gamma 2.2: `255·(n/100)^2.2` as a 21-point piecewise-linear table (out of range stays out of range) |
+| `i2c_level8`     | `i2c_sensor`       | `q[1]` | `q[1] × q[1]` | `(42, n · 255 / 100)` — register and value                                                          |
+| `gpio_level`     | `digital_output`   | `bool` | `bool`        | identity                                                                                            |
+| `hbridge_signed` | `h_bridge_channel` | `q[1]` | `bool × q[1]` | `(¬(n < 0), abs(n) · 255 / 100)` — direction and duty                                               |
 
 Quantities are `f64` in production (kernel: `Nat`), so `pwm_duty8` carries 127.5
 for 50 %: the exact value of the pure term, not a rounding the board does. There

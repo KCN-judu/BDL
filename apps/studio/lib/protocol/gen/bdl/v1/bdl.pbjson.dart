@@ -27,6 +27,7 @@ const DeviceKind$json = {
     {'1': 'DEVICE_KIND_QUADRATURE_ENCODER', '2': 5},
     {'1': 'DEVICE_KIND_UART', '2': 6},
     {'1': 'DEVICE_KIND_DIGITAL_INPUT', '2': 7},
+    {'1': 'DEVICE_KIND_ANALOG_INPUT', '2': 8},
   ],
 };
 
@@ -36,7 +37,8 @@ final $typed_data.Uint8List deviceKindDescriptor = $convert
         'RfUFdNX0NIQU5ORUwQARIeChpERVZJQ0VfS0lORF9ESUdJVEFMX09VVFBVVBACEiAKHERFVklD'
         'RV9LSU5EX0hfQlJJREdFX0NIQU5ORUwQAxIaChZERVZJQ0VfS0lORF9JMkNfU0VOU09SEAQSIg'
         'oeREVWSUNFX0tJTkRfUVVBRFJBVFVSRV9FTkNPREVSEAUSFAoQREVWSUNFX0tJTkRfVUFSVBAG'
-        'Eh0KGURFVklDRV9LSU5EX0RJR0lUQUxfSU5QVVQQBw==');
+        'Eh0KGURFVklDRV9LSU5EX0RJR0lUQUxfSU5QVVQQBxIcChhERVZJQ0VfS0lORF9BTkFMT0dfSU'
+        '5QVVQQCA==');
 
 @$core.Deprecated('Use editKindDescriptor instead')
 const EditKind$json = {

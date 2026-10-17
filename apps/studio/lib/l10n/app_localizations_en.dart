@@ -1087,6 +1087,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get digitalInput => 'Digital input';
 
   @override
+  String get analogInput => 'Analog input';
+
+  @override
   String get hBridgeChannel => 'H-bridge channel';
 
   @override

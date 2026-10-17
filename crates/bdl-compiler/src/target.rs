@@ -37,6 +37,9 @@ pub fn source_kind(profile: &InputProfileId) -> Option<SourceKind> {
     match profile.as_str() {
         "gpio_level_in" => Some(SourceKind::LevelPullDown),
         "gpio_level_in_low" => Some(SourceKind::LevelPullUp),
+        "adc_percent" | "adc_ntc10k_b3950" | "adc_ldr_gl5528" | "adc_sharp_gp2y0a21" => {
+            Some(SourceKind::Adc10)
+        }
         _ => None,
     }
 }
@@ -185,7 +188,10 @@ pub fn adapter_plan(
     let mut providers = Vec::new();
     for (slot, p, _decl, kind) in provided {
         let i_slot = slot;
-        let capability = Capability::DigitalIn;
+        let capability = match kind {
+            SourceKind::LevelPullDown | SourceKind::LevelPullUp => Capability::DigitalIn,
+            SourceKind::Adc10 => Capability::AnalogIn,
+        };
         let requirement = deployment
             .requirements
             .iter()
@@ -268,7 +274,7 @@ pub fn adapter_plan(
     let mut sinks = Vec::new();
     for s in &exec.sinks {
         let kind = match s.profile.as_str() {
-            "pwm_duty8" | "pwm_duty4" => SinkKind::PwmDuty8,
+            "pwm_duty8" | "pwm_duty4" | "pwm_gamma8" => SinkKind::PwmDuty8,
             "gpio_level" => SinkKind::Level,
             other => {
                 diagnostics.push(refuse(

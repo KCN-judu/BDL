@@ -36,6 +36,10 @@ class DeviceKind extends $pb.ProtobufEnum {
   static const DeviceKind DEVICE_KIND_DIGITAL_INPUT =
       DeviceKind._(7, _omitEnumNames ? '' : 'DEVICE_KIND_DIGITAL_INPUT');
 
+  /// One analog input pin read by the ADC (0.31).
+  static const DeviceKind DEVICE_KIND_ANALOG_INPUT =
+      DeviceKind._(8, _omitEnumNames ? '' : 'DEVICE_KIND_ANALOG_INPUT');
+
   static const $core.List<DeviceKind> values = <DeviceKind>[
     DEVICE_KIND_UNSPECIFIED,
     DEVICE_KIND_PWM_CHANNEL,
@@ -45,9 +49,10 @@ class DeviceKind extends $pb.ProtobufEnum {
     DEVICE_KIND_QUADRATURE_ENCODER,
     DEVICE_KIND_UART,
     DEVICE_KIND_DIGITAL_INPUT,
+    DEVICE_KIND_ANALOG_INPUT,
   ];
 
-  static final $core.List<DeviceKind?> _byValue = $pb.ProtobufEnum.$_initByValueList(values, 7);
+  static final $core.List<DeviceKind?> _byValue = $pb.ProtobufEnum.$_initByValueList(values, 8);
   static DeviceKind? valueOf($core.int value) =>
       value < 0 || value >= _byValue.length ? null : _byValue[value];
 

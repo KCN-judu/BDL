@@ -599,11 +599,12 @@ fn a_provider_that_reads_another_representation_does_not_fit() {
         ["deploy.provider_incompatible"]
     );
     assert!(deployment.diagnostics[0].message.contains("sensor"));
-    // every candidate says whether it fits: neither line profile does
-    assert!(deployment.provisions[&level]
-        .candidates
-        .iter()
-        .all(|(_, fit)| *fit == Some(false)));
+    // every candidate says whether it fits: neither line profile does, nor
+    // a thermistor; only the percent reading carries a plain level
+    for (entry, fit) in &deployment.provisions[&level].candidates {
+        let fits = entry.profile.id.as_str() == "adc_percent";
+        assert_eq!(*fit == Some(true), fits, "{}", entry.profile.id);
+    }
 }
 
 #[test]

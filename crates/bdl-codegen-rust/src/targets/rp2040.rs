@@ -159,6 +159,12 @@ pub fn source_peripheral(b: &ProviderBinding) -> Result<Peripheral, EmitError> {
             pull_up: false,
         },
         SourceKind::LevelPullUp => Peripheral::Sense { pin, pull_up: true },
+        SourceKind::Adc10 => {
+            return Err(EmitError(format!(
+                "rp2040: no ADC reader yet for `{}`",
+                b.profile
+            )))
+        }
     })
 }
 

@@ -109,6 +109,20 @@ pub fn read_level<S: LevelSource + ?Sized>(source: &mut S) -> bool {
     source.level()
 }
 
+/// One analog pin read by a 10-bit converter: the raw count `0 ..= 1023`
+/// of the reference voltage.  The curve of the sensor behind the pin
+/// (a thermistor divider, a ranger) is the profile's transducer, never
+/// the reader's.
+pub trait AdcSource {
+    fn counts(&mut self) -> u16;
+}
+
+/// Read one pin as the raw count the transducers take (`q 0`); nothing can
+/// be refused.
+pub fn read_adc<S: AdcSource + ?Sized>(source: &mut S) -> f64 {
+    f64::from(source.counts())
+}
+
 /// Apply one raw duty command: converted by [`duty8`], written when
 /// accepted, held when refused.  Returns what was written.
 pub fn apply_duty8<S: PwmDuty8 + ?Sized>(sink: &mut S, raw: f64) -> Result<u8, CommandFault> {
